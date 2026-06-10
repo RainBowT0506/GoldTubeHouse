@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YouTube 字幕分段整理工具 🛠️</title>
+    <title>YouTube 字幕分段整理與 AI 筆記生成工具 🛠️</title>
     <!-- 載入 Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -321,44 +321,54 @@
             font-size: 24px;
         }
 
-        @keyframes rotate {
-            100% { transform: rotate(360deg); }
-        }
-
-        .loading-title {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 12px;
-            letter-spacing: 0.5px;
-        }
-
-        .loading-subtitle {
-            color: var(--text-muted);
-            font-size: 14px;
-            animation: pulse 1.5s infinite ease-in-out;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 0.6; }
-            50% { opacity: 1; }
-        }
-
         /* 畫面 3: 主應用介面（左右分欄） */
         #app-screen {
             display: none;
             flex: 1;
-            height: calc(100vh - 73px); /* 扣掉 header 高度 */
+            height: calc(100vh - 73px);
             padding: 24px 40px;
             gap: 24px;
         }
 
-        /* 左側：字幕顯示區域 */
+        /* 左側：字幕與結果區域 */
         .content-panel {
             flex: 1;
             display: flex;
             flex-direction: column;
             overflow: hidden;
             height: 100%;
+        }
+
+        /* Tab 控制列 */
+        .tab-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-muted);
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .tab-btn.active {
+            color: #60a5fa;
+            background: rgba(59, 130, 246, 0.12);
+            border-color: rgba(59, 130, 246, 0.25);
         }
 
         .panel-header {
@@ -369,11 +379,23 @@
         }
 
         .panel-title {
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 600;
             display: flex;
             align-items: center;
             gap: 8px;
+        }
+
+        .tab-content {
+            display: none;
+            flex: 1;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .tab-content.active {
+            display: flex;
+            flex-direction: column;
         }
 
         .subtitle-scroll-area {
@@ -384,26 +406,6 @@
             gap: 24px;
             padding-right: 12px;
             scrollbar-width: thin;
-        }
-
-        /* 自訂滾動條 */
-        .subtitle-scroll-area::-webkit-scrollbar,
-        .sidebar-scroll-area::-webkit-scrollbar {
-            width: 6px;
-        }
-        .subtitle-scroll-area::-webkit-scrollbar-track,
-        .sidebar-scroll-area::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.01);
-            border-radius: 10px;
-        }
-        .subtitle-scroll-area::-webkit-scrollbar-thumb,
-        .sidebar-scroll-area::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-        }
-        .subtitle-scroll-area::-webkit-scrollbar-thumb:hover,
-        .sidebar-scroll-area::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.2);
         }
 
         /* 章節大卡片 (包含子分段) */
@@ -564,6 +566,7 @@
             border-color: #10b981 !important;
         }
 
+        /* 可編輯段落內容 */
         .segment-content {
             font-size: 15px;
             color: #cbd5e1;
@@ -571,9 +574,19 @@
             text-align: justify;
             white-space: pre-wrap;
             user-select: text;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            padding: 4px;
+            outline: none;
+            transition: border-color 0.2s;
         }
 
-        /* 右側：側邊欄 (Chapters 與 設定) */
+        .segment-content:focus {
+            border-color: rgba(59, 130, 246, 0.4);
+            background: rgba(11, 15, 25, 0.5);
+        }
+
+        /* 側邊欄 */
         .sidebar {
             width: 440px;
             display: flex;
@@ -659,7 +672,7 @@
 
         .chapters-textarea {
             width: 100%;
-            height: 180px;
+            height: 150px;
             background: rgba(11, 15, 25, 0.8);
             border: 1px solid var(--border-color);
             border-radius: var(--radius-md);
@@ -748,7 +761,7 @@
         }
 
         .settings-input {
-            width: 60px;
+            width: 70px;
             background: rgba(11, 15, 25, 0.8);
             border: 1px solid var(--border-color);
             border-radius: 6px;
@@ -756,6 +769,11 @@
             color: var(--text-main);
             text-align: center;
             font-size: 13px;
+            outline: none;
+        }
+
+        .settings-input:focus {
+            border-color: var(--primary);
         }
 
         .settings-unit {
@@ -806,12 +824,23 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
+            border: none;
+        }
+
+        .btn-lock-changes {
+            background: linear-gradient(135deg, var(--primary), #1e40af);
+            color: white;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.2);
+        }
+
+        .btn-lock-changes:hover {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            box-shadow: 0 6px 14px rgba(59, 130, 246, 0.3);
         }
 
         .btn-copy-all {
             background: linear-gradient(135deg, var(--accent), #059669);
             color: white;
-            border: none;
             box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);
         }
 
@@ -829,6 +858,49 @@
             background: rgba(255,255,255,0.06);
             color: var(--text-main);
             border-color: rgba(255,255,255,0.15);
+        }
+
+        /* 費用估算框 */
+        .cost-box {
+            display: none;
+            padding: 16px;
+            background: rgba(59, 130, 246, 0.08);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            margin-top: 10px;
+            flex-direction: column;
+            gap: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .cost-title {
+            font-weight: 600;
+            color: #60a5fa;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .cost-row {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-muted);
+        }
+
+        /* AI 筆記與術語輸出顯示 */
+        .ai-result-area {
+            background: rgba(11, 15, 25, 0.6);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            flex: 1;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-size: 15px;
+            line-height: 1.8;
+            color: #e2e8f0;
+            user-select: text;
         }
 
         /* 錯誤彈窗提示 */
@@ -876,7 +948,6 @@
             opacity: 1;
         }
 
-        /* 說明專區 */
         .instruction-box {
             font-size: 12px;
             color: var(--text-muted);
@@ -885,7 +956,7 @@
             border: 1px solid rgba(255,255,255,0.04);
             border-radius: 8px;
             padding: 10px;
-            margin-top: 14px;
+            margin-top: 10px;
         }
 
         .instruction-box p {
@@ -893,24 +964,6 @@
         }
         .instruction-box p:last-child {
             margin-bottom: 0;
-        }
-
-        /* Responsive Layout */
-        @media (max-width: 1100px) {
-            #app-screen {
-                flex-direction: column;
-                height: auto;
-                overflow: visible;
-                padding: 16px;
-            }
-            .sidebar {
-                width: 100%;
-                height: auto;
-            }
-            .subtitle-scroll-area {
-                height: 500px;
-                overflow-y: auto;
-            }
         }
     </style>
 </head>
@@ -921,7 +974,7 @@
             <span>GoldTubeHouse 🛠️</span>
         </div>
         <a href="#" class="github-link">
-            <span>字幕分段整理工具 v1.0</span>
+            <span>字幕分段整理工具 v2.0</span>
         </a>
     </header>
 
@@ -929,7 +982,7 @@
         <!-- 畫面 1: 首頁 / 輸入網址 -->
         <div id="home-screen">
             <h1 class="hero-title">YouTube 字幕分段整理工具</h1>
-            <p class="hero-subtitle">貼上 YouTube 影片網址，即可極速取得字幕，並根據章節或自訂時間區段進行視覺化區塊分割，方便您一鍵複製至 AI 做筆記。</p>
+            <p class="hero-subtitle">貼上 YouTube 影片網址，即可極速取得字幕，並根據章節進行智慧分段。支援手動鍵盤 Enter 調整切分點，並可呼叫 OpenAI API 一鍵生成結構化重點整理與專業術語對照。</p>
             
             <!-- 錯誤提示 -->
             <div id="error-box" class="error-alert">
@@ -938,7 +991,7 @@
             </div>
 
             <div class="input-group">
-                <input type="text" id="yt-url" class="url-input" placeholder="請貼上 YouTube 影片或播放清單網址 (例如 https://www.youtube.com/watch?v=EH5jx5qPabU)" value="https://www.youtube.com/watch?v=EH5jx5qPabU">
+                <input type="text" id="yt-url" class="url-input" placeholder="請貼上 YouTube 影片網址 (例如 https://www.youtube.com/watch?v=2GZ2SNXWK-c)" value="https://www.youtube.com/watch?v=2GZ2SNXWK-c">
                 <button class="btn-submit" onclick="processVideo()">
                     <span>開始處理</span>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
@@ -947,26 +1000,26 @@
 
             <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
                 <span style="color: var(--text-muted); font-size: 13px; align-self: center;">常用測試範例：</span>
+                <span class="example-tag" onclick="useExample('https://www.youtube.com/watch?v=2GZ2SNXWK-c')">n8n 自動化大師課 (長達 6 小時)</span>
                 <span class="example-tag" onclick="useExample('https://www.youtube.com/watch?v=EH5jx5qPabU')">n8n AI Agent 教學 (約 25 分)</span>
-                <span class="example-tag" onclick="useExample('https://www.youtube.com/watch?v=lie9zRW2P6A')">AI 暴風眼訪談 (約 51 分)</span>
             </div>
 
             <!-- 特色展示 -->
             <div class="features-grid">
                 <div class="feature-card">
-                    <div class="feature-icon">📑</div>
-                    <div class="feature-title">自動章節分割</div>
-                    <div class="feature-desc">貼上 YouTube Chapters，自動將對應的字幕時間精準歸類，並針對長間隔進行二次智慧分段。</div>
+                    <div class="feature-icon">⌨️</div>
+                    <div class="feature-title">手動 Enter 快速切分</div>
+                    <div class="feature-desc">直接點擊文字卡片，在任意句點後按下 Enter 鍵，系統即會精準在該時間點進行段落分割，其後區段自動後移。</div>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">⏰</div>
-                    <div class="feature-title">自訂區間分段</div>
-                    <div class="feature-desc">無章節時，根據設定的區段大小（如 15 分鐘）進行平滑分段，並可自訂過濾門檻。</div>
+                    <div class="feature-icon">🎯</div>
+                    <div class="feature-title">句點對齊智慧分段</div>
+                    <div class="feature-desc">無章節或大間隔自動分割時，自動抓取最接近 20 分鐘的句尾（句號），保持語意段落完整性。</div>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">📋</div>
-                    <div class="feature-title">一鍵複製極速做筆記</div>
-                    <div class="feature-desc">設計專門的「僅複製字幕」與「帶標題複製」按鈕，過濾 HTML 樣式，完美餵給 AI 產出筆記。</div>
+                    <div class="feature-icon">🧠</div>
+                    <div class="feature-title">OpenAI 自動筆記術語</div>
+                    <div class="feature-desc">串接 API 金鑰，一鍵為每個分段生成重點筆記，並每小時（3個分段）生成 50 個專業詞彙的中英文對照與釋義。</div>
                 </div>
             </div>
         </div>
@@ -983,16 +1036,48 @@
 
         <!-- 畫面 3: 主應用介面 -->
         <div id="app-screen">
-            <!-- 左欄：字幕內容 -->
+            <!-- 左欄：字幕內容與 AI 產出 -->
             <div class="content-panel">
-                <div class="panel-header">
-                    <h2 class="panel-title">
-                        <span>字幕分段區塊</span>
-                        <span style="font-size: 13px; font-weight: normal; color: var(--text-muted); background: rgba(255,255,255,0.04); padding: 4px 10px; border-radius: 20px;" id="segments-count-badge">0 個區塊</span>
-                    </h2>
+                <div class="tab-bar">
+                    <button class="tab-btn active" id="tab-btn-edit" onclick="switchTab('edit')">編輯與分割區塊</button>
+                    <button class="tab-btn" id="tab-btn-notes" onclick="switchTab('notes')" style="display:none;">AI 整理筆記 📝</button>
+                    <button class="tab-btn" id="tab-btn-term" onclick="switchTab('term')" style="display:none;">專業術語對照 📘</button>
                 </div>
-                <div id="subtitle-container" class="subtitle-scroll-area">
-                    <!-- 字幕分段內容將動態渲染於此 -->
+
+                <!-- Tab 1: 編輯分割畫面 -->
+                <div id="tab-content-edit" class="tab-content active">
+                    <div class="panel-header">
+                        <h2 class="panel-title">
+                            <span>字幕分段區塊</span>
+                            <span style="font-size: 13px; font-weight: normal; color: var(--text-muted); background: rgba(255,255,255,0.04); padding: 4px 10px; border-radius: 20px;" id="segments-count-badge">0 個區塊</span>
+                        </h2>
+                        <span style="font-size: 12px; color: var(--accent); font-weight: 500;">💡 您可點選任意卡片內容，在句號後按 Enter 鍵進行手動段落切分</span>
+                    </div>
+                    <div id="subtitle-container" class="subtitle-scroll-area">
+                        <!-- 字幕分段內容將動態渲染於此 -->
+                    </div>
+                </div>
+
+                <!-- Tab 2: AI 筆記畫面 -->
+                <div id="tab-content-notes" class="tab-content">
+                    <div class="panel-header">
+                        <h2 class="panel-title">重點整理筆記</h2>
+                        <button class="btn-copy btn-copy-highlight" onclick="copyAllAINotes()">複製全部筆記</button>
+                    </div>
+                    <div id="ai-notes-container" class="ai-result-area">
+                        <!-- AI 筆記 -->
+                    </div>
+                </div>
+
+                <!-- Tab 3: AI 專業術語對照 -->
+                <div id="tab-content-term" class="tab-content">
+                    <div class="panel-header">
+                        <h2 class="panel-title">專業術語對照表</h2>
+                        <button class="btn-copy btn-copy-highlight" onclick="copyAllAITerms()">複製全部術語</button>
+                    </div>
+                    <div id="ai-term-container" class="ai-result-area">
+                        <!-- AI 術語 -->
+                    </div>
                 </div>
             </div>
 
@@ -1013,6 +1098,24 @@
                         </div>
                     </div>
 
+                    <!-- OpenAI API 設定卡 -->
+                    <div class="sidebar-card">
+                        <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">OpenAI API 設定</h4>
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <div>
+                                <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px;">API Key</label>
+                                <input type="password" id="openai-key" class="settings-input" style="width: 100%; text-align: left; height: 32px;" placeholder="貼上 sk-...金鑰">
+                            </div>
+                            <div>
+                                <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px;">模型選擇</label>
+                                <select id="openai-model" class="settings-input" style="width: 100%; text-align: left; height: 32px; padding: 0 8px;">
+                                    <option value="gpt-4o-mini">gpt-4o-mini (極速便宜，推薦)</option>
+                                    <option value="gpt-4o">gpt-4o (高品質，較慢且貴)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Chapters 輸入 -->
                     <div class="sidebar-card">
                         <div class="chapters-label">
@@ -1020,11 +1123,10 @@
                             <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">可留空以使用時間間隔</span>
                         </div>
                         <textarea id="chapters-input" class="chapters-textarea" placeholder="格式範例：
-0:00 Intro
-0:33 What is an Agent?
-0:54 Agents vs. Automations
-2:09 3 Main Components
-3:29 Types of Systems"></textarea>
+00:00:00 Introduction
+00:01:25 The n8n basics
+01:11:41 Foundational concepts
+03:11:09 Javascript functions"></textarea>
                         <div class="chapters-actions">
                             <button class="btn-action btn-apply" onclick="applyChapters()">
                                 <span>套用章節</span>
@@ -1033,37 +1135,33 @@
                                 <span>清除</span>
                             </button>
                         </div>
-                        <div class="instruction-box">
-                            <p>💡 系統會將字幕根據貼上的章節時間進行分配。</p>
-                            <p>💡 若兩章節的間隔很長（預設大於 20 分鐘），會自動細分為每 15 分鐘的無標題區塊，確保每段文字不致過長。</p>
-                        </div>
                     </div>
 
                     <!-- 分段設定 -->
                     <div class="sidebar-card">
                         <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">分段參數微調</h4>
                         <div class="settings-grid">
-                            <!-- 設定 1：長片分段間隔 -->
+                            <!-- 設定 1：分段間隔 -->
                             <div>
                                 <div class="settings-item">
-                                    <span class="settings-name">自訂分段區間</span>
+                                    <span class="settings-name">自訂分段區間 (預設 20分)</span>
                                     <div class="settings-control">
-                                        <input type="number" id="setting-interval" class="settings-input" value="15" min="1" max="180" onchange="triggerReSegmentation()">
+                                        <input type="number" id="setting-interval" class="settings-input" value="20" min="1" max="180" onchange="triggerReSegmentation()">
                                         <span class="settings-unit">分</span>
                                     </div>
                                 </div>
                                 <div class="presets">
                                     <button class="btn-preset" onclick="setPresetInterval(5)">5分</button>
                                     <button class="btn-preset" onclick="setPresetInterval(10)">10分</button>
-                                    <button class="btn-preset active" id="preset-15" onclick="setPresetInterval(15)">15分</button>
-                                    <button class="btn-preset" onclick="setPresetInterval(20)">20分</button>
+                                    <button class="btn-preset" onclick="setPresetInterval(15)">15分</button>
+                                    <button class="btn-preset active" id="preset-20" onclick="setPresetInterval(20)">20分</button>
                                     <button class="btn-preset" onclick="setPresetInterval(30)">30分</button>
                                 </div>
                             </div>
 
                             <!-- 設定 2：免分段短片門檻 -->
                             <div class="settings-item">
-                                <span class="settings-name">短影片直接顯示門檻</span>
+                                <span class="settings-name">直接顯示門檻</span>
                                 <div class="settings-control">
                                     <input type="number" id="setting-no-segment" class="settings-input" value="20" min="5" max="120" onchange="triggerReSegmentation()">
                                     <span class="settings-unit">分</span>
@@ -1072,7 +1170,7 @@
 
                             <!-- 設定 3：大間隔細分門檻 -->
                             <div class="settings-item">
-                                <span class="settings-name">章節長間隔細分門檻</span>
+                                <span class="settings-name">超長章節細分門檻</span>
                                 <div class="settings-control">
                                     <input type="number" id="setting-sub-segment" class="settings-input" value="20" min="5" max="120" onchange="triggerReSegmentation()">
                                     <span class="settings-unit">分</span>
@@ -1084,10 +1182,33 @@
 
                 <!-- 底部操作列 -->
                 <div class="sidebar-footer">
-                    <button class="btn-global btn-copy-all" onclick="copyAllMarkdown()">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                        <span>複製全部段落 (Markdown)</span>
+                    <!-- 鎖定段落與預估費用按鈕 -->
+                    <button class="btn-global btn-lock-changes" id="btn-lock-segments" onclick="lockAndEstimateCost()">
+                        <span>🔒 鎖定分段並預估 API 費用</span>
                     </button>
+
+                    <!-- 費用估算框 -->
+                    <div id="cost-estimation-box" class="cost-box">
+                        <div class="cost-title">
+                            <span>📊 API 費用估算</span>
+                        </div>
+                        <div class="cost-row">
+                            <span>總段落數</span>
+                            <span id="est-segments">0 個</span>
+                        </div>
+                        <div class="cost-row">
+                            <span>總文字長度</span>
+                            <span id="est-chars">0 字</span>
+                        </div>
+                        <div class="cost-row">
+                            <span>預估費用 (USD)</span>
+                            <span id="est-cost" style="color: var(--accent); font-weight: 600;">$0.00 USD</span>
+                        </div>
+                        <button class="btn-global btn-copy-all" style="margin-top: 5px;" onclick="runAIGeneration()">
+                            <span>🚀 確認呼叫 AI 開始整理</span>
+                        </button>
+                    </div>
+
                     <button class="btn-global btn-back" onclick="goBackToHome()">
                         <span>← 返回輸入其他網址</span>
                     </button>
@@ -1104,15 +1225,45 @@
 
     <script>
         // 全域變數
-        let videoData = null; // 後端傳回的 { title, duration, thumbnail, video_id, subtitles }
-        let parsedChapters = []; // 解析後的 [{ start, timeStr, title }]
+        let videoData = null; // 後端傳回的影片原始資料
+        let parsedChapters = []; // 從 Chapters 輸入框解析出的 [{ start, timeStr, title }]
+        let userCustomSplits = []; // 使用者按 Enter 手動分割的時間戳 [{ time, title }]
+        let currentSegments = []; // 當前計算出的分段結構 (渲染比對用)
+        let aiNotesResult = null; // 存放 AI 筆記結果
+        let aiTermsResult = null; // 存放 AI 術語結果
 
-        // 範例網址選取
+        // 頁面載入時預設載入 localStorage 裡的 OpenAI key
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedKey = localStorage.getItem('openai_api_key');
+            const savedModel = localStorage.getItem('openai_model');
+            if (savedKey) document.getElementById('openai-key').value = savedKey;
+            if (savedModel) document.getElementById('openai-model').value = savedModel;
+            
+            // 監聽變更
+            document.getElementById('openai-key').addEventListener('change', (e) => {
+                localStorage.setItem('openai_api_key', e.target.value.trim());
+            });
+            document.getElementById('openai-model').addEventListener('change', (e) => {
+                localStorage.setItem('openai_model', e.target.value);
+            });
+
+            // 預填長影片範例
+            useExample('https://www.youtube.com/watch?v=2GZ2SNXWK-c');
+        });
+
+        // 範例選取
         function useExample(url) {
             document.getElementById('yt-url').value = url;
-            // 如果是特定測試，自動預填寫 Chapters 給使用者，更方便測試
             const chaptersTextarea = document.getElementById('chapters-input');
-            if (url.includes('EH5jx5qPabU')) {
+            if (url.includes('2GZ2SNXWK-c')) {
+                chaptersTextarea.value = `00:00:00 Introduction
+00:01:25 The n8n basics
+01:11:41 Foundational concepts
+03:11:09 Javascript functions
+05:04:47 Setting up self-hosting
+05:28:07 Comparing n8n vs make & which to use when
+05:55:27 Outro`;
+            } else if (url.includes('EH5jx5qPabU')) {
                 chaptersTextarea.value = `0:00 Intro
 0:33 What is an Agent?
 0:54 Agents vs. Automations
@@ -1132,35 +1283,10 @@
 15:54 Adding Tools
 22:48 Testing and Debugging
 24:53 Possibilities From Here`;
-            } else if (url.includes('lie9zRW2P6A')) {
-                chaptersTextarea.value = `00:00 台灣身處 AI 暴風眼中心，我們該如何生存？ 
-01:34 AI 正在吃掉軟體，引爆下一波生產力革命嗎？ 
-03:21 AI 智商已達博士級，死讀書的人將被徹底淘汰？ 
-04:46 全球只剩「兩國九企」玩得起 AI？ 
-05:48 SaaS 股價暴跌，軟體服務業正面臨毀滅性打擊？ 
-07:18 文科生也能寫程式，工程師的護城河還在嗎？ 
-10:35 OpenAI 在幫 Google 練兵？這場算力戰誰會贏？ 
-12:41 自動販賣機自己會賺錢，AI 代理人時代來了？ 
-14:15 雲端太強殺死邊緣，蘋果在 AI 時代陷入大麻煩？ 
-16:05 放棄軟體夢，台灣靠「硬體載體」才是唯一活路？ 
-18:23 Google 擁有「地球級基建」，後進者想追上是不可能的任務？ 
-20:05 學生佔了八成流量，ChatGPT 的商業模式出現危機？ 
-22:56 科技業賺翻你卻沒加薪，這就是經濟學人說的「台灣病」？ 
-27:00 年輕人才憑空消失，台灣正面臨最嚴重的國安危機？ 
-31:22 老闆一人抵三人用，「一人公司」將取代傳統企業？ 
-37:41 別做模型了，幫客戶「接水管」才是真正的暴利藍海？ 
-41:15 智育變得最不值錢，孩子未來該學哪兩種保命能力？ 
-45:24 只會寫 Code 沒用，軟體工程師若不轉型價值將歸零？ 
-51:43 這不是海嘯是隧道，如何衝過黑暗變身 AI 超級人類？`;
             } else {
                 chaptersTextarea.value = '';
             }
         }
-
-        // 當預設範例被點擊時，自動填寫
-        document.addEventListener('DOMContentLoaded', () => {
-            useExample('https://www.youtube.com/watch?v=EH5jx5qPabU');
-        });
 
         // 顯示/隱藏畫面元件
         function showScreen(screenId) {
@@ -1169,13 +1295,30 @@
             document.getElementById('app-screen').style.display = screenId === 'app' ? 'flex' : 'none';
         }
 
-        // 回到首頁
+        // 切換 Tab
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            document.getElementById(`tab-btn-${tabId}`).classList.add('active');
+            document.getElementById(`tab-content-${tabId}`).classList.add('active');
+        }
+
+        // 返回首頁
         function goBackToHome() {
             showScreen('home');
             document.getElementById('error-box').style.display = 'none';
+            // 隱藏 AI Tabs
+            document.getElementById('tab-btn-notes').style.display = 'none';
+            document.getElementById('tab-btn-term').style.display = 'none';
+            document.getElementById('cost-estimation-box').style.display = 'none';
+            aiNotesResult = null;
+            aiTermsResult = null;
+            userCustomSplits = [];
+            switchTab('edit');
         }
 
-        // 發送 API 請求處理影片
+        // 呼叫後端處理影片資訊與字幕
         async function processVideo() {
             const urlInput = document.getElementById('yt-url').value.trim();
             const errorBox = document.getElementById('error-box');
@@ -1206,12 +1349,12 @@
 
                 if (response.ok && result.status === 'success') {
                     videoData = result;
+                    userCustomSplits = []; // 重設手動切分
                     renderVideoInfo();
-                    // 套用輸入框中原有的 Chapters (如果有)
                     parseAndSegment();
                     showScreen('app');
                 } else {
-                    throw new Error(result.message || '無法下載或處理該影片。請確認網址是否正確，且該影片有提供字幕。');
+                    throw new Error(result.message || '無法下載或處理該影片。請確認網址，且該影片有提供字幕。');
                 }
             } catch (err) {
                 showScreen('home');
@@ -1220,7 +1363,7 @@
             }
         }
 
-        // 渲染影片基本資訊
+        // 渲染影片資訊
         function renderVideoInfo() {
             if (!videoData) return;
 
@@ -1238,7 +1381,7 @@
             `;
         }
 
-        // 轉換時間字串成秒數 (H:MM:SS or MM:SS)
+        // 時間字串轉秒數 (支援 H:MM:SS 或 MM:SS)
         function parseTimeToSeconds(timeStr) {
             const parts = timeStr.trim().split(':').map(Number);
             if (parts.length === 2) {
@@ -1249,7 +1392,7 @@
             return 0;
         }
 
-        // 格式化秒數為時間字串 (MM:SS)
+        // 秒數轉時間字串
         function formatTime(seconds) {
             const h = Math.floor(seconds / 3600);
             const m = Math.floor((seconds % 3600) / 60);
@@ -1261,38 +1404,33 @@
             return `${pad(m)}:${pad(s)}`;
         }
 
-        // 點擊套用章節按鈕
         function applyChapters() {
             parseAndSegment();
             showToast('已套用章節分段！');
         }
 
-        // 清除章節
         function clearChapters() {
             document.getElementById('chapters-input').value = '';
+            userCustomSplits = []; // 同步清除手動切分
             parseAndSegment();
-            showToast('已清除章節並恢復自動時間分段。');
+            showToast('已清除章節與手動切分點。');
         }
 
-        // 當設定欄位變更時觸發重新分段
         function triggerReSegmentation() {
             parseAndSegment();
         }
 
-        // 設定快速區間
         function setPresetInterval(minutes) {
             document.getElementById('setting-interval').value = minutes;
-            // 移除所有 Preset 的 active state
             document.querySelectorAll('.btn-preset').forEach(btn => btn.classList.remove('active'));
-            // 給對應的加上 active class
-            if (minutes === 15) {
-                document.getElementById('preset-15').classList.add('active');
+            if (minutes === 20) {
+                document.getElementById('preset-20').classList.add('active');
             }
             parseAndSegment();
             showToast(`已設定預設區間為 ${minutes} 分鐘。`);
         }
 
-        // 解析 chapters-input 並進行分段與渲染
+        // 主解析與分段控制器
         function parseAndSegment() {
             if (!videoData) return;
 
@@ -1310,110 +1448,203 @@
                     if (match) {
                         const timeStr = match[1];
                         const timeSecs = parseTimeToSeconds(timeStr);
-                        // 取出時間字串之後的文字做為標題
                         let title = line.replace(timeStr, '').replace(/^\s*[-–—]\s*/, '').trim();
                         if (!title) title = `章節 @ ${timeStr}`;
                         parsedChapters.push({
-                            start: timeSecs,
-                            timeStr: timeStr,
+                            time: timeSecs,
                             title: title
                         });
                     }
                 }
-                // 按時間排序以確保正確性
-                parsedChapters.sort((a, b) => a.start - b.start);
             }
 
-            // 取得分段參數設定 (轉換為秒)
-            const intervalSecs = parseInt(document.getElementById('setting-interval').value) * 60 || 900;
+            // 合併 Chapters 與使用者手動 Enter 的分割點
+            let combinedSplits = [...parsedChapters];
+            userCustomSplits.forEach(custom => {
+                // 如果該時間點尚未被 Chapter 覆蓋，則加入
+                if (!combinedSplits.some(s => Math.abs(s.time - custom.time) < 5)) {
+                    combinedSplits.push(custom);
+                }
+            });
+
+            // 確保按照時間先後排序
+            combinedSplits.sort((a, b) => a.time - b.time);
+
+            const intervalSecs = parseInt(document.getElementById('setting-interval').value) * 60 || 1200;
             const noSegThreshold = parseInt(document.getElementById('setting-no-segment').value) * 60 || 1200;
             const subSegThreshold = parseInt(document.getElementById('setting-sub-segment').value) * 60 || 1200;
 
-            const segments = generateSegments(
+            currentSegments = generateSegments(
                 videoData.subtitles,
                 videoData.duration,
-                parsedChapters,
+                combinedSplits,
                 intervalSecs,
                 noSegThreshold,
                 subSegThreshold
             );
 
-            renderSegments(segments);
+            renderSegments(currentSegments);
+            
+            // 如果顯示了費用框，則動態更新它
+            if (document.getElementById('cost-estimation-box').style.display === 'flex') {
+                lockAndEstimateCost();
+            }
         }
 
-        // 智慧分段引擎
-        function generateSegments(subtitles, duration, chapters, interval, noSegThreshold, subSegThreshold) {
+        // 檢查句尾符號 (。！？.!?)
+        function isSentenceEnd(text) {
+            if (!text) return false;
+            const cleanText = text.trim();
+            if (cleanText.length === 0) return false;
+            const lastChar = cleanText.slice(-1);
+            return /[。！？.!?]/.test(lastChar);
+        }
+
+        // 尋找最佳切分點的 Subtitle 索引 (優先對齊句尾)
+        function findBestSplitIndex(subtitles, targetTime, maxOffsetSecs = 120) {
+            let closestIndex = -1;
+            let minDiff = Infinity;
+            
+            for (let i = 0; i < subtitles.length; i++) {
+                let diff = Math.abs(subtitles[i].start - targetTime);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    closestIndex = i;
+                }
+            }
+            
+            if (closestIndex === -1) return subtitles.length;
+            
+            // 在容許範圍內搜尋最近的完整句尾
+            let bestIndex = closestIndex;
+            let searchRadius = 0;
+            while (true) {
+                let beforeIndex = closestIndex - searchRadius;
+                let afterIndex = closestIndex + searchRadius;
+                let beforeValid = beforeIndex >= 0 && Math.abs(subtitles[beforeIndex].start - targetTime) <= maxOffsetSecs;
+                let afterValid = afterIndex < subtitles.length && Math.abs(subtitles[afterIndex].start - targetTime) <= maxOffsetSecs;
+                
+                if (!beforeValid && !afterValid) break;
+                
+                if (afterValid && isSentenceEnd(subtitles[afterIndex].text)) {
+                    bestIndex = afterIndex + 1;
+                    break;
+                }
+                if (beforeValid && isSentenceEnd(subtitles[beforeIndex].text)) {
+                    bestIndex = beforeIndex + 1;
+                    break;
+                }
+                searchRadius++;
+            }
+            return bestIndex;
+        }
+
+        // 智慧分段引擎 (整合句點對齊與子區塊細分)
+        function generateSegments(subtitles, duration, splits, interval, noSegThreshold, subSegThreshold) {
             let segments = [];
 
-            if (chapters.length === 0) {
-                // 情境 1: 沒有貼 Chapters
+            // 情境 1: 沒有任何 Chapters 或分割點
+            if (splits.length === 0) {
                 if (duration <= noSegThreshold) {
-                    // 長度低於門檻 (例如 20分鐘)，直接回傳單一分段
                     segments.push({
                         id: 'seg_all',
                         chapterTitle: '完整影片字幕',
-                        subTitle: '',
+                        subTitle: `00:00 ~ ${formatTime(duration)}`,
                         isSubSegment: false,
                         start: 0,
                         end: duration,
                         subtitles: subtitles
                     });
                 } else {
-                    // 長度大於門檻，按固定間隔 (如 15分鐘) 進行分段
-                    let numSegments = Math.ceil(duration / interval);
-                    for (let i = 0; i < numSegments; i++) {
-                        let start = i * interval;
-                        let end = Math.min((i + 1) * interval, duration);
-                        let sub = subtitles.filter(s => s.start >= start && s.start < end);
+                    let t = 0;
+                    let idx = 0;
+                    while (t < duration) {
+                        let target = t + interval;
+                        if (target >= duration) {
+                            let sub = subtitles.filter(s => s.start >= t);
+                            segments.push({
+                                id: `seg_time_${idx}`,
+                                chapterTitle: `分段區塊 ${idx + 1}`,
+                                subTitle: `${formatTime(t)} ~ ${formatTime(duration)}`,
+                                isSubSegment: false,
+                                start: t,
+                                end: duration,
+                                subtitles: sub
+                            });
+                            break;
+                        }
+                        // 句號對齊尋找最佳切點
+                        let bestIdx = findBestSplitIndex(subtitles, target, 120);
+                        let nextT = (bestIdx < subtitles.length) ? subtitles[bestIdx].start : duration;
+                        if (nextT <= t) nextT = t + interval; // 備用防卡死
+
+                        let sub = subtitles.filter(s => s.start >= t && s.start < nextT);
                         segments.push({
-                            id: `seg_time_${i}`,
-                            chapterTitle: `分段區塊 ${i + 1}`,
-                            subTitle: `${formatTime(start)} ~ ${formatTime(end)}`,
+                            id: `seg_time_${idx}`,
+                            chapterTitle: `分段區塊 ${idx + 1}`,
+                            subTitle: `${formatTime(t)} ~ ${formatTime(nextT)}`,
                             isSubSegment: false,
-                            start: start,
-                            end: end,
+                            start: t,
+                            end: nextT,
                             subtitles: sub
                         });
+                        t = nextT;
+                        idx++;
                     }
                 }
             } else {
-                // 情境 2: 有 Chapters
-                // 如果第一個章節起點不是 0，自動在最前面補一個預設起點章節
-                if (chapters[0].start > 0) {
-                    chapters.unshift({ start: 0, timeStr: '0:00', title: '影片開始' });
+                // 情境 2: 有 Chapter 或自訂切割點
+                // 確保第一個分割點從 0 秒開始
+                if (splits[0].time > 0) {
+                    splits.unshift({ time: 0, title: '影片開始' });
                 }
 
-                for (let i = 0; i < chapters.length; i++) {
-                    let start = chapters[i].start;
-                    let end = (i + 1 < chapters.length) ? chapters[i + 1].start : duration;
-                    let chapterTitle = chapters[i].title;
+                for (let i = 0; i < splits.length; i++) {
+                    let start = splits[i].time;
+                    let end = (i + 1 < splits.length) ? splits[i + 1].time : duration;
+                    let chapterTitle = splits[i].title || `自訂分段 ${i}`;
                     let chapterDuration = end - start;
 
-                    // 檢查這個章節的間隔是否太長，如果超過細分門檻 (例如 20 分鐘)
+                    // 若此區段長度大於細分門檻，進行 15-20 分鐘的句點對齊子分段
                     if (chapterDuration > subSegThreshold) {
-                        // 針對這個超長區段進行細分
-                        let numSubs = Math.ceil(chapterDuration / interval);
-                        
-                        // 我們先將所有的 subtitles 提取出來
+                        let t = start;
+                        let subIdx = 0;
                         let chapterSubtitles = subtitles.filter(s => s.start >= start && s.start < end);
-
                         let subSegments = [];
-                        for (let j = 0; j < numSubs; j++) {
-                            let subStart = start + j * interval;
-                            let subEnd = Math.min(start + (j + 1) * interval, end);
-                            let subSubs = chapterSubtitles.filter(s => s.start >= subStart && s.start < subEnd);
-                            
+
+                        while (t < end) {
+                            let target = t + interval;
+                            if (target >= end) {
+                                let sub = chapterSubtitles.filter(s => s.start >= t);
+                                subSegments.push({
+                                    id: `seg_chap_${i}_sub_${subIdx}`,
+                                    chapterTitle: chapterTitle,
+                                    subTitle: `${formatTime(t)} ~ ${formatTime(end)}`,
+                                    isSubSegment: true,
+                                    start: t,
+                                    end: end,
+                                    subtitles: sub
+                                });
+                                break;
+                            }
+                            let bestIdx = findBestSplitIndex(chapterSubtitles, target, 120);
+                            let nextT = (bestIdx < chapterSubtitles.length) ? chapterSubtitles[bestIdx].start : end;
+                            if (nextT <= t) nextT = t + interval;
+
+                            let sub = chapterSubtitles.filter(s => s.start >= t && s.start < nextT);
                             subSegments.push({
-                                id: `seg_chap_${i}_sub_${j}`,
+                                id: `seg_chap_${i}_sub_${subIdx}`,
                                 chapterTitle: chapterTitle,
-                                subTitle: `${formatTime(subStart)} ~ ${formatTime(subEnd)}`,
-                                isSubSegment: true, // 標示為子分段
-                                start: subStart,
-                                end: subEnd,
-                                subtitles: subSubs
+                                subTitle: `${formatTime(t)} ~ ${formatTime(nextT)}`,
+                                isSubSegment: true,
+                                start: t,
+                                end: nextT,
+                                subtitles: sub
                             });
+                            t = nextT;
+                            subIdx++;
                         }
-                        
+
                         segments.push({
                             isGroup: true,
                             chapterTitle: chapterTitle,
@@ -1422,7 +1653,7 @@
                             subSegments: subSegments
                         });
                     } else {
-                        // 正常章節 (不需要細分)
+                        // 正常長度，直接建立單一分段
                         let sub = subtitles.filter(s => s.start >= start && s.start < end);
                         segments.push({
                             isGroup: false,
@@ -1441,46 +1672,38 @@
             return segments;
         }
 
-        // 字幕清理、去重與合併 logic
+        // 字幕清理與合併成單一字串
         function cleanAndJoinSubtitles(entries) {
             if (!entries || entries.length === 0) return "(此時間段內無字幕文字)";
             
             let cleanedList = [];
             for (let entry of entries) {
                 let text = entry.text.trim();
-                // 移除 VTT HTML tags
-                text = text.replace(/<[^>]+>/g, '');
-                // 把連續空格轉為單一空格
-                text = text.replace(/\s+/g, ' ');
+                text = text.replace(/<[^>]+>/g, ''); // 移 XML
+                text = text.replace(/\s+/g, ' '); // 縮空格
                 if (!text) continue;
 
-                // 去重邏輯
                 if (cleanedList.length > 0) {
                     let last = cleanedList[cleanedList.length - 1];
-                    // 1. 完全相同
                     if (last === text) continue;
-                    // 2. 當前行包含上一行 (e.g. "I love" -> "I love programming")
                     if (text.startsWith(last) || text.includes(last)) {
                         cleanedList[cleanedList.length - 1] = text;
                         continue;
                     }
-                    // 3. 上一行包含當前行 (e.g. "I love programming" -> "programming")
                     if (last.includes(text)) {
                         continue;
                     }
                 }
                 cleanedList.push(text);
             }
-
-            // 合併為一整段
             return cleanedList.join(' ').replace(/\s+/g, ' ').trim();
         }
 
-        // 動態渲染左側分段區塊
+        // 渲染字幕區塊列表
         function renderSegments(segments) {
             const container = document.getElementById('subtitle-container');
             container.innerHTML = '';
-            let totalBlocksCount = 0;
+            let blockCount = 0;
 
             if (segments.length === 0) {
                 container.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-muted);">無分段資料，請確認字幕下載正確。</div>`;
@@ -1490,11 +1713,10 @@
 
             segments.forEach(item => {
                 if (item.isGroup) {
-                    // 這是一個超長章節的群組 (Chapter Group)
+                    // 超長章節包裝器
                     const groupDiv = document.createElement('div');
                     groupDiv.className = 'chapter-group';
 
-                    // 群組 Header
                     const groupHeader = document.createElement('div');
                     groupHeader.className = 'chapter-group-header';
                     
@@ -1511,10 +1733,9 @@
                     timeSpan.className = 'chapter-group-time';
                     timeSpan.textContent = `${formatTime(item.start)} ~ ${formatTime(item.end)}`;
 
-                    // 複製整個超長章節全部字幕的按鈕
                     const copyGroupBtn = document.createElement('button');
                     copyGroupBtn.className = 'btn-copy-group';
-                    copyGroupBtn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> 複製整章`;
+                    copyGroupBtn.innerHTML = `複製整章`;
                     copyGroupBtn.onclick = () => copyEntireChapter(item);
 
                     metaDiv.appendChild(timeSpan);
@@ -1523,26 +1744,98 @@
                     groupHeader.appendChild(metaDiv);
                     groupDiv.appendChild(groupHeader);
 
-                    // 渲染子分段
                     item.subSegments.forEach(subSeg => {
-                        totalBlocksCount++;
+                        blockCount++;
                         const card = createSegmentCard(subSeg, true);
                         groupDiv.appendChild(card);
                     });
 
                     container.appendChild(groupDiv);
                 } else {
-                    // 一般獨立分段
-                    totalBlocksCount++;
+                    blockCount++;
                     const card = createSegmentCard(item, false);
                     container.appendChild(card);
                 }
             });
 
-            document.getElementById('segments-count-badge').textContent = `${totalBlocksCount} 個區塊`;
+            document.getElementById('segments-count-badge').textContent = `${blockCount} 個區塊`;
         }
 
-        // 建立單一字幕分段卡片 DOM
+        // 搜尋 Segment id 所屬的 segment 物件
+        function findSegmentById(segId) {
+            for (let s of currentSegments) {
+                if (s.isGroup) {
+                    for (let sub of s.subSegments) {
+                        if (sub.id === segId) return sub;
+                    }
+                } else {
+                    if (s.id === segId) return s;
+                }
+            }
+            return null;
+        }
+
+        // 獲取 Caret (游標) 在 ContentEditable 元素內部的字元偏移量
+        function getCaretCharacterOffsetWithin(element) {
+            let caretOffset = 0;
+            const doc = element.ownerDocument || element.document;
+            const win = doc.defaultView || doc.parentWindow;
+            const sel = win.getSelection();
+            if (sel.rangeCount > 0) {
+                const range = sel.getRangeAt(0);
+                const preCaretRange = range.cloneRange();
+                preCaretRange.selectNodeContents(element);
+                preCaretRange.setEnd(range.endContainer, range.endOffset);
+                caretOffset = preCaretRange.toString().length;
+            }
+            return caretOffset;
+        }
+
+        // 處理手動 Enter 鍵的分割邏輯
+        function handleSegmentKeydown(event, element) {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // 攔截預設換行
+
+                const caretOffset = getCaretCharacterOffsetWithin(element);
+                const card = element.closest('.segment-card');
+                const segId = card.id;
+                const seg = findSegmentById(segId);
+                
+                if (!seg || seg.subtitles.length === 0) return;
+
+                // 根據字元偏移比例，找到對應的 subtitle 項目與時間
+                let currentOffset = 0;
+                let splitTime = seg.start;
+                
+                for (let entry of seg.subtitles) {
+                    let entryText = entry.text.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim() + " ";
+                    currentOffset += entryText.length;
+                    if (currentOffset >= caretOffset) {
+                        splitTime = entry.start;
+                        break;
+                    }
+                }
+
+                // 限制：分割前半段需至少大於 5 分鐘 (300 秒)
+                const distanceFromStart = splitTime - seg.start;
+                if (distanceFromStart < 300) {
+                    showToast("⚠️ 分割出的前半段需大於 5 分鐘，已自動合併。");
+                    return;
+                }
+
+                // 註冊這個手動分割時間點
+                userCustomSplits.push({
+                    time: splitTime,
+                    title: "" // 無標題，由程式按順序命名或顯示為子段落
+                });
+
+                // 重新分段渲染
+                parseAndSegment();
+                showToast("✂️ 手動分割成功！後續時段已向後推移。");
+            }
+        }
+
+        // 建立分段卡片元件
         function createSegmentCard(seg, isSub) {
             const card = document.createElement('div');
             card.className = `segment-card ${isSub ? 'subsegment' : ''}`;
@@ -1550,7 +1843,6 @@
 
             const text = cleanAndJoinSubtitles(seg.subtitles);
 
-            // 結構
             const header = document.createElement('div');
             header.className = 'segment-header';
 
@@ -1559,8 +1851,7 @@
 
             const title = document.createElement('span');
             title.className = 'segment-title';
-            // 如果是子分段，不顯示大章節標題在每張卡片上，只顯示其時間標誌或 subTitle
-            title.innerHTML = isSub ? `↳ <span>細分區塊</span>` : `# <span>${seg.chapterTitle}</span>`;
+            title.innerHTML = isSub ? `↳ <span>細分區間</span>` : `# <span>${seg.chapterTitle}</span>`;
 
             const timeRange = document.createElement('span');
             timeRange.className = 'segment-time-range';
@@ -1574,7 +1865,6 @@
             const actions = document.createElement('div');
             actions.className = 'segment-actions';
 
-            // 按鈕 1: 僅複製字幕
             const copySubBtn = document.createElement('button');
             copySubBtn.className = 'btn-copy btn-copy-highlight';
             copySubBtn.innerHTML = `<span>僅複製字幕</span>`;
@@ -1583,26 +1873,27 @@
                 highlightButton(copySubBtn);
             };
 
-            // 按鈕 2: 帶標題複製
             const copyWithTitleBtn = document.createElement('button');
             copyWithTitleBtn.className = 'btn-copy';
             copyWithTitleBtn.innerHTML = `<span>複製標題與字幕</span>`;
             copyWithTitleBtn.onclick = () => {
                 const headerText = isSub ? `## ${seg.chapterTitle} (${seg.subTitle})` : `# ${seg.chapterTitle} (${seg.subTitle})`;
-                const fullText = `${headerText}\n\n${text}`;
-                copyTextToClipboard(fullText);
+                copyTextToClipboard(`${headerText}\n\n${text}`);
                 highlightButton(copyWithTitleBtn);
             };
 
             actions.appendChild(copySubBtn);
             actions.appendChild(copyWithTitleBtn);
-
             header.appendChild(meta);
             header.appendChild(actions);
 
             const content = document.createElement('div');
             content.className = 'segment-content';
+            content.contentEditable = 'true';
             content.textContent = text;
+            content.setAttribute('spellcheck', 'false');
+            // 監聽 Enter 切割事件
+            content.onkeydown = (e) => handleSegmentKeydown(e, content);
 
             card.appendChild(header);
             card.appendChild(content);
@@ -1610,54 +1901,181 @@
             return card;
         }
 
-        // 複製整個章節 (包含底下所有細分區間)
+        // 複製超長章節全段
         function copyEntireChapter(group) {
             let headerText = `# ${group.chapterTitle} (${formatTime(group.start)} ~ ${formatTime(group.end)})`;
             let texts = [];
             group.subSegments.forEach(sub => {
                 const text = cleanAndJoinSubtitles(sub.subtitles);
-                texts.push(`## ${sub.subTitle}\n${text}`);
+                texts.push(`## (${sub.subTitle})\n${text}`);
             });
-            const fullMarkdown = `${headerText}\n\n${texts.join('\n\n')}`;
-            copyTextToClipboard(fullMarkdown);
-            showToast(`已複製「${group.chapterTitle}」的全部子章節內容！`);
+            copyTextToClipboard(`${headerText}\n\n${texts.join('\n\n')}`);
+            showToast(`已複製整章「${group.chapterTitle}」內容！`);
         }
 
-        // 複製全部段落為 Markdown
-        function copyAllMarkdown() {
+        // 鎖定分段並進行 API 費用估算
+        function lockAndEstimateCost() {
             if (!videoData) return;
 
-            const intervalSecs = parseInt(document.getElementById('setting-interval').value) * 60 || 900;
-            const noSegThreshold = parseInt(document.getElementById('setting-no-segment').value) * 60 || 1200;
-            const subSegThreshold = parseInt(document.getElementById('setting-sub-segment').value) * 60 || 1200;
+            // 計算所有區段的總中英字數與 Token
+            let totalChars = 0;
+            let totalSegments = 0;
 
-            const segments = generateSegments(
-                videoData.subtitles,
-                videoData.duration,
-                parsedChapters,
-                intervalSecs,
-                noSegThreshold,
-                subSegThreshold
-            );
-
-            let markdownList = [];
-            markdownList.push(`# ${videoData.title}\n影片連結: https://www.youtube.com/watch?v=${videoData.video_id}\n\n`);
-
-            segments.forEach(item => {
-                if (item.isGroup) {
-                    markdownList.push(`# ${item.chapterTitle} (${formatTime(item.start)} ~ ${formatTime(item.end)})\n`);
-                    item.subSegments.forEach(sub => {
-                        const txt = cleanAndJoinSubtitles(sub.subtitles);
-                        markdownList.push(`## (${sub.subTitle})\n${txt}\n\n`);
+            currentSegments.forEach(seg => {
+                if (seg.isGroup) {
+                    seg.subSegments.forEach(sub => {
+                        totalSegments++;
+                        totalChars += cleanAndJoinSubtitles(sub.subtitles).length;
                     });
                 } else {
-                    const txt = cleanAndJoinSubtitles(item.subtitles);
-                    markdownList.push(`# ${item.chapterTitle} (${item.subTitle})\n${txt}\n\n`);
+                    totalSegments++;
+                    totalChars += cleanAndJoinSubtitles(seg.subtitles).length;
                 }
             });
 
-            copyTextToClipboard(markdownList.join(''));
-            showToast('已成功複製全片 Markdown 段落字幕！');
+            // 估算 Token (以中英混合估算：1 字元約 0.8 ~ 1.2 token，此處以 1.2 預算保險)
+            const estInputTokens = Math.ceil(totalChars * 1.2);
+            
+            // 估算輸出 Token：
+            // Prompt 1 為每個 segment 生成重點，平均一個 segment 輸出約 500 token
+            const estOutputP1 = totalSegments * 500;
+            // Prompt 2 每 3 個 segment (1小時) 生成 50 個術語，一個術語區塊約 800 token
+            const estOutputP2 = Math.ceil(totalSegments / 3) * 800;
+            const estOutputTokens = estOutputP1 + estOutputP2;
+
+            // 依模型計算費率 (OpenAI 費率：輸入 / 輸出 每百萬 token)
+            const model = document.getElementById('openai-model').value;
+            let rateInput = 0.15; // gpt-4o-mini
+            let rateOutput = 0.60;
+            if (model === 'gpt-4o') {
+                rateInput = 2.50;
+                rateOutput = 10.00;
+            }
+
+            const inputCost = (estInputTokens / 1000000) * rateInput;
+            const outputCost = (estOutputTokens / 1000000) * rateOutput;
+            const totalCost = inputCost + outputCost;
+
+            // 顯示費用框並填寫資訊
+            document.getElementById('cost-estimation-box').style.display = 'flex';
+            document.getElementById('est-segments').textContent = `${totalSegments} 個區塊`;
+            document.getElementById('est-chars').textContent = `${totalChars.toLocaleString()} 字`;
+            document.getElementById('est-cost').textContent = `$${totalCost.toFixed(4)} USD (約台幣 ${(totalCost * 32.5).toFixed(2)} 元)`;
+            
+            showToast("🔒 已鎖定當前段落，請於右側查看 API 費用預估！");
+        }
+
+        // 發送 AI 筆記生成請求
+        async function runAIGeneration() {
+            const apiKey = document.getElementById('openai-key').value.trim();
+            const model = document.getElementById('openai-model').value;
+            const errorBox = document.getElementById('error-box');
+
+            if (!apiKey) {
+                alert("請填寫您的 OpenAI API Key！");
+                return;
+            }
+
+            // 提取目前鎖定的所有段落文字
+            let segmentsPayload = [];
+            currentSegments.forEach(seg => {
+                if (seg.isGroup) {
+                    seg.subSegments.forEach(sub => {
+                        segmentsPayload.push({
+                            title: `${sub.chapterTitle} (${sub.subTitle})`,
+                            text: cleanAndJoinSubtitles(sub.subtitles),
+                            start: sub.start,
+                            end: sub.end
+                        });
+                    });
+                } else {
+                    segmentsPayload.push({
+                        title: `${seg.chapterTitle} (${seg.subTitle})`,
+                        text: cleanAndJoinSubtitles(seg.subtitles),
+                        start: seg.start,
+                        end: seg.end
+                    });
+                }
+            });
+
+            // 顯示 Loading
+            showScreen('loading');
+            document.getElementById('loading-text').textContent = '正在呼叫 OpenAI API 生成筆記與術語中，這可能需要幾十秒至一分鐘，請稍候...';
+
+            try {
+                const response = await fetch('/api/generate-notes', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        api_key: apiKey,
+                        model: model,
+                        segments: segmentsPayload
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.status === 'success') {
+                    // 填入筆記與術語
+                    aiNotesResult = result.notes;
+                    aiTermsResult = result.terminologies;
+
+                    renderAINotes();
+                    renderAITerms();
+
+                    // 啟用 Tabs
+                    document.getElementById('tab-btn-notes').style.display = 'block';
+                    document.getElementById('tab-btn-term').style.display = 'block';
+
+                    showScreen('app');
+                    switchTab('notes'); // 自動切到結果 Tab
+                    showToast('🎉 AI 筆記整理與術語對照表已生成完畢！');
+                } else {
+                    throw new Error(result.message || '呼叫 AI 失敗，請確認 API 金鑰是否有效且餘額充足。');
+                }
+            } catch (err) {
+                showScreen('app');
+                alert(err.message || '呼叫 AI 整理時發生錯誤。');
+            }
+        }
+
+        // 渲染 AI 筆記
+        function renderAINotes() {
+            const container = document.getElementById('ai-notes-container');
+            if (!aiNotesResult) return;
+
+            let fullNotesMarkdown = "";
+            aiNotesResult.forEach(item => {
+                fullNotesMarkdown += `# ${item.title}\n\n${item.content}\n\n---\n\n`;
+            });
+
+            container.textContent = fullNotesMarkdown;
+        }
+
+        // 渲染 AI 術語
+        function renderAITerms() {
+            const container = document.getElementById('ai-term-container');
+            if (!aiTermsResult) return;
+
+            container.textContent = aiTermsResult;
+        }
+
+        // 一鍵複製 AI 筆記
+        function copyAllAINotes() {
+            if (!aiNotesResult) return;
+            const container = document.getElementById('ai-notes-container');
+            copyTextToClipboard(container.textContent);
+            showToast('已複製全部 AI 重點整理筆記！');
+        }
+
+        // 一鍵複製 AI 術語
+        function copyAllAITerms() {
+            if (!aiTermsResult) return;
+            const container = document.getElementById('ai-term-container');
+            copyTextToClipboard(container.textContent);
+            showToast('已複製全部 AI 專業術語對照表！');
         }
 
         // 工具：寫入剪貼簿
@@ -1670,7 +2088,7 @@
             document.body.removeChild(textarea);
         }
 
-        // 工具：複製按鈕的視覺反饋
+        // 工具：按鈕回饋
         function highlightButton(btn) {
             btn.classList.add('copied');
             const originalHTML = btn.innerHTML;

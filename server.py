@@ -2,6 +2,8 @@ import os
 import re
 import glob
 import tempfile
+import concurrent.futures
+import requests
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
@@ -10,9 +12,20 @@ import yt_dlp
 
 app = FastAPI(title="YouTube Subtitle Segmenter API")
 
-# 請求模型的 Pydantic 定義
+# 請求模型定義
 class VideoRequest(BaseModel):
     url: str
+
+class SegmentData(BaseModel):
+    title: str
+    text: str
+    start: float
+    end: float
+
+class GenerateRequest(BaseModel):
+    api_key: str
+    model: str
+    segments: list[SegmentData]
 
 # 剖析影片 ID
 def get_video_id(url: str):
@@ -25,7 +38,6 @@ def get_video_id(url: str):
             candidate = match.group(1)
             if len(candidate) == 11:
                 return candidate
-    # 備用：若輸入本身就是符合長度與格式的 ID
     if len(url) == 11 and re.match(r'^[a-zA-Z0-9_-]{11}$', url):
         return url
     return None
@@ -35,11 +47,9 @@ def parse_vtt_file(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
         content = f.read()
     
-    # 使用雙換行切分區塊
     blocks = re.split(r'\n\s*\n', content)
     subtitles = []
     
-    # 標準 VTT 時間軸正則
     timestamp_re = re.compile(r'(\d{2}:)?(\d{2}):(\d{2})\.(\d{3}) --> (\d{2}:)?(\d{2}):(\d{2})\.(\d{3})')
     
     for block in blocks:
@@ -81,7 +91,6 @@ def parse_vtt_file(file_path):
             duration = max(0.0, end - start)
             text = " ".join(text_lines)
             
-            # 清理 XML/HTML tags
             text = re.sub(r'<[^>]+>', '', text)
             text = re.sub(r'\s+', ' ', text).strip()
             
@@ -97,27 +106,33 @@ def parse_vtt_file(file_path):
 def fetch_subtitles_api(video_id: str):
     api = YouTubeTranscriptApi()
     try:
-        # 取得影片所有的字幕清單
         transcript_list = api.list(video_id)
         
-        # 優先順序：繁體中文、簡體中文、英文
         try:
             transcript = transcript_list.find_transcript(['zh-TW', 'zh-CN', 'en'])
         except:
-            # 若無手動字幕，尋找對應的自動翻譯或自動生成字幕
             try:
                 transcript = transcript_list.find_generated_transcript(['zh-TW', 'zh-CN', 'en'])
             except:
-                # 若都沒有，直接拿清單中第一個可用的字幕
                 transcript = next(iter(transcript_list))
         
         data = transcript.fetch()
         subtitles = []
         for entry in data:
+            # 相容 dictionary 與物件型態的 entry 存取方式
+            if isinstance(entry, dict):
+                text = entry.get('text', '')
+                start = entry.get('start', 0.0)
+                duration = entry.get('duration', 0.0)
+            else:
+                text = getattr(entry, 'text', '')
+                start = getattr(entry, 'start', 0.0)
+                duration = getattr(entry, 'duration', 0.0)
+                
             subtitles.append({
-                'text': entry.get('text', ''),
-                'start': entry.get('start', 0.0),
-                'duration': entry.get('duration', 0.0)
+                'text': text,
+                'start': start,
+                'duration': duration
             })
         return subtitles
     except Exception as e:
@@ -152,7 +167,6 @@ def fetch_subtitles_ytdlp(video_id: str):
             print(f"[yt-dlp] 找不到下載的 VTT 檔案。")
             return None
             
-        # 篩選最適語言
         selected_file = None
         for lang in ['.zh-TW.', '.zh-CN.', '.en.']:
             for f in vtt_files:
@@ -197,6 +211,35 @@ def get_video_metadata(video_id: str):
             'video_id': video_id
         }
 
+# 呼叫 OpenAI API 的共用函式 (直接發送 HTTP 請求)
+def call_openai_api(api_key: str, model: str, prompt: str, system_msg: str = "You are a helpful study and note-taking assistant."):
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": system_msg},
+            {"role": "user", "content": prompt}
+        ],
+        "temperature": 0.3
+    }
+    try:
+        response = requests.post(
+            "https://api.openai.com/v1/chat/completions",
+            json=payload,
+            headers=headers,
+            timeout=120
+        )
+        if response.status_code == 200:
+            result = response.json()
+            return result['choices'][0]['message']['content'].strip()
+        else:
+            return f"❌ OpenAI API 錯誤 (HTTP {response.status_code}): {response.text}"
+    except Exception as e:
+        return f"❌ 呼叫 AI 失敗: {str(e)}"
+
 # 根路由：回傳前端網頁
 @app.get("/", response_class=HTMLResponse)
 async def serve_index():
@@ -218,10 +261,7 @@ async def process_video(request: VideoRequest):
         
     print(f"開始處理影片 (ID: {video_id})...")
     
-    # 1. 優先嘗試 API 擷取字幕
     subtitles = fetch_subtitles_api(video_id)
-    
-    # 2. 備份方案：以 yt-dlp 下載解析
     if not subtitles:
         print("API 讀取失敗，降級使用 yt-dlp 擷取字幕中...")
         subtitles = fetch_subtitles_ytdlp(video_id)
@@ -232,10 +272,8 @@ async def process_video(request: VideoRequest):
             content={"status": "error", "message": "無法取得該影片的字幕。請確認該影片是否有提供字幕或自動字幕。"}
         )
         
-    # 3. 擷取影片資訊
     metadata = get_video_metadata(video_id)
     
-    # 4. 若擷取出的 duration 為空或為 0，從最後一筆字幕起點估算
     if (not metadata.get('duration') or metadata.get('duration') == 0) and subtitles:
         last_sub = subtitles[-1]
         metadata['duration'] = int(last_sub['start'] + last_sub['duration'])
@@ -249,6 +287,95 @@ async def process_video(request: VideoRequest):
         "duration": metadata['duration'],
         "thumbnail": metadata['thumbnail'],
         "subtitles": subtitles
+    }
+
+# API 路由：呼叫 AI 整理筆記與專業術語
+@app.post("/api/generate-notes")
+async def generate_notes(request: GenerateRequest):
+    api_key = request.api_key.strip()
+    model = request.model
+    segments = request.segments
+
+    if not api_key:
+        return JSONResponse(
+            status_code=400,
+            content={"status": "error", "message": "請提供有效的 OpenAI API Key"}
+        )
+    if not segments:
+        return JSONResponse(
+            status_code=400,
+            content={"status": "error", "message": "無分段內容可供處理"}
+        )
+
+    print(f"開始為 {len(segments)} 個分段生成 AI 筆記 (模型: {model})...")
+
+    # Prompt 1 範本：針對單一分段
+    prompt_1_template = """幫我分多個段落作重點整理
+段落用標題(#)
+每個段落下的內容重點整理用無序清單，
+注意：重點只需要一層，不要有第二層無序清單，清單不要標籤文字。
+不需幫我做總結
+不需花俏的圖示而是專注於筆記內容
+不要提供額外協助的建議
+如果有專業術語幫我附上英文
+Ex.中文專業術語（英文）
+繁體中文回答
+
+以下是字幕內容：
+{text}"""
+
+    # Prompt 2 範本：針對合併的三個分段 (代表 60 分鐘)
+    prompt_2_template = """針對以下字幕內容，
+給 50 個專業術語，用無序清單
+格式：* 中文專業術語（英文）：解釋
+不用額外的話，只給專業術語與解釋 
+不需要空行 
+繁體中文回答
+
+字幕內容：
+{text}"""
+
+    # 使用 ThreadPoolExecutor 在背景同時呼叫 API 以加速執行
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        # 1. 提交所有單一分段的 Prompt 1 筆記整理任務
+        p1_futures = []
+        for seg in segments:
+            p1_prompt = prompt_1_template.format(text=seg.text)
+            p1_futures.append(executor.submit(call_openai_api, api_key, model, p1_prompt))
+
+        # 2. 每 3 個分段 (一組) 提交一次 Prompt 2 專業術語整理任務
+        p2_futures = []
+        temp_group = []
+        for idx, seg in enumerate(segments):
+            temp_group.append(seg.text)
+            # 若累積了 3 段，或已是最後一段，合併提交
+            if (idx + 1) % 3 == 0 or (idx + 1) == len(segments):
+                combined_text = "\n".join(temp_group)
+                p2_prompt = prompt_2_template.format(text=combined_text)
+                p2_futures.append(executor.submit(call_openai_api, api_key, model, p2_prompt))
+                temp_group = []
+
+        # 3. 收集所有執行結果
+        p1_results = [f.result() for f in p1_futures]
+        p2_results = [f.result() for f in p2_futures]
+
+    # 格式化輸出
+    formatted_notes = []
+    for idx, seg in enumerate(segments):
+        formatted_notes.append({
+            "title": seg.title,
+            "content": p1_results[idx]
+        })
+
+    # 合併專業術語
+    merged_terms = "\n".join(p2_results)
+
+    print("AI 筆記與專業術語生成完成！")
+
+    return {
+        "status": "success",
+        "notes": formatted_notes,
+        "terminologies": merged_terms
     }
 
 if __name__ == "__main__":
