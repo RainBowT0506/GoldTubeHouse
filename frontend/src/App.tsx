@@ -289,9 +289,13 @@ function App() {
       }
     });
 
+    const videoDuration = videoData?.duration || 0;
+    const p1Calls = Math.max(1, Math.ceil(videoDuration / 1200)); // 20 minutes = 1200 seconds
+    const p2Calls = Math.max(1, Math.ceil(videoDuration / 3600)); // 60 minutes = 3600 seconds
+
     const estInputTokens = Math.ceil(totalChars * 1.2);
-    const estOutputP1 = totalSegmentsCount * 500;
-    const estOutputP2 = Math.ceil(totalSegmentsCount / 3) * 800;
+    const estOutputP1 = p1Calls * 500;
+    const estOutputP2 = p2Calls * 800;
     const estOutputTokens = estOutputP1 + estOutputP2;
 
     const inputCost = (estInputTokens / 1000000) * 1.25; // fixed gpt-5.1 rates
@@ -304,7 +308,7 @@ function App() {
       costUSD: totalCost,
       costTWD: totalCost * 32.5
     };
-  }, [currentSegments, editedSegmentTexts]);
+  }, [currentSegments, editedSegmentTexts, videoData]);
 
   // --- Handlers ---
   const handleUrlSubmit = async () => {

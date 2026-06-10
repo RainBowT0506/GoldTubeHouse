@@ -309,6 +309,23 @@ async def get_env_key():
     return {"status": "success", "api_key": key}
 
 # API 路由：呼叫 AI 整理筆記與專業術語
+def format_seconds_to_time(secs: float) -> str:
+    h = int(secs // 3600)
+    m = int((secs % 3600) // 60)
+    s = int(secs % 60)
+    if h > 0:
+        return f"{h:02d}:{m:02d}:{s:02d}"
+    return f"{m:02d}:{s:02d}"
+
+def group_segments_by_duration(segments: list, interval_seconds: int) -> dict:
+    groups = {}
+    for seg in segments:
+        b_idx = int(seg.start // interval_seconds)
+        if b_idx not in groups:
+            groups[b_idx] = []
+        groups[b_idx].append(seg)
+    return groups
+
 @app.post("/api/generate-notes")
 async def generate_notes(request: GenerateRequest):
     api_key = request.api_key.strip()
@@ -326,7 +343,13 @@ async def generate_notes(request: GenerateRequest):
             content={"status": "error", "message": "無分段內容可供處理"}
         )
 
-    print(f"開始為 {len(segments)} 個分段生成 AI 筆記 (模型: {model})...")
+    print(f"收到 {len(segments)} 個原始分段，開始依時間區間進行分組處理 (模型: {model})...")
+
+    # 1. 依 20 分鐘 (1200 秒) 影片時間分組 Prompt 1 (筆記整理)
+    p1_groups = group_segments_by_duration(segments, 1200)
+
+    # 2. 依 60 分鐘 (3600 秒) 影片時間分組 Prompt 2 (專業術語)
+    p2_groups = group_segments_by_duration(segments, 3600)
 
     # Prompt 1 範本：針對單一分段
     prompt_1_template = """幫我分多個段落作重點整理
@@ -356,23 +379,35 @@ Ex.中文專業術語（英文）
 
     # 使用 ThreadPoolExecutor 在背景同時呼叫 API 以加速執行
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-        # 1. 提交所有單一分段的 Prompt 1 筆記整理任務
+        # 1. 提交 Prompt 1 任務
         p1_futures = []
-        for seg in segments:
-            p1_prompt = prompt_1_template.format(text=seg.text)
+        p1_metadata = []
+        for b_idx in sorted(p1_groups.keys()):
+            group_segs = p1_groups[b_idx]
+            combined_text_list = []
+            for s in group_segs:
+                combined_text_list.append(f"### {s.title}\n{s.text}")
+            combined_text = "\n\n".join(combined_text_list)
+            
+            min_start = min(s.start for s in group_segs)
+            max_end = max(s.end for s in group_segs)
+            title = f"影片時間 {format_seconds_to_time(min_start)} ~ {format_seconds_to_time(max_end)} 重點整理"
+            
+            p1_prompt = prompt_1_template.format(text=combined_text)
+            p1_metadata.append(title)
             p1_futures.append(executor.submit(call_openai_api, api_key, model, p1_prompt))
 
-        # 2. 每 3 個分段 (一組) 提交一次 Prompt 2 專業術語整理任務
+        # 2. 提交 Prompt 2 任務
         p2_futures = []
-        temp_group = []
-        for idx, seg in enumerate(segments):
-            temp_group.append(seg.text)
-            # 若累積了 3 段，或已是最後一段，合併提交
-            if (idx + 1) % 3 == 0 or (idx + 1) == len(segments):
-                combined_text = "\n".join(temp_group)
-                p2_prompt = prompt_2_template.format(text=combined_text)
-                p2_futures.append(executor.submit(call_openai_api, api_key, model, p2_prompt))
-                temp_group = []
+        for b_idx in sorted(p2_groups.keys()):
+            group_segs = p2_groups[b_idx]
+            combined_text_list = []
+            for s in group_segs:
+                combined_text_list.append(s.text)
+            combined_text = "\n".join(combined_text_list)
+            
+            p2_prompt = prompt_2_template.format(text=combined_text)
+            p2_futures.append(executor.submit(call_openai_api, api_key, model, p2_prompt))
 
         # 3. 收集所有執行結果
         p1_results = [f.result() for f in p1_futures]
@@ -380,16 +415,16 @@ Ex.中文專業術語（英文）
 
     # 格式化輸出
     formatted_notes = []
-    for idx, seg in enumerate(segments):
+    for idx, title in enumerate(p1_metadata):
         formatted_notes.append({
-            "title": seg.title,
+            "title": title,
             "content": p1_results[idx]
         })
 
     # 合併專業術語
     merged_terms = "\n".join(p2_results)
 
-    print("AI 筆記與專業術語生成完成！")
+    print(f"AI 筆記 ({len(p1_metadata)} 次呼叫) 與專業術語 ({len(p2_results)} 次呼叫) 生成完成！")
 
     return {
         "status": "success",
