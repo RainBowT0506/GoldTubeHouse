@@ -4,6 +4,8 @@ import glob
 import tempfile
 import concurrent.futures
 import requests
+import json
+from datetime import datetime
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -326,6 +328,48 @@ def group_segments_by_duration(segments: list, interval_seconds: int) -> dict:
         groups[b_idx].append(seg)
     return groups
 
+# API 路由：呼叫 AI 整理筆記與專業術語
+def log_ai_request_response(model: str, segments: list, p1_logs: list, p2_logs: list, final_output: dict):
+    # 確保 ai_logs 資料夾存在於工作目錄中
+    log_dir = "ai_logs"
+    os.makedirs(log_dir, exist_ok=True)
+    
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    log_file = os.path.join(log_dir, f"ai_call_{timestamp}.json")
+    
+    # 將 SegmentData 轉為可序列化的 dictionary
+    serializable_segments = []
+    for s in segments:
+        if hasattr(s, "model_dump"):
+            serializable_segments.append(s.model_dump())
+        elif hasattr(s, "dict"):
+            serializable_segments.append(s.dict())
+        elif isinstance(s, dict):
+            serializable_segments.append(s)
+        else:
+            serializable_segments.append({
+                "title": getattr(s, "title", ""),
+                "text": getattr(s, "text", ""),
+                "start": getattr(s, "start", 0.0),
+                "end": getattr(s, "end", 0.0)
+            })
+
+    log_data = {
+        "timestamp": datetime.now().isoformat(),
+        "model": model,
+        "segments": serializable_segments,
+        "prompt_1_calls": p1_logs,
+        "prompt_2_calls": p2_logs,
+        "final_output": final_output
+    }
+    
+    try:
+        with open(log_file, "w", encoding="utf-8") as f:
+            json.dump(log_data, f, ensure_ascii=False, indent=2)
+        print(f"[Logger] AI 請求與回應紀錄已成功儲存至 {log_file}")
+    except Exception as e:
+        print(f"[Logger] 儲存 AI 請求回應日誌遭遇錯誤: {e}")
+
 @app.post("/api/generate-notes")
 async def generate_notes(request: GenerateRequest):
     api_key = request.api_key.strip()
@@ -394,11 +438,12 @@ Ex.中文專業術語（英文）
             title = f"影片時間 {format_seconds_to_time(min_start)} ~ {format_seconds_to_time(max_end)} 重點整理"
             
             p1_prompt = prompt_1_template.format(text=combined_text)
-            p1_metadata.append(title)
+            p1_metadata.append({"title": title, "prompt": p1_prompt})
             p1_futures.append(executor.submit(call_openai_api, api_key, model, p1_prompt))
 
         # 2. 提交 Prompt 2 任務
         p2_futures = []
+        p2_metadata = []
         for b_idx in sorted(p2_groups.keys()):
             group_segs = p2_groups[b_idx]
             combined_text_list = []
@@ -407,6 +452,7 @@ Ex.中文專業術語（英文）
             combined_text = "\n".join(combined_text_list)
             
             p2_prompt = prompt_2_template.format(text=combined_text)
+            p2_metadata.append({"prompt": p2_prompt})
             p2_futures.append(executor.submit(call_openai_api, api_key, model, p2_prompt))
 
         # 3. 收集所有執行結果
@@ -415,14 +461,34 @@ Ex.中文專業術語（英文）
 
     # 格式化輸出
     formatted_notes = []
-    for idx, title in enumerate(p1_metadata):
+    p1_logs = []
+    for idx, meta in enumerate(p1_metadata):
         formatted_notes.append({
-            "title": title,
+            "title": meta["title"],
             "content": p1_results[idx]
+        })
+        p1_logs.append({
+            "title": meta["title"],
+            "prompt": meta["prompt"],
+            "response": p1_results[idx]
         })
 
     # 合併專業術語
     merged_terms = "\n".join(p2_results)
+    p2_logs = []
+    for idx, meta in enumerate(p2_metadata):
+        p2_logs.append({
+            "prompt": meta["prompt"],
+            "response": p2_results[idx]
+        })
+
+    final_output = {
+        "notes": formatted_notes,
+        "terminologies": merged_terms
+    }
+
+    # 儲存 AI 請求回應的 Log 紀錄
+    log_ai_request_response(model, segments, p1_logs, p2_logs, final_output)
 
     print(f"AI 筆記 ({len(p1_metadata)} 次呼叫) 與專業術語 ({len(p2_results)} 次呼叫) 生成完成！")
 

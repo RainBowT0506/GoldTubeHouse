@@ -2,3 +2,4 @@
 subtitles/
 __pycache__/
 *.pyc
+ai_logs/
