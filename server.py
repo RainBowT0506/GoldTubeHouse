@@ -25,10 +25,16 @@ class SegmentData(BaseModel):
     start: float
     end: float
 
-class GenerateRequest(BaseModel):
+class BlockNoteRequest(BaseModel):
     api_key: str
     model: str
-    segments: list[SegmentData]
+    title: str
+    text: str
+
+class BlockTermsRequest(BaseModel):
+    api_key: str
+    model: str
+    text: str
 
 # 剖析影片 ID
 def get_video_id(url: str):
@@ -370,32 +376,38 @@ def log_ai_request_response(model: str, segments: list, p1_logs: list, p2_logs: 
     except Exception as e:
         print(f"[Logger] 儲存 AI 請求回應日誌遭遇錯誤: {e}")
 
-@app.post("/api/generate-notes")
-async def generate_notes(request: GenerateRequest):
+def flatten_markdown_lists(text: str) -> str:
+    if not text:
+        return text
+    lines = text.split('\n')
+    flattened = []
+    for line in lines:
+        # 尋找前面有空白/縮排並以無序清單標記（-, *, +）開頭的行
+        match = re.match(r'^(\s+)([-*+])\s*(.*)', line)
+        if match:
+            marker = match.group(2)
+            content = match.group(3)
+            # 移除縮排空白，將其拉回第一層無序清單
+            flattened.append(f"{marker} {content}")
+        else:
+            flattened.append(line)
+    return '\n'.join(flattened)
+
+@app.post("/api/generate-block-note")
+async def generate_block_note(request: BlockNoteRequest):
     api_key = request.api_key.strip()
     model = request.model
-    segments = request.segments
+    title = request.title
+    text = request.text
 
     if not api_key:
-        return JSONResponse(
-            status_code=400,
-            content={"status": "error", "message": "請提供有效的 OpenAI API Key"}
-        )
-    if not segments:
-        return JSONResponse(
-            status_code=400,
-            content={"status": "error", "message": "無分段內容可供處理"}
-        )
+        raise HTTPException(status_code=400, detail="請提供有效的 OpenAI API Key")
+    if not text:
+        raise HTTPException(status_code=400, detail="無內容可供處理")
 
-    print(f"收到 {len(segments)} 個原始分段，開始依時間區間進行分組處理 (模型: {model})...")
+    print(f"正在為 block '{title}' 生成 AI 筆記...")
 
-    # 1. 依 20 分鐘 (1200 秒) 影片時間分組 Prompt 1 (筆記整理)
-    p1_groups = group_segments_by_duration(segments, 1200)
-
-    # 2. 依 60 分鐘 (3600 秒) 影片時間分組 Prompt 2 (專業術語)
-    p2_groups = group_segments_by_duration(segments, 3600)
-
-    # Prompt 1 範本：針對單一分段
+    # Prompt 1 範本
     prompt_1_template = """幫我分多個段落作重點整理
 段落用標題(#)
 每個段落下的內容重點整理用無序清單，
@@ -410,7 +422,41 @@ Ex.中文專業術語（英文）
 以下是字幕內容：
 {text}"""
 
-    # Prompt 2 範本：針對合併的三個分段 (代表 60 分鐘)
+    prompt = prompt_1_template.format(text=text)
+    raw_response = call_openai_api(api_key, model, prompt)
+    
+    # 進行清單扁平化處理，確保僅有一層無序清單
+    processed_response = flatten_markdown_lists(raw_response)
+
+    # 紀錄該 Block 的日誌
+    log_ai_request_response(
+        model=model,
+        segments=[],
+        p1_logs=[{"title": title, "prompt": prompt, "response": raw_response, "processed": processed_response}],
+        p2_logs=[],
+        final_output={"title": title, "content": processed_response}
+    )
+
+    return {
+        "status": "success",
+        "title": title,
+        "content": processed_response
+    }
+
+@app.post("/api/generate-block-terms")
+async def generate_block_terms(request: BlockTermsRequest):
+    api_key = request.api_key.strip()
+    model = request.model
+    text = request.text
+
+    if not api_key:
+        raise HTTPException(status_code=400, detail="請提供有效的 OpenAI API Key")
+    if not text:
+        raise HTTPException(status_code=400, detail="無內容可供處理")
+
+    print("正在為區間生成 AI 專業術語...")
+
+    # Prompt 2 範本
     prompt_2_template = """針對以下字幕內容，
 給 50 個專業術語，用無序清單
 格式：* 中文專業術語（英文）：解釋
@@ -421,81 +467,24 @@ Ex.中文專業術語（英文）
 字幕內容：
 {text}"""
 
-    # 使用 ThreadPoolExecutor 在背景同時呼叫 API 以加速執行
-    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-        # 1. 提交 Prompt 1 任務
-        p1_futures = []
-        p1_metadata = []
-        for b_idx in sorted(p1_groups.keys()):
-            group_segs = p1_groups[b_idx]
-            combined_text_list = []
-            for s in group_segs:
-                combined_text_list.append(f"### {s.title}\n{s.text}")
-            combined_text = "\n\n".join(combined_text_list)
-            
-            min_start = min(s.start for s in group_segs)
-            max_end = max(s.end for s in group_segs)
-            title = f"影片時間 {format_seconds_to_time(min_start)} ~ {format_seconds_to_time(max_end)} 重點整理"
-            
-            p1_prompt = prompt_1_template.format(text=combined_text)
-            p1_metadata.append({"title": title, "prompt": p1_prompt})
-            p1_futures.append(executor.submit(call_openai_api, api_key, model, p1_prompt))
+    prompt = prompt_2_template.format(text=text)
+    raw_response = call_openai_api(api_key, model, prompt)
+    
+    # 清單扁平化
+    processed_response = flatten_markdown_lists(raw_response)
 
-        # 2. 提交 Prompt 2 任務
-        p2_futures = []
-        p2_metadata = []
-        for b_idx in sorted(p2_groups.keys()):
-            group_segs = p2_groups[b_idx]
-            combined_text_list = []
-            for s in group_segs:
-                combined_text_list.append(s.text)
-            combined_text = "\n".join(combined_text_list)
-            
-            p2_prompt = prompt_2_template.format(text=combined_text)
-            p2_metadata.append({"prompt": p2_prompt})
-            p2_futures.append(executor.submit(call_openai_api, api_key, model, p2_prompt))
-
-        # 3. 收集所有執行結果
-        p1_results = [f.result() for f in p1_futures]
-        p2_results = [f.result() for f in p2_futures]
-
-    # 格式化輸出
-    formatted_notes = []
-    p1_logs = []
-    for idx, meta in enumerate(p1_metadata):
-        formatted_notes.append({
-            "title": meta["title"],
-            "content": p1_results[idx]
-        })
-        p1_logs.append({
-            "title": meta["title"],
-            "prompt": meta["prompt"],
-            "response": p1_results[idx]
-        })
-
-    # 合併專業術語
-    merged_terms = "\n".join(p2_results)
-    p2_logs = []
-    for idx, meta in enumerate(p2_metadata):
-        p2_logs.append({
-            "prompt": meta["prompt"],
-            "response": p2_results[idx]
-        })
-
-    final_output = {
-        "notes": formatted_notes,
-        "terminologies": merged_terms
-    }
-
-    # 儲存 AI 請求回應的 Log 紀錄
-    log_ai_request_response(model, segments, p1_logs, p2_logs, final_output)
-
-    print(f"AI 筆記 ({len(p1_metadata)} 次呼叫) 與專業術語 ({len(p2_results)} 次呼叫) 生成完成！")
+    # 紀錄該 Block 的日誌
+    log_ai_request_response(
+        model=model,
+        segments=[],
+        p1_logs=[],
+        p2_logs=[{"prompt": prompt, "response": raw_response, "processed": processed_response}],
+        final_output={"content": processed_response}
+    )
 
     return {
         "status": "success",
-        "notes": formatted_notes,
-        "terminologies": merged_terms
+        "content": processed_response
     }
 
 # 掛載靜態檔案目錄 (用於 React 構建的靜態資源)

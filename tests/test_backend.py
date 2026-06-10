@@ -10,7 +10,8 @@ from server import (
     get_video_id,
     format_seconds_to_time,
     group_segments_by_duration,
-    parse_vtt_file
+    parse_vtt_file,
+    flatten_markdown_lists
 )
 
 class SegmentMock:
@@ -92,6 +93,27 @@ Language: zh-TW
         finally:
             if os.path.exists(temp_path):
                 os.remove(temp_path)
+
+    def test_flatten_markdown_lists(self):
+        raw_markdown = """# Title
+* Item 1
+  * Sub-item 1
+    * Sub-sub-item 1
+* Item 2
+  - Sub-item 2
+  + Sub-item 3
+Normal paragraph.
+"""
+        expected_markdown = """# Title
+* Item 1
+* Sub-item 1
+* Sub-sub-item 1
+* Item 2
+- Sub-item 2
++ Sub-item 3
+Normal paragraph.
+"""
+        self.assertEqual(flatten_markdown_lists(raw_markdown), expected_markdown)
 
 if __name__ == "__main__":
     unittest.main()

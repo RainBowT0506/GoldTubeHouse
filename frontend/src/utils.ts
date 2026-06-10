@@ -2,6 +2,7 @@ export interface SubtitleEntry {
   text: string;
   start: number;
   duration: number;
+  globalIndex?: number;
 }
 
 export interface ChapterSplit {
@@ -91,31 +92,74 @@ export function findBestSplitIndex(subtitles: SubtitleEntry[], targetTime: numbe
   return bestIndex;
 }
 
-// Clean and join subtitles text
-export function cleanAndJoinSubtitles(entries: SubtitleEntry[]): string {
-  if (!entries || entries.length === 0) return "(此時間段內無字幕文字)";
+export interface SubtitleMapping {
+  entryIndex: number;
+  textStart: number;
+  textEnd: number;
+}
 
-  const cleanedList: string[] = [];
-  for (const entry of entries) {
+// Clean, deduplicate, and map subtitles to their source entries
+export function getCleanedSubtitlesAndMappings(entries: SubtitleEntry[]): {
+  text: string;
+  mappings: SubtitleMapping[];
+} {
+  if (!entries || entries.length === 0) {
+    return { text: "(此時間段內無字幕文字)", mappings: [] };
+  }
+
+  const mappedEntries: { entryIndex: number; text: string }[] = [];
+  for (let i = 0; i < entries.length; i++) {
+    const entry = entries[i];
     let text = entry.text.trim();
     text = text.replace(/<[^>]+>/g, ''); // Remove XML
     text = text.replace(/\s+/g, ' '); // Compress spaces
     if (!text) continue;
 
-    if (cleanedList.length > 0) {
-      const last = cleanedList[cleanedList.length - 1];
-      if (last === text) continue;
-      if (text.startsWith(last) || text.includes(last)) {
-        cleanedList[cleanedList.length - 1] = text;
+    if (mappedEntries.length > 0) {
+      const lastItem = mappedEntries[mappedEntries.length - 1];
+      const lastText = lastItem.text;
+      if (lastText === text) {
+        lastItem.entryIndex = i;
         continue;
       }
-      if (last.includes(text)) {
+      if (text.startsWith(lastText) || text.includes(lastText)) {
+        lastItem.text = text;
+        lastItem.entryIndex = i;
+        continue;
+      }
+      if (lastText.includes(text)) {
         continue;
       }
     }
-    cleanedList.push(text);
+    mappedEntries.push({ entryIndex: i, text: text });
   }
-  return cleanedList.join(' ').replace(/\s+/g, ' ').trim();
+
+  let joinedText = "";
+  const mappings: SubtitleMapping[] = [];
+
+  for (let i = 0; i < mappedEntries.length; i++) {
+    const item = mappedEntries[i];
+    const textStart = joinedText.length;
+    joinedText += item.text;
+    const textEnd = joinedText.length;
+    
+    mappings.push({
+      entryIndex: item.entryIndex,
+      textStart: textStart,
+      textEnd: textEnd
+    });
+
+    if (i < mappedEntries.length - 1) {
+      joinedText += " ";
+    }
+  }
+
+  return { text: joinedText, mappings };
+}
+
+// Clean and join subtitles text
+export function cleanAndJoinSubtitles(entries: SubtitleEntry[]): string {
+  return getCleanedSubtitlesAndMappings(entries).text;
 }
 
 // Main segmentation engine
@@ -163,6 +207,11 @@ export function generateSegments(
         const bestIdx = findBestSplitIndex(subtitles, target, 120);
         let nextT = (bestIdx < subtitles.length) ? subtitles[bestIdx].start : duration;
         if (nextT <= t) nextT = t + interval; // Avoid infinite loop
+
+        // If the remaining duration after nextT is too short, merge it into the current segment
+        if (duration - nextT < Math.min(360, interval * 0.5)) {
+          nextT = duration;
+        }
 
         const sub = subtitles.filter(s => s.start >= t && s.start < nextT);
         segments.push({
@@ -218,6 +267,11 @@ export function generateSegments(
           const bestIdx = findBestSplitIndex(chapterSubtitles, target, 120);
           let nextT = (bestIdx < chapterSubtitles.length) ? chapterSubtitles[bestIdx].start : end;
           if (nextT <= t) nextT = t + interval;
+
+          // If the remaining duration in this chapter after nextT is too short, merge it into the current sub-segment
+          if (end - nextT < Math.min(360, interval * 0.5)) {
+            nextT = end;
+          }
 
           const sub = chapterSubtitles.filter(s => s.start >= t && s.start < nextT);
           subSegments.push({
