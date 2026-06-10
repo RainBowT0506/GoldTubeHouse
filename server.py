@@ -6,6 +6,7 @@ import concurrent.futures
 import requests
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from youtube_transcript_api import YouTubeTranscriptApi
 import yt_dlp
@@ -243,11 +244,15 @@ def call_openai_api(api_key: str, model: str, prompt: str, system_msg: str = "Yo
 # 根路由：回傳前端網頁
 @app.get("/", response_class=HTMLResponse)
 async def serve_index():
+    react_index = os.path.join("frontend", "dist", "index.html")
+    if os.path.exists(react_index):
+        with open(react_index, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
     index_path = os.path.join("templates", "index.html")
     if os.path.exists(index_path):
         with open(index_path, "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
-    return HTMLResponse(content="<h1>找不到前端模板，請確保 templates/index.html 存在。</h1>", status_code=404)
+    return HTMLResponse(content="<h1>找不到前端模板，請確保 frontend/dist/index.html 或 templates/index.html 存在。</h1>", status_code=404)
 
 # API 路由：下載並剖析影片與字幕
 @app.post("/api/process-video")
@@ -391,6 +396,11 @@ Ex.中文專業術語（英文）
         "notes": formatted_notes,
         "terminologies": merged_terms
     }
+
+# 掛載靜態檔案目錄 (用於 React 構建的靜態資源)
+dist_dir = os.path.join("frontend", "dist")
+if os.path.exists(dist_dir):
+    app.mount("/", StaticFiles(directory=dist_dir, html=False), name="static")
 
 if __name__ == "__main__":
     import uvicorn
