@@ -1105,6 +1105,7 @@
                             <div>
                                 <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px;">API Key</label>
                                 <input type="password" id="openai-key" class="settings-input" style="width: 100%; text-align: left; height: 32px;" placeholder="貼上 sk-...金鑰">
+                                <div id="env-key-hint" style="font-size: 11px; margin-top: 5px; color: #60a5fa; cursor: pointer; display: none; line-height: 1.4;" onclick="loadEnvKey()">💡 偵測到本地環境中有 API Key [點此引入]</div>
                             </div>
                             <div>
                                 <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px;">模型選擇</label>
@@ -1112,6 +1113,10 @@
                                     <option value="gpt-4o-mini">gpt-4o-mini (極速便宜，推薦)</option>
                                     <option value="gpt-4o">gpt-4o (高品質，較慢且貴)</option>
                                 </select>
+                            </div>
+                            <!-- 模型價差與 CP 值分析面板 -->
+                            <div id="model-analysis-box" style="margin-top: 5px; padding: 10px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 6px; font-size: 11px; line-height: 1.5;">
+                                <!-- 動態填入分析 -->
                             </div>
                         </div>
                     </div>
@@ -1235,9 +1240,10 @@
         // 頁面載入時預設載入 localStorage 裡的 OpenAI key
         document.addEventListener('DOMContentLoaded', () => {
             const savedKey = localStorage.getItem('openai_api_key');
-            const savedModel = localStorage.getItem('openai_model');
+            const savedModel = localStorage.getItem('openai_model') || 'gpt-4o-mini';
+            
             if (savedKey) document.getElementById('openai-key').value = savedKey;
-            if (savedModel) document.getElementById('openai-model').value = savedModel;
+            document.getElementById('openai-model').value = savedModel;
             
             // 監聽變更
             document.getElementById('openai-key').addEventListener('change', (e) => {
@@ -1245,11 +1251,84 @@
             });
             document.getElementById('openai-model').addEventListener('change', (e) => {
                 localStorage.setItem('openai_model', e.target.value);
+                updateModelAnalysis();
+                if (document.getElementById('cost-estimation-box').style.display === 'flex') {
+                    lockAndEstimateCost();
+                }
             });
 
             // 預填長影片範例
             useExample('https://www.youtube.com/watch?v=2GZ2SNXWK-c');
+
+            // 檢查本地端環境變數與更新模型分析
+            checkEnvKey();
+            updateModelAnalysis();
         });
+
+        // 檢查本地環境變數是否有 API Key
+        async function checkEnvKey() {
+            try {
+                const res = await fetch('/api/check-env');
+                const data = await res.json();
+                if (data.status === 'success' && data.has_key) {
+                    document.getElementById('env-key-hint').style.display = 'block';
+                } else {
+                    document.getElementById('env-key-hint').style.display = 'none';
+                }
+            } catch (e) {
+                console.error("檢查本地環境變數失敗:", e);
+            }
+        }
+
+        // 從本地環境變數引入 API Key
+        async function loadEnvKey() {
+            if (confirm("偵測到您本地系統環境變數中已設定 OPENAI_API_KEY。\n是否確定要將其引入至網頁中？\n（引入後將自動儲存於瀏覽器快取中）")) {
+                try {
+                    const res = await fetch('/api/get-env-key', { method: 'POST' });
+                    const data = await res.json();
+                    if (data.status === 'success' && data.api_key) {
+                        document.getElementById('openai-key').value = data.api_key;
+                        localStorage.setItem('openai_api_key', data.api_key);
+                        showToast("✅ 已成功引入本地環境變數 API Key！");
+                        checkEnvKey(); // 重新檢查以更新狀態或隱藏
+                    } else {
+                        alert("引入失敗：" + (data.message || "未知錯誤"));
+                    }
+                } catch (e) {
+                    alert("引入過程發生錯誤：" + e.message);
+                }
+            }
+        }
+
+        // 動態模型分析與 CP 值評估
+        function updateModelAnalysis() {
+            const model = document.getElementById('openai-model').value;
+            const box = document.getElementById('model-analysis-box');
+            if (!box) return;
+
+            if (model === 'gpt-4o-mini') {
+                box.innerHTML = `
+                    <div style="color: var(--accent); font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+                        <span>🚀</span><span>gpt-4o-mini 分析（極高 CP 值）</span>
+                    </div>
+                    <div style="color: var(--text-muted); font-size: 11px;">
+                        • <b>費率：</b>輸入 $0.15 / 輸出 $0.60 (每百萬 tokens)<br>
+                        • <b>分析：</b>字幕摘要與翻譯主要依賴文字流理解，gpt-4o-mini 在此領域的表現十分卓越。成本相較 gpt-4o <b>便宜了約 94%</b> (僅為 1/16 價格)，是<b>最推薦常態使用</b>的選項！
+                    </div>
+                `;
+            } else if (model === 'gpt-4o') {
+                box.innerHTML = `
+                    <div style="color: var(--primary); font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+                        <span>💎</span><span>gpt-4o 分析（高推理成本）</span>
+                    </div>
+                    <div style="color: var(--text-muted); font-size: 11px;">
+                        • <b>費率：</b>輸入 $2.50 / 輸出 $10.00 (每百萬 tokens)<br>
+                        • <b>價差：</b>⚠️ <b>高達 16.6 倍價差</b> (額外增加 1560% 的 AI 開銷)<br>
+                        • <b>分析：</b>擁有極強的跨領域邏輯與代碼理解力。只有當影片含有深奧學術、複雜程式架構、且 mini 生成筆記不如預期時，才建議啟用。
+                    </div>
+                `;
+            }
+        }
 
         // 範例選取
         function useExample(url) {

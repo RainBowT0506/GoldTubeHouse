@@ -289,6 +289,20 @@ async def process_video(request: VideoRequest):
         "subtitles": subtitles
     }
 
+# API 路由：檢查本地端環境變數是否有 API Key
+@app.get("/api/check-env")
+async def check_env():
+    has_key = "OPENAI_API_KEY" in os.environ and bool(os.environ.get("OPENAI_API_KEY").strip())
+    return {"status": "success", "has_key": has_key}
+
+# API 路由：獲取本地端環境變數的 API Key
+@app.post("/api/get-env-key")
+async def get_env_key():
+    key = os.environ.get("OPENAI_API_KEY", "").strip()
+    if not key:
+        return JSONResponse(status_code=400, content={"status": "error", "message": "環境變數中未設定 OPENAI_API_KEY"})
+    return {"status": "success", "api_key": key}
+
 # API 路由：呼叫 AI 整理筆記與專業術語
 @app.post("/api/generate-notes")
 async def generate_notes(request: GenerateRequest):
