@@ -8,6 +8,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- 載入 Chart.js 用於繪製黃金交叉圖 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --bg-color: #0b0f19;
@@ -1111,12 +1113,28 @@
                                 <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px;">模型選擇</label>
                                 <select id="openai-model" class="settings-input" style="width: 100%; text-align: left; height: 32px; padding: 0 8px;">
                                     <option value="gpt-4o-mini">gpt-4o-mini (極速便宜，推薦)</option>
-                                    <option value="gpt-4o">gpt-4o (高品質，較慢且貴)</option>
+                                    <option value="gpt-4o">gpt-4o (標準高品質)</option>
+                                    <option value="gpt-5-mini">gpt-5-mini (全新次世代輕量模型)</option>
+                                    <option value="gpt-5">gpt-5 (全新次世代主力模型)</option>
+                                    <option value="gpt-5.4-mini">gpt-5.4-mini (未來中階 mini)</option>
+                                    <option value="gpt-5.4">gpt-5.4 (未來高階主力)</option>
+                                    <option value="o3-mini">o3-mini (推理模型 - 低成本)</option>
+                                    <option value="gpt-4.1">gpt-4.1 (過度期模型 - 黃金交叉對照組)</option>
                                 </select>
                             </div>
                             <!-- 模型價差與 CP 值分析面板 -->
                             <div id="model-analysis-box" style="margin-top: 5px; padding: 10px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 6px; font-size: 11px; line-height: 1.5;">
                                 <!-- 動態填入分析 -->
+                            </div>
+                            <!-- 黃金交叉分析圖表 -->
+                            <div style="margin-top: 10px;">
+                                <div style="font-size: 12px; font-weight: 600; color: #60a5fa; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;">
+                                    <span>📈 模型費率黃金交叉圖</span>
+                                    <span style="font-size: 10px; color: var(--text-muted); font-weight: normal;">(X軸: 輸出/輸入比例)</span>
+                                </div>
+                                <div style="background: rgba(11, 15, 25, 0.4); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 8px;">
+                                    <canvas id="crossover-chart" style="width: 100%; height: 150px;"></canvas>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1237,6 +1255,18 @@
         let aiNotesResult = null; // 存放 AI 筆記結果
         let aiTermsResult = null; // 存放 AI 術語結果
 
+        // 模型價格配置 (每百萬 tokens)
+        const MODEL_PRICES = {
+            'gpt-4o-mini': { name: 'gpt-4o-mini', input: 0.15, output: 0.60, color: '#10b981' },
+            'gpt-4o': { name: 'gpt-4o', input: 2.50, output: 10.00, color: '#3b82f6' },
+            'gpt-5-mini': { name: 'gpt-5-mini', input: 0.25, output: 2.00, color: '#8b5cf6' },
+            'gpt-5': { name: 'gpt-5', input: 1.25, output: 10.00, color: '#ec4899' },
+            'gpt-5.4-mini': { name: 'gpt-5.4-mini', input: 0.75, output: 4.50, color: '#f59e0b' },
+            'gpt-5.4': { name: 'gpt-5.4', input: 2.50, output: 15.00, color: '#ef4444' },
+            'o3-mini': { name: 'o3-mini', input: 1.10, output: 4.40, color: '#06b6d4' },
+            'gpt-4.1': { name: 'gpt-4.1', input: 2.00, output: 8.00, color: '#94a3b8' }
+        };
+
         // 頁面載入時預設載入 localStorage 裡的 OpenAI key
         document.addEventListener('DOMContentLoaded', () => {
             const savedKey = localStorage.getItem('openai_api_key');
@@ -1252,6 +1282,7 @@
             document.getElementById('openai-model').addEventListener('change', (e) => {
                 localStorage.setItem('openai_model', e.target.value);
                 updateModelAnalysis();
+                drawCrossoverChart();
                 if (document.getElementById('cost-estimation-box').style.display === 'flex') {
                     lockAndEstimateCost();
                 }
@@ -1263,6 +1294,7 @@
             // 檢查本地端環境變數與更新模型分析
             checkEnvKey();
             updateModelAnalysis();
+            drawCrossoverChart();
         });
 
         // 檢查本地環境變數是否有 API Key
@@ -1300,34 +1332,201 @@
             }
         }
 
-        // 動態模型分析與 CP 值評估
+        // 動態模型分析與 CP 值評估 (含黃金交叉文字說明)
         function updateModelAnalysis() {
             const model = document.getElementById('openai-model').value;
             const box = document.getElementById('model-analysis-box');
             if (!box) return;
 
-            if (model === 'gpt-4o-mini') {
-                box.innerHTML = `
-                    <div style="color: var(--accent); font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
-                        <span>🚀</span><span>gpt-4o-mini 分析（極高 CP 值）</span>
-                    </div>
-                    <div style="color: var(--text-muted); font-size: 11px;">
-                        • <b>費率：</b>輸入 $0.15 / 輸出 $0.60 (每百萬 tokens)<br>
-                        • <b>分析：</b>字幕摘要與翻譯主要依賴文字流理解，gpt-4o-mini 在此領域的表現十分卓越。成本相較 gpt-4o <b>便宜了約 94%</b> (僅為 1/16 價格)，是<b>最推薦常態使用</b>的選項！
-                    </div>
-                `;
-            } else if (model === 'gpt-4o') {
-                box.innerHTML = `
-                    <div style="color: var(--primary); font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
-                        <span>💎</span><span>gpt-4o 分析（高推理成本）</span>
-                    </div>
-                    <div style="color: var(--text-muted); font-size: 11px;">
-                        • <b>費率：</b>輸入 $2.50 / 輸出 $10.00 (每百萬 tokens)<br>
-                        • <b>價差：</b>⚠️ <b>高達 16.6 倍價差</b> (額外增加 1560% 的 AI 開銷)<br>
-                        • <b>分析：</b>擁有極強的跨領域邏輯與代碼理解力。只有當影片含有深奧學術、複雜程式架構、且 mini 生成筆記不如預期時，才建議啟用。
-                    </div>
-                `;
+            switch(model) {
+                case 'gpt-4o-mini':
+                    box.innerHTML = `
+                        <div style="color: var(--accent); font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+                            <span>🚀</span><span>gpt-4o-mini 分析（極高 CP 值）</span>
+                        </div>
+                        <div style="color: var(--text-muted); font-size: 11px;">
+                            • <b>費率：</b>輸入 $0.150 / 輸出 $0.600 (每百萬 tokens)<br>
+                            • <b>分析：</b>最推薦常態使用！相比 gpt-4o 節省約 <b>94% 的成本</b>。適合 99% 的字幕摘要與筆記整理。
+                        </div>
+                    `;
+                    break;
+                case 'gpt-4o':
+                    box.innerHTML = `
+                        <div style="color: var(--primary); font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+                            <span>💎</span><span>gpt-4o 分析（標準高階）</span>
+                        </div>
+                        <div style="color: var(--text-muted); font-size: 11px;">
+                            • <b>費率：</b>輸入 $2.500 / 輸出 $10.000 (每百萬 tokens)<br>
+                            • <b>分析：</b>邏輯能力極強，但<b>費用比 mini 高 16.6 倍</b>。無黃金交叉優勢，建議僅在 mini 產出筆記不佳時使用。
+                        </div>
+                    `;
+                    break;
+                case 'gpt-5-mini':
+                    box.innerHTML = `
+                        <div style="color: var(--accent); font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+                            <span>⚡</span><span>gpt-5-mini 分析（次世代輕量）</span>
+                        </div>
+                        <div style="color: var(--text-muted); font-size: 11px;">
+                            • <b>費率：</b>輸入 $0.250 / 輸出 $2.000 (每百萬 tokens)<br>
+                            • <b>分析：</b>次世代輕量模型。與 gpt-4o 相比，它在<b>所有比例下都遠比 gpt-4o 便宜</b> (便宜約 80%~90%)，性能卻近乎持平。
+                        </div>
+                    `;
+                    break;
+                case 'gpt-5':
+                    box.innerHTML = `
+                        <div style="color: var(--primary); font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+                            <span>🔥</span><span>gpt-5 分析（次世代旗艦 - 黃金交叉）</span>
+                        </div>
+                        <div style="color: var(--text-muted); font-size: 11px;">
+                            • <b>費率：</b>輸入 $1.250 / 輸出 $10.000 (每百萬 tokens)<br>
+                            • <b>交叉點：</b>與 <b>gpt-4.1</b> 在 <b>輸出/輸入比例為 37.5%</b> 時達到黃金交叉。當重點筆記字數小於 37.5% 時（一般字幕場景約為 15%~30%），<b>gpt-5 比舊款 gpt-4.1 更便宜且效能更強</b>！
+                        </div>
+                    `;
+                    break;
+                case 'gpt-5.4-mini':
+                    box.innerHTML = `
+                        <div style="color: var(--accent); font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+                            <span>⚙️</span><span>gpt-5.4-mini 分析（未來中階）</span>
+                        </div>
+                        <div style="color: var(--text-muted); font-size: 11px;">
+                            • <b>費率：</b>輸入 $0.750 / 輸出 $4.500 (每百萬 tokens)<br>
+                            • <b>分析：</b>未來中階輕量化模型，收費比 gpt-5-mini 略高，適用於需要更新知識庫的中等難度分析。
+                        </div>
+                    `;
+                    break;
+                case 'gpt-5.4':
+                    box.innerHTML = `
+                        <div style="color: var(--primary); font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+                            <span>🔱</span><span>gpt-5.4 分析（未來主力）</span>
+                        </div>
+                        <div style="color: var(--text-muted); font-size: 11px;">
+                            • <b>費率：</b>輸入 $2.500 / 輸出 $15.000 (每百萬 tokens)<br>
+                            • <b>分析：</b>高運算力高成本模型，性能頂尖，但輸出費率較高，不建議大規模用於單純字幕整理。
+                        </div>
+                    `;
+                    break;
+                case 'o3-mini':
+                    box.innerHTML = `
+                        <div style="color: #06b6d4; font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+                            <span>🧠</span><span>o3-mini 分析（推理模型）</span>
+                        </div>
+                        <div style="color: var(--text-muted); font-size: 11px;">
+                            • <b>費率：</b>輸入 $1.100 / 輸出 $4.400 (每百萬 tokens)<br>
+                            • <b>分析：</b>具思維鏈推理。相較 gpt-5 擁有<b>極便宜的輸出費率</b>。在程式碼或高難度技術影片分析時比 gpt-5 更划算。
+                        </div>
+                    `;
+                    break;
+                case 'gpt-4.1':
+                    box.innerHTML = `
+                        <div style="color: #94a3b8; font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+                            <span>⚖️</span><span>gpt-4.1 分析（對照組）</span>
+                        </div>
+                        <div style="color: var(--text-muted); font-size: 11px;">
+                            • <b>費率：</b>輸入 $2.000 / 輸出 $8.000 (每百萬 tokens)<br>
+                            • <b>交叉點：</b>與 <b>gpt-5</b> 在 <b>37.5%</b> 處相交。僅在生成重點比重極大（輸出大於 37.5% 輸入）時，其輸出單價低的優勢才會顯現。
+                        </div>
+                    `;
+                    break;
+                default:
+                    box.innerHTML = `<div style="color: var(--text-muted);">選擇模型查看 CP 值分析。</div>`;
             }
+        }
+
+        // 繪製費率黃金交叉折線圖
+        let crossoverChartInstance = null;
+        function drawCrossoverChart() {
+            const canvas = document.getElementById('crossover-chart');
+            if (!canvas) return;
+
+            if (crossoverChartInstance) {
+                crossoverChartInstance.destroy();
+            }
+
+            const selectedModel = document.getElementById('openai-model').value;
+            // 挑選具代表性的 5 個模型繪製
+            const modelsToPlot = ['gpt-4o-mini', 'gpt-4o', 'gpt-5-mini', 'gpt-5', 'gpt-4.1'];
+
+            // X 軸數據：輸出與輸入的 Token 比例 (0% 到 100%)
+            const labels = [];
+            const ratios = [];
+            for (let r = 0; r <= 1.0; r += 0.1) {
+                labels.push(`${Math.round(r * 100)}%`);
+                ratios.push(r);
+            }
+
+            const datasets = modelsToPlot.map(mKey => {
+                const m = MODEL_PRICES[mKey];
+                if (!m) return null;
+
+                const data = ratios.map(r => {
+                    const totalCost = m.input + r * m.output;
+                    return parseFloat(totalCost.toFixed(3));
+                });
+
+                const isSelected = (mKey === selectedModel);
+
+                return {
+                    label: isSelected ? `⭐ ${m.name}` : m.name,
+                    data: data,
+                    borderColor: m.color,
+                    borderWidth: isSelected ? 3.5 : 1.5,
+                    backgroundColor: 'transparent',
+                    pointRadius: isSelected ? 4 : 1,
+                    pointHoverRadius: 6,
+                    tension: 0.1
+                };
+            }).filter(d => d !== null);
+
+            crossoverChartInstance = new Chart(canvas, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                color: '#94a3b8',
+                                boxWidth: 8,
+                                font: { size: 9 },
+                                padding: 6
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            titleColor: '#f8fafc',
+                            bodyColor: '#cbd5e1',
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: $${context.raw.toFixed(2)} USD`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.03)' },
+                            ticks: { color: '#94a3b8', font: { size: 8 } }
+                        },
+                        y: {
+                            grid: { color: 'rgba(255, 255, 255, 0.03)' },
+                            ticks: { color: '#94a3b8', font: { size: 8 } },
+                            title: {
+                                display: true,
+                                text: '每百萬 Input 總價 (USD)',
+                                color: '#94a3b8',
+                                font: { size: 8 }
+                            }
+                        }
+                    }
+                }
+            });
         }
 
         // 範例選取
@@ -2024,12 +2223,9 @@
 
             // 依模型計算費率 (OpenAI 費率：輸入 / 輸出 每百萬 token)
             const model = document.getElementById('openai-model').value;
-            let rateInput = 0.15; // gpt-4o-mini
-            let rateOutput = 0.60;
-            if (model === 'gpt-4o') {
-                rateInput = 2.50;
-                rateOutput = 10.00;
-            }
+            const priceInfo = MODEL_PRICES[model] || MODEL_PRICES['gpt-4o-mini'];
+            const rateInput = priceInfo.input;
+            const rateOutput = priceInfo.output;
 
             const inputCost = (estInputTokens / 1000000) * rateInput;
             const outputCost = (estOutputTokens / 1000000) * rateOutput;
