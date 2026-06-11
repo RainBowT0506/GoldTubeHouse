@@ -313,3 +313,19 @@ export function generateSegments(
 
   return segments;
 }
+
+export function resolveSubtitleOverlaps(entries: SubtitleEntry[]): SubtitleEntry[] {
+  if (!entries || entries.length === 0) return [];
+  // Sort by start time just to be sure
+  const sorted = [...entries].sort((a, b) => a.start - b.start);
+  
+  for (let i = 0; i < sorted.length - 1; i++) {
+    const current = sorted[i];
+    const next = sorted[i + 1];
+    const currentEnd = current.start + current.duration;
+    if (currentEnd > next.start) {
+      current.duration = Math.max(0.01, next.start - current.start);
+    }
+  }
+  return sorted;
+}

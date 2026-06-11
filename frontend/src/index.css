@@ -6,12 +6,12 @@
     --border-hover: rgba(255, 255, 255, 0.15);
     --text-main: #f8fafc;
     --text-muted: #94a3b8;
-    --primary: #3b82f6;
-    --primary-hover: #2563eb;
-    --primary-glow: rgba(59, 130, 246, 0.35);
-    --accent: #10b981;
-    --accent-hover: #059669;
-    --accent-glow: rgba(16, 185, 129, 0.3);
+    --primary: #dfb15b;
+    --primary-hover: #cca047;
+    --primary-glow: rgba(223, 177, 91, 0.35);
+    --accent: #f97316;
+    --accent-hover: #ea580c;
+    --accent-glow: rgba(249, 115, 22, 0.3);
     --error: #ef4444;
     --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
     --radius-lg: 16px;
@@ -45,7 +45,7 @@ body::before {
     left: -15%;
     width: 50vw;
     height: 50vw;
-    background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, rgba(0, 0, 0, 0) 70%);
+    background: radial-gradient(circle, rgba(223, 177, 91, 0.1) 0%, rgba(0, 0, 0, 0) 70%);
     z-index: -1;
     filter: blur(80px);
     pointer-events: none;
@@ -58,7 +58,7 @@ body::after {
     right: -15%;
     width: 50vw;
     height: 50vw;
-    background: radial-gradient(circle, rgba(16, 185, 129, 0.08) 0%, rgba(0, 0, 0, 0) 70%);
+    background: radial-gradient(circle, rgba(249, 115, 22, 0.06) 0%, rgba(0, 0, 0, 0) 70%);
     z-index: -1;
     filter: blur(80px);
     pointer-events: none;
@@ -82,7 +82,7 @@ header {
     font-family: var(--font-display);
     font-size: 24px;
     font-weight: 700;
-    background: linear-gradient(135deg, #60a5fa, #3b82f6, #10b981);
+    background: linear-gradient(135deg, #f7e7c4, #dfb15b, #f97316);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     display: flex;
@@ -220,9 +220,9 @@ main {
 }
 
 .example-tag:hover {
-    background: rgba(59, 130, 246, 0.1);
-    color: #60a5fa;
-    border-color: rgba(59, 130, 246, 0.3);
+    background: rgba(223, 177, 91, 0.12);
+    color: #f2d184;
+    border-color: rgba(223, 177, 91, 0.3);
 }
 
 /* 特色說明卡片 */
@@ -379,9 +379,9 @@ main {
 }
 
 .tab-btn.active {
-    color: #60a5fa;
-    background: rgba(59, 130, 246, 0.12);
-    border-color: rgba(59, 130, 246, 0.25);
+    color: #dfb15b;
+    background: rgba(223, 177, 91, 0.12);
+    border-color: rgba(223, 177, 91, 0.25);
 }
 
 .panel-header {
@@ -433,7 +433,7 @@ main {
 }
 
 .chapter-group:hover {
-    border-color: rgba(59, 130, 246, 0.2);
+    border-color: rgba(223, 177, 91, 0.2);
     background: rgba(22, 28, 45, 0.45);
 }
 
@@ -449,7 +449,7 @@ main {
 .chapter-group-title {
     font-size: 18px;
     font-weight: 700;
-    color: #60a5fa;
+    color: #dfb15b;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -457,12 +457,12 @@ main {
 
 .chapter-group-time {
     font-size: 13px;
-    background: rgba(59, 130, 246, 0.15);
-    color: #3b82f6;
+    background: rgba(223, 177, 91, 0.12);
+    color: #dfb15b;
     padding: 4px 10px;
     border-radius: 20px;
     font-weight: 500;
-    border: 1px solid rgba(59, 130, 246, 0.2);
+    border: 1px solid rgba(223, 177, 91, 0.25);
 }
 
 /* 複製整個 Chapter 的按鈕 */
@@ -484,7 +484,7 @@ main {
 .btn-copy-group:hover {
     border-color: var(--primary);
     color: var(--primary);
-    background: rgba(59, 130, 246, 0.05);
+    background: rgba(223, 177, 91, 0.05);
 }
 
 /* 字幕卡片 (區塊) */
@@ -509,7 +509,7 @@ main {
 }
 
 .segment-card.subsegment {
-    border-left: 3px solid #10b981;
+    border-left: 3px solid var(--accent);
 }
 
 .segment-header {
@@ -566,19 +566,19 @@ main {
 }
 
 .btn-copy.btn-copy-highlight {
-    border-color: rgba(16, 185, 129, 0.3);
+    border-color: rgba(249, 115, 22, 0.3);
 }
 
 .btn-copy.btn-copy-highlight:hover {
     border-color: var(--accent);
     color: var(--accent);
-    background: rgba(16, 185, 129, 0.05);
+    background: rgba(249, 115, 22, 0.05);
 }
 
 .btn-copy.copied {
-    background: rgba(16, 185, 129, 0.1) !important;
-    color: #10b981 !important;
-    border-color: #10b981 !important;
+    background: rgba(249, 115, 22, 0.1) !important;
+    color: var(--accent) !important;
+    border-color: var(--accent) !important;
 }
 
 /* 可編輯段落內容 */
@@ -817,9 +817,9 @@ main {
 
 .btn-preset:hover,
 .btn-preset.active {
-    background: rgba(59, 130, 246, 0.15);
-    color: #60a5fa;
-    border-color: rgba(59, 130, 246, 0.3);
+    background: rgba(223, 177, 91, 0.15);
+    color: var(--primary);
+    border-color: rgba(223, 177, 91, 0.3);
 }
 
 /* 底部操作欄 */
@@ -846,25 +846,25 @@ main {
 }
 
 .btn-lock-changes {
-    background: linear-gradient(135deg, var(--primary), #1e40af);
+    background: linear-gradient(135deg, var(--primary), #8c6615);
     color: white;
-    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.2);
+    box-shadow: 0 4px 10px rgba(223, 177, 91, 0.2);
 }
 
 .btn-lock-changes:hover {
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
-    box-shadow: 0 6px 14px rgba(59, 130, 246, 0.3);
+    background: linear-gradient(135deg, #cca047, #b38827);
+    box-shadow: 0 6px 14px rgba(223, 177, 91, 0.3);
 }
 
 .btn-copy-all {
-    background: linear-gradient(135deg, var(--accent), #059669);
+    background: linear-gradient(135deg, var(--accent), #ea580c);
     color: white;
-    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);
+    box-shadow: 0 4px 10px rgba(249, 115, 22, 0.2);
 }
 
 .btn-copy-all:hover {
-    background: linear-gradient(135deg, #059669, #047857);
-    box-shadow: 0 6px 14px rgba(16, 185, 129, 0.3);
+    background: linear-gradient(135deg, #ea580c, #c2410c);
+    box-shadow: 0 6px 14px rgba(249, 115, 22, 0.3);
 }
 
 .btn-back {
@@ -883,8 +883,8 @@ main {
 .cost-box {
     display: flex;
     padding: 16px;
-    background: rgba(59, 130, 246, 0.08);
-    border: 1px solid rgba(59, 130, 246, 0.2);
+    background: rgba(223, 177, 91, 0.08);
+    border: 1px solid rgba(223, 177, 91, 0.2);
     border-radius: var(--radius-md);
     font-size: 13px;
     margin-top: 10px;
@@ -895,7 +895,7 @@ main {
 
 .cost-title {
     font-weight: 600;
-    color: #60a5fa;
+    color: var(--primary);
     display: flex;
     align-items: center;
     gap: 6px;
@@ -944,7 +944,7 @@ main {
     bottom: 30px;
     left: 50%;
     transform: translateX(-50%) translateY(100px);
-    background: rgba(16, 185, 129, 0.9);
+    background: rgba(249, 115, 22, 0.9);
     color: white;
     padding: 10px 24px;
     border-radius: 30px;

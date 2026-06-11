@@ -3,3 +3,4 @@ subtitles/
 __pycache__/
 *.pyc
 ai_logs/
+/node_modules

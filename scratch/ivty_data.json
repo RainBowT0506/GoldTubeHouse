@@ -1,0 +1,5076 @@
+{
+  "title": "This AI System Creates Longform YouTube Videos Hourly (n8n NO CODE automation tutorial 🥚)",
+  "duration": 2149,
+  "subtitles": [
+    {
+      "text": "I just built this AI system to create",
+      "start": 0.16,
+      "duration": 4.56
+    },
+    {
+      "text": "long- form YouTube videos hourly using",
+      "start": 2.399,
+      "duration": 4.96
+    },
+    {
+      "text": "AI and no code automation tools because",
+      "start": 4.72,
+      "duration": 4.32
+    },
+    {
+      "text": "if you haven't seen them before, there",
+      "start": 7.359,
+      "duration": 3.841
+    },
+    {
+      "text": "are actually these videos and channels",
+      "start": 9.04,
+      "duration": 4.16
+    },
+    {
+      "text": "that are getting millions of views and",
+      "start": 11.2,
+      "duration": 4.08
+    },
+    {
+      "text": "millions of subscribers which are",
+      "start": 13.2,
+      "duration": 3.919
+    },
+    {
+      "text": "basically clips of a voice speaking",
+      "start": 15.28,
+      "duration": 3.999
+    },
+    {
+      "text": "motivational content and people do find",
+      "start": 17.119,
+      "duration": 3.92
+    },
+    {
+      "text": "value in them because of the motivation",
+      "start": 19.279,
+      "duration": 3.92
+    },
+    {
+      "text": "that it provides through words. And you",
+      "start": 21.039,
+      "duration": 4.08
+    },
+    {
+      "text": "can see this channel in particular only",
+      "start": 23.199,
+      "duration": 4.641
+    },
+    {
+      "text": "has something like 33 videos but already",
+      "start": 25.119,
+      "duration": 5.601
+    },
+    {
+      "text": "with 1.35 million subscribers. So when",
+      "start": 27.84,
+      "duration": 4.48
+    },
+    {
+      "text": "you can create these videos on an",
+      "start": 30.72,
+      "duration": 3.28
+    },
+    {
+      "text": "automated manner, you can just see how",
+      "start": 32.32,
+      "duration": 3.919
+    },
+    {
+      "text": "powerful this workflow can be. And what",
+      "start": 34.0,
+      "duration": 4.48
+    },
+    {
+      "text": "you can do is to set up this system once",
+      "start": 36.239,
+      "duration": 4.0
+    },
+    {
+      "text": "and what it's going to do is to generate",
+      "start": 38.48,
+      "duration": 3.919
+    },
+    {
+      "text": "your video ideas as well as prompts to",
+      "start": 40.239,
+      "duration": 4.081
+    },
+    {
+      "text": "go along with that. Generate the visuals",
+      "start": 42.399,
+      "duration": 3.68
+    },
+    {
+      "text": "as well as the voice over and the",
+      "start": 44.32,
+      "duration": 3.68
+    },
+    {
+      "text": "background music and upload them on",
+      "start": 46.079,
+      "duration": 4.32
+    },
+    {
+      "text": "YouTube every day or every hour if you",
+      "start": 48.0,
+      "duration": 4.64
+    },
+    {
+      "text": "wish. And this is just one example on",
+      "start": 50.399,
+      "duration": 3.591
+    },
+    {
+      "text": "the niche of",
+      "start": 52.64,
+      "duration": 4.42
+    },
+    {
+      "text": "[Music]",
+      "start": 53.99,
+      "duration": 3.07
+    },
+    {
+      "text": "stoicism. As the storm gathers strength,",
+      "start": 59.879,
+      "duration": 5.761
+    },
+    {
+      "text": "the lion remains a pillar of",
+      "start": 63.199,
+      "duration": 5.441
+    },
+    {
+      "text": "serenity. Such is the way of the stoic.",
+      "start": 65.64,
+      "duration": 5.72
+    },
+    {
+      "text": "Strong, patient, immovable like the",
+      "start": 68.64,
+      "duration": 4.04
+    },
+    {
+      "text": "great",
+      "start": 71.36,
+      "duration": 4.32
+    },
+    {
+      "text": "lion. His unflapable demeanor reflects",
+      "start": 72.68,
+      "duration": 6.439
+    },
+    {
+      "text": "an age-old wisdom. All storms eventually",
+      "start": 75.68,
+      "duration": 5.28
+    },
+    {
+      "text": "pass.",
+      "start": 79.119,
+      "duration": 4.601
+    },
+    {
+      "text": "In life's chaos, remember the lion's",
+      "start": 80.96,
+      "duration": 7.0
+    },
+    {
+      "text": "lesson. Find stillness amid storms",
+      "start": 83.72,
+      "duration": 6.36
+    },
+    {
+      "text": "always. And there you have it. The",
+      "start": 87.96,
+      "duration": 4.199
+    },
+    {
+      "text": "visuals, the audio, the transitions",
+      "start": 90.08,
+      "duration": 4.24
+    },
+    {
+      "text": "between scenes, and publishing of this",
+      "start": 92.159,
+      "duration": 4.0
+    },
+    {
+      "text": "long- form YouTube video has all been",
+      "start": 94.32,
+      "duration": 3.759
+    },
+    {
+      "text": "handled by that AI automation system",
+      "start": 96.159,
+      "duration": 3.92
+    },
+    {
+      "text": "that we just showed. And what's great is",
+      "start": 98.079,
+      "duration": 4.0
+    },
+    {
+      "text": "you can actually adapt this workflow to",
+      "start": 100.079,
+      "duration": 3.761
+    },
+    {
+      "text": "different niches depending on your",
+      "start": 102.079,
+      "duration": 3.68
+    },
+    {
+      "text": "interest. So, for example, you can",
+      "start": 103.84,
+      "duration": 3.8
+    },
+    {
+      "text": "generate sleep stories, deeper into a",
+      "start": 105.759,
+      "duration": 4.64
+    },
+    {
+      "text": "dream where stars whispered ancient",
+      "start": 107.64,
+      "duration": 5.159
+    },
+    {
+      "text": "lullabies, create horror themed videos",
+      "start": 110.399,
+      "duration": 4.961
+    },
+    {
+      "text": "behind the mirror, smiling with a mouth",
+      "start": 112.799,
+      "duration": 5.36
+    },
+    {
+      "text": "that wasn't hers, craft children's story",
+      "start": 115.36,
+      "duration": 5.439
+    },
+    {
+      "text": "book style films, dandelion meadows,",
+      "start": 118.159,
+      "duration": 4.96
+    },
+    {
+      "text": "sniffing for the scent of honey, and",
+      "start": 120.799,
+      "duration": 4.0
+    },
+    {
+      "text": "even videos that provide interesting",
+      "start": 123.119,
+      "duration": 4.64
+    },
+    {
+      "text": "trivia. Blue blood, they're the aliens",
+      "start": 124.799,
+      "duration": 5.44
+    },
+    {
+      "text": "we never noticed. or films you can",
+      "start": 127.759,
+      "duration": 4.681
+    },
+    {
+      "text": "listen to for zen meditation with your",
+      "start": 130.239,
+      "duration": 5.521
+    },
+    {
+      "text": "thoughts until they evaporate into",
+      "start": 132.44,
+      "duration": 5.96
+    },
+    {
+      "text": "stillness. So if you watch till the end",
+      "start": 135.76,
+      "duration": 4.16
+    },
+    {
+      "text": "of this video, I will give you the",
+      "start": 138.4,
+      "duration": 3.12
+    },
+    {
+      "text": "templates you need to create whatever",
+      "start": 139.92,
+      "duration": 2.72
+    },
+    {
+      "text": "video you want. And if you're",
+      "start": 141.52,
+      "duration": 2.96
+    },
+    {
+      "text": "intimidated by technical jargon, don't",
+      "start": 142.64,
+      "duration": 3.44
+    },
+    {
+      "text": "be because this tool that we are using",
+      "start": 144.48,
+      "duration": 3.759
+    },
+    {
+      "text": "is all no code. So it's easy to learn",
+      "start": 146.08,
+      "duration": 3.76
+    },
+    {
+      "text": "even if you're a complete beginner. All",
+      "start": 148.239,
+      "duration": 3.121
+    },
+    {
+      "text": "you just need to know is how to drag and",
+      "start": 149.84,
+      "duration": 3.2
+    },
+    {
+      "text": "drop things and you're set. And learning",
+      "start": 151.36,
+      "duration": 3.76
+    },
+    {
+      "text": "about AI automation is also one of the",
+      "start": 153.04,
+      "duration": 3.76
+    },
+    {
+      "text": "best uses of your time given the demand",
+      "start": 155.12,
+      "duration": 3.44
+    },
+    {
+      "text": "for it which you can clearly see if you",
+      "start": 156.8,
+      "duration": 3.92
+    },
+    {
+      "text": "just type it over at Google Trends. So",
+      "start": 158.56,
+      "duration": 3.92
+    },
+    {
+      "text": "if you invest the next few minutes or so",
+      "start": 160.72,
+      "duration": 3.68
+    },
+    {
+      "text": "learning about AI today and watch till",
+      "start": 162.48,
+      "duration": 3.36
+    },
+    {
+      "text": "the end because this might just be one",
+      "start": 164.4,
+      "duration": 2.96
+    },
+    {
+      "text": "of the most important skills that you",
+      "start": 165.84,
+      "duration": 4.0
+    },
+    {
+      "text": "will ever learn. By the way, if you're",
+      "start": 167.36,
+      "duration": 4.72
+    },
+    {
+      "text": "new here, my name is Jay and it is my",
+      "start": 169.84,
+      "duration": 4.72
+    },
+    {
+      "text": "one mission to make AI easy to learn for",
+      "start": 172.08,
+      "duration": 4.48
+    },
+    {
+      "text": "anyone who wants to. And as a matter of",
+      "start": 174.56,
+      "duration": 4.08
+    },
+    {
+      "text": "fact, to make this as easy as possible,",
+      "start": 176.56,
+      "duration": 4.319
+    },
+    {
+      "text": "I've collected all the prompts and tools",
+      "start": 178.64,
+      "duration": 4.4
+    },
+    {
+      "text": "that we will be using in this page in",
+      "start": 180.879,
+      "duration": 4.161
+    },
+    {
+      "text": "our community with a specific highlight",
+      "start": 183.04,
+      "duration": 3.839
+    },
+    {
+      "text": "for this blueprint file, which you can",
+      "start": 185.04,
+      "duration": 3.76
+    },
+    {
+      "text": "just download and import to the tool",
+      "start": 186.879,
+      "duration": 3.761
+    },
+    {
+      "text": "that we are using and it will create",
+      "start": 188.8,
+      "duration": 4.24
+    },
+    {
+      "text": "that workflow for you from scratch",
+      "start": 190.64,
+      "duration": 3.84
+    },
+    {
+      "text": "without you having to set it up",
+      "start": 193.04,
+      "duration": 3.279
+    },
+    {
+      "text": "manually. And if in case you're not yet",
+      "start": 194.48,
+      "duration": 3.52
+    },
+    {
+      "text": "part of the community, check it out.",
+      "start": 196.319,
+      "duration": 3.041
+    },
+    {
+      "text": "It's just in the link in the video",
+      "start": 198.0,
+      "duration": 3.2
+    },
+    {
+      "text": "description. We have a lot of events,",
+      "start": 199.36,
+      "duration": 3.92
+    },
+    {
+      "text": "initiatives, and AI professionals at",
+      "start": 201.2,
+      "duration": 4.08
+    },
+    {
+      "text": "around a thousand members strong now who",
+      "start": 203.28,
+      "duration": 4.4
+    },
+    {
+      "text": "are all building cool stuff using AI. We",
+      "start": 205.28,
+      "duration": 4.319
+    },
+    {
+      "text": "also regularly post paid opportunities",
+      "start": 207.68,
+      "duration": 4.24
+    },
+    {
+      "text": "here, either by myself or other members",
+      "start": 209.599,
+      "duration": 3.92
+    },
+    {
+      "text": "of the community. So, if you are",
+      "start": 211.92,
+      "duration": 3.36
+    },
+    {
+      "text": "interested to start earning from AI,",
+      "start": 213.519,
+      "duration": 3.36
+    },
+    {
+      "text": "then this might just be your very first",
+      "start": 215.28,
+      "duration": 3.28
+    },
+    {
+      "text": "step. We even give out free membership",
+      "start": 216.879,
+      "duration": 3.92
+    },
+    {
+      "text": "to our most active members to make the",
+      "start": 218.56,
+      "duration": 4.72
+    },
+    {
+      "text": "group as accessible as possible. So, if",
+      "start": 220.799,
+      "duration": 4.72
+    },
+    {
+      "text": "you want access to these step-by-step AI",
+      "start": 223.28,
+      "duration": 4.239
+    },
+    {
+      "text": "tutorials with ready to load automation",
+      "start": 225.519,
+      "duration": 3.761
+    },
+    {
+      "text": "blueprints for each one of them and a",
+      "start": 227.519,
+      "duration": 3.841
+    },
+    {
+      "text": "strong community of AI professionals to",
+      "start": 229.28,
+      "duration": 3.92
+    },
+    {
+      "text": "network with, then go have a look at the",
+      "start": 231.36,
+      "duration": 3.84
+    },
+    {
+      "text": "Robo Nuggets community just in the link",
+      "start": 233.2,
+      "duration": 4.0
+    },
+    {
+      "text": "in the video's description. All right,",
+      "start": 235.2,
+      "duration": 4.08
+    },
+    {
+      "text": "let's begin. So, the framework of what",
+      "start": 237.2,
+      "duration": 3.92
+    },
+    {
+      "text": "we will be setting up is quite simple",
+      "start": 239.28,
+      "duration": 3.519
+    },
+    {
+      "text": "really because there's basically just",
+      "start": 241.12,
+      "duration": 4.08
+    },
+    {
+      "text": "two agents that you'll need to produce.",
+      "start": 242.799,
+      "duration": 4.401
+    },
+    {
+      "text": "And if this is yourself, you essentially",
+      "start": 245.2,
+      "duration": 4.08
+    },
+    {
+      "text": "just set the direction once you provide",
+      "start": 247.2,
+      "duration": 4.48
+    },
+    {
+      "text": "that direction to your ideas agency. In",
+      "start": 249.28,
+      "duration": 4.319
+    },
+    {
+      "text": "this case, that would just be TAG GPT.",
+      "start": 251.68,
+      "duration": 3.759
+    },
+    {
+      "text": "And then those ideas get passed along to",
+      "start": 253.599,
+      "duration": 3.841
+    },
+    {
+      "text": "this creator agent, which is basically",
+      "start": 255.439,
+      "duration": 4.561
+    },
+    {
+      "text": "an AI automation workflow that produces",
+      "start": 257.44,
+      "duration": 5.28
+    },
+    {
+      "text": "and publish your video daily or even",
+      "start": 260.0,
+      "duration": 4.72
+    },
+    {
+      "text": "hourly if you want to. So to set up your",
+      "start": 262.72,
+      "duration": 3.919
+    },
+    {
+      "text": "ideas agent is very simple. You just",
+      "start": 264.72,
+      "duration": 4.08
+    },
+    {
+      "text": "need to head to chat GPT. And then if",
+      "start": 266.639,
+      "duration": 4.321
+    },
+    {
+      "text": "you go to the community, you can use a",
+      "start": 268.8,
+      "duration": 3.76
+    },
+    {
+      "text": "prompt like this one, which if I just",
+      "start": 270.96,
+      "duration": 4.48
+    },
+    {
+      "text": "copy that and paste into chat GPT, you",
+      "start": 272.56,
+      "duration": 4.48
+    },
+    {
+      "text": "can see it's now starting to give me",
+      "start": 275.44,
+      "duration": 3.68
+    },
+    {
+      "text": "ideas on the videos that I can create.",
+      "start": 277.04,
+      "duration": 3.52
+    },
+    {
+      "text": "And just to go through this prompt very",
+      "start": 279.12,
+      "duration": 3.04
+    },
+    {
+      "text": "quickly, it's quite simple. You",
+      "start": 280.56,
+      "duration": 3.28
+    },
+    {
+      "text": "essentially just change these ones",
+      "start": 282.16,
+      "duration": 3.92
+    },
+    {
+      "text": "within the brackets on what topic you",
+      "start": 283.84,
+      "duration": 4.24
+    },
+    {
+      "text": "want. For this video, we'll basically do",
+      "start": 286.08,
+      "duration": 4.72
+    },
+    {
+      "text": "the topic of stoicism. I asked Chai JPT",
+      "start": 288.08,
+      "duration": 4.48
+    },
+    {
+      "text": "to give me five ideas there. You can",
+      "start": 290.8,
+      "duration": 3.2
+    },
+    {
+      "text": "increase that if you want. And a few",
+      "start": 292.56,
+      "duration": 3.52
+    },
+    {
+      "text": "keywords just to help it ideulate",
+      "start": 294.0,
+      "duration": 4.24
+    },
+    {
+      "text": "better. And then I gave it some defined",
+      "start": 296.08,
+      "duration": 3.92
+    },
+    {
+      "text": "columns here which you can read in your",
+      "start": 298.24,
+      "duration": 4.0
+    },
+    {
+      "text": "own time. But essentially that is what",
+      "start": 300.0,
+      "duration": 5.04
+    },
+    {
+      "text": "chat GPT has followed. So now that it",
+      "start": 302.24,
+      "duration": 4.56
+    },
+    {
+      "text": "has produced this table, what you can",
+      "start": 305.04,
+      "duration": 3.92
+    },
+    {
+      "text": "just do is copy that whole thing by",
+      "start": 306.8,
+      "duration": 3.839
+    },
+    {
+      "text": "clicking here and then create a Google",
+      "start": 308.96,
+      "duration": 3.519
+    },
+    {
+      "text": "Sheets template similar to this one in",
+      "start": 310.639,
+      "duration": 4.161
+    },
+    {
+      "text": "the link which if you open already has",
+      "start": 312.479,
+      "duration": 4.72
+    },
+    {
+      "text": "those columns readily available for us.",
+      "start": 314.8,
+      "duration": 4.239
+    },
+    {
+      "text": "So for you to get a copy of this you can",
+      "start": 317.199,
+      "duration": 3.601
+    },
+    {
+      "text": "just click on file and then click make a",
+      "start": 319.039,
+      "duration": 4.241
+    },
+    {
+      "text": "copy and that will allow you to create",
+      "start": 320.8,
+      "duration": 4.56
+    },
+    {
+      "text": "an editable file in your own Google",
+      "start": 323.28,
+      "duration": 3.919
+    },
+    {
+      "text": "drive. So now what you just need to do",
+      "start": 325.36,
+      "duration": 4.16
+    },
+    {
+      "text": "is to paste what chat GPT gave you and",
+      "start": 327.199,
+      "duration": 3.84
+    },
+    {
+      "text": "you can just delete this row because",
+      "start": 329.52,
+      "duration": 3.92
+    },
+    {
+      "text": "that is already the headers in this",
+      "start": 331.039,
+      "duration": 4.481
+    },
+    {
+      "text": "case. And now we have these five video",
+      "start": 333.44,
+      "duration": 4.479
+    },
+    {
+      "text": "ideas that are now ready to be produced.",
+      "start": 335.52,
+      "duration": 4.399
+    },
+    {
+      "text": "And you can also see they're all unique",
+      "start": 337.919,
+      "duration": 4.081
+    },
+    {
+      "text": "based on the topic that we gave it. So",
+      "start": 339.919,
+      "duration": 4.481
+    },
+    {
+      "text": "this one is a story of a lion as an",
+      "start": 342.0,
+      "duration": 4.96
+    },
+    {
+      "text": "analogy for stoicism. One is a bear, one",
+      "start": 344.4,
+      "duration": 4.72
+    },
+    {
+      "text": "is a fox and so on and so forth. We also",
+      "start": 346.96,
+      "duration": 4.079
+    },
+    {
+      "text": "have a caption for the video here and a",
+      "start": 349.12,
+      "duration": 3.76
+    },
+    {
+      "text": "few other columns which I will explain",
+      "start": 351.039,
+      "duration": 4.321
+    },
+    {
+      "text": "as we make the automation itself. And",
+      "start": 352.88,
+      "duration": 4.4
+    },
+    {
+      "text": "there you go. That is essentially part",
+      "start": 355.36,
+      "duration": 3.839
+    },
+    {
+      "text": "one already done. You need to pass that",
+      "start": 357.28,
+      "duration": 4.16
+    },
+    {
+      "text": "along to your creator agent so that it",
+      "start": 359.199,
+      "duration": 4.481
+    },
+    {
+      "text": "can produce and publish those videos for",
+      "start": 361.44,
+      "duration": 4.16
+    },
+    {
+      "text": "you automatically. And the tool that we",
+      "start": 363.68,
+      "duration": 4.639
+    },
+    {
+      "text": "will be using for this automation is N8N",
+      "start": 365.6,
+      "duration": 4.48
+    },
+    {
+      "text": "which again if you just click this link",
+      "start": 368.319,
+      "duration": 4.0
+    },
+    {
+      "text": "in our community that will take you to",
+      "start": 370.08,
+      "duration": 5.28
+    },
+    {
+      "text": "N8N where you can get a free trial. And",
+      "start": 372.319,
+      "duration": 5.121
+    },
+    {
+      "text": "in case you don't know, N8N is",
+      "start": 375.36,
+      "duration": 3.679
+    },
+    {
+      "text": "essentially an automation software",
+      "start": 377.44,
+      "duration": 4.16
+    },
+    {
+      "text": "similar to Zapier or make.com if in case",
+      "start": 379.039,
+      "duration": 4.241
+    },
+    {
+      "text": "you've heard of those. But you can see",
+      "start": 381.6,
+      "duration": 2.96
+    },
+    {
+      "text": "if you just search them on Google",
+      "start": 383.28,
+      "duration": 3.68
+    },
+    {
+      "text": "Trends, N8N has become the most popular",
+      "start": 384.56,
+      "duration": 5.04
+    },
+    {
+      "text": "tool recently because of how flexible it",
+      "start": 386.96,
+      "duration": 4.64
+    },
+    {
+      "text": "is with using AI tools that are getting",
+      "start": 389.6,
+      "duration": 3.599
+    },
+    {
+      "text": "more traction lately. So I highly",
+      "start": 391.6,
+      "duration": 3.28
+    },
+    {
+      "text": "encourage you to learn it and it's not",
+      "start": 393.199,
+      "duration": 3.12
+    },
+    {
+      "text": "that difficult if you have someone to",
+      "start": 394.88,
+      "duration": 3.439
+    },
+    {
+      "text": "guide you. So once you sign up to N8N,",
+      "start": 396.319,
+      "duration": 3.761
+    },
+    {
+      "text": "you'll see this dashboard and what you",
+      "start": 398.319,
+      "duration": 3.6
+    },
+    {
+      "text": "want to do is create workflow here at",
+      "start": 400.08,
+      "duration": 3.36
+    },
+    {
+      "text": "the top right. And now we will be",
+      "start": 401.919,
+      "duration": 3.601
+    },
+    {
+      "text": "creating that automation from scratch.",
+      "start": 403.44,
+      "duration": 3.92
+    },
+    {
+      "text": "And of course, it's important to just",
+      "start": 405.52,
+      "duration": 4.16
+    },
+    {
+      "text": "begin with the end in mind in this case",
+      "start": 407.36,
+      "duration": 4.08
+    },
+    {
+      "text": "because what we are setting up would be",
+      "start": 409.68,
+      "duration": 3.6
+    },
+    {
+      "text": "this automation workflow which is not",
+      "start": 411.44,
+      "duration": 3.84
+    },
+    {
+      "text": "that complex really if you just break it",
+      "start": 413.28,
+      "duration": 4.24
+    },
+    {
+      "text": "down into more simple parts because here",
+      "start": 415.28,
+      "duration": 4.08
+    },
+    {
+      "text": "at the left you essentially have the",
+      "start": 417.52,
+      "duration": 4.079
+    },
+    {
+      "text": "input section where you provide those",
+      "start": 419.36,
+      "duration": 4.559
+    },
+    {
+      "text": "ideas that you got from chat GPT and",
+      "start": 421.599,
+      "duration": 4.081
+    },
+    {
+      "text": "create some prompts for it that will",
+      "start": 423.919,
+      "duration": 3.921
+    },
+    {
+      "text": "generate the images. This green area",
+      "start": 425.68,
+      "duration": 4.239
+    },
+    {
+      "text": "will be all about creating or generating",
+      "start": 427.84,
+      "duration": 4.0
+    },
+    {
+      "text": "the video itself including the",
+      "start": 429.919,
+      "duration": 4.56
+    },
+    {
+      "text": "voiceovers, the images and the music",
+      "start": 431.84,
+      "duration": 5.28
+    },
+    {
+      "text": "behind it. And the output section is all",
+      "start": 434.479,
+      "duration": 4.881
+    },
+    {
+      "text": "about storing that output into Google",
+      "start": 437.12,
+      "duration": 4.0
+    },
+    {
+      "text": "Sheets and then publishing that to",
+      "start": 439.36,
+      "duration": 3.679
+    },
+    {
+      "text": "YouTube on the frequency that you want.",
+      "start": 441.12,
+      "duration": 4.16
+    },
+    {
+      "text": "And so now here in N8N, first thing to",
+      "start": 443.039,
+      "duration": 4.801
+    },
+    {
+      "text": "do is to just rename this workflow so",
+      "start": 445.28,
+      "duration": 4.4
+    },
+    {
+      "text": "that you know how to go back to it. And",
+      "start": 447.84,
+      "duration": 3.52
+    },
+    {
+      "text": "for your very first step, you need to",
+      "start": 449.68,
+      "duration": 3.519
+    },
+    {
+      "text": "set up a trigger, which is essentially",
+      "start": 451.36,
+      "duration": 4.0
+    },
+    {
+      "text": "going to be the trigger for the",
+      "start": 453.199,
+      "duration": 4.161
+    },
+    {
+      "text": "automation. So for this one, let's just",
+      "start": 455.36,
+      "duration": 4.0
+    },
+    {
+      "text": "use the schedule trigger. And if you",
+      "start": 457.36,
+      "duration": 3.44
+    },
+    {
+      "text": "click on that, it will show the",
+      "start": 459.36,
+      "duration": 3.36
+    },
+    {
+      "text": "frequency of when this automation will",
+      "start": 460.8,
+      "duration": 3.679
+    },
+    {
+      "text": "run. So we'll leave that for now. It",
+      "start": 462.72,
+      "duration": 3.44
+    },
+    {
+      "text": "basically says it will run once a day.",
+      "start": 464.479,
+      "duration": 3.041
+    },
+    {
+      "text": "And the next thing you want to set up",
+      "start": 466.16,
+      "duration": 2.72
+    },
+    {
+      "text": "after that, if you just click on that",
+      "start": 467.52,
+      "duration": 4.0
+    },
+    {
+      "text": "plus icon, is this Google Sheets node,",
+      "start": 468.88,
+      "duration": 4.719
+    },
+    {
+      "text": "specifically the get rows in sheet",
+      "start": 471.52,
+      "duration": 4.0
+    },
+    {
+      "text": "action, which if you click on that, you",
+      "start": 473.599,
+      "duration": 4.72
+    },
+    {
+      "text": "will see N8N's common design of working,",
+      "start": 475.52,
+      "duration": 4.64
+    },
+    {
+      "text": "which if you're new to N8N, it's",
+      "start": 478.319,
+      "duration": 4.0
+    },
+    {
+      "text": "probably good to take a step back and",
+      "start": 480.16,
+      "duration": 4.24
+    },
+    {
+      "text": "just show how it all works because each",
+      "start": 482.319,
+      "duration": 3.681
+    },
+    {
+      "text": "node, if you open them up, it's all the",
+      "start": 484.4,
+      "duration": 3.359
+    },
+    {
+      "text": "same. Here at the left window you will",
+      "start": 486.0,
+      "duration": 3.199
+    },
+    {
+      "text": "have the input which are all the",
+      "start": 487.759,
+      "duration": 3.201
+    },
+    {
+      "text": "attributes that are coming from previous",
+      "start": 489.199,
+      "duration": 3.68
+    },
+    {
+      "text": "nodes that is getting passed along to",
+      "start": 490.96,
+      "duration": 3.6
+    },
+    {
+      "text": "this node that you are configuring. So",
+      "start": 492.879,
+      "duration": 3.681
+    },
+    {
+      "text": "this green section is all about the",
+      "start": 494.56,
+      "duration": 4.4
+    },
+    {
+      "text": "configuration and the look of this area",
+      "start": 496.56,
+      "duration": 4.0
+    },
+    {
+      "text": "varies depending on the node that you",
+      "start": 498.96,
+      "duration": 3.04
+    },
+    {
+      "text": "are setting up and then depending on",
+      "start": 500.56,
+      "duration": 3.84
+    },
+    {
+      "text": "that config and using all those input",
+      "start": 502.0,
+      "duration": 4.96
+    },
+    {
+      "text": "values it then provides you the output",
+      "start": 504.4,
+      "duration": 4.56
+    },
+    {
+      "text": "which it then passes along to the",
+      "start": 506.96,
+      "duration": 4.0
+    },
+    {
+      "text": "succeeding nodes. So it's very simple",
+      "start": 508.96,
+      "duration": 4.319
+    },
+    {
+      "text": "and if we go back to N8N you can see",
+      "start": 510.96,
+      "duration": 4.48
+    },
+    {
+      "text": "that design of working is just the same.",
+      "start": 513.279,
+      "duration": 4.0
+    },
+    {
+      "text": "So here in Google Sheets, you first need",
+      "start": 515.44,
+      "duration": 3.68
+    },
+    {
+      "text": "to set up your credential, which if you",
+      "start": 517.279,
+      "duration": 3.2
+    },
+    {
+      "text": "haven't yet, just click on create new",
+      "start": 519.12,
+      "duration": 3.44
+    },
+    {
+      "text": "credential. And N8N allows you to sign",
+      "start": 520.479,
+      "duration": 3.761
+    },
+    {
+      "text": "in with Google. So it's pretty simple.",
+      "start": 522.56,
+      "duration": 2.959
+    },
+    {
+      "text": "So just go ahead and do that. And then",
+      "start": 524.24,
+      "duration": 3.44
+    },
+    {
+      "text": "what you want to do is to leave this as",
+      "start": 525.519,
+      "duration": 4.241
+    },
+    {
+      "text": "operation get row. And then for the",
+      "start": 527.68,
+      "duration": 3.92
+    },
+    {
+      "text": "document, just go ahead and find that",
+      "start": 529.76,
+      "duration": 3.68
+    },
+    {
+      "text": "one that you were working on, which for",
+      "start": 531.6,
+      "duration": 4.16
+    },
+    {
+      "text": "my case would be this Google sheet. And",
+      "start": 533.44,
+      "duration": 4.32
+    },
+    {
+      "text": "then I want to choose sheet one because",
+      "start": 535.76,
+      "duration": 3.92
+    },
+    {
+      "text": "that's the one where I pasted my ideas",
+      "start": 537.76,
+      "duration": 4.24
+    },
+    {
+      "text": "in. For the filter, just add it in. And",
+      "start": 539.68,
+      "duration": 3.839
+    },
+    {
+      "text": "then for the column, you want to get",
+      "start": 542.0,
+      "duration": 3.6
+    },
+    {
+      "text": "this production status column. and type",
+      "start": 543.519,
+      "duration": 5.201
+    },
+    {
+      "text": "the value as for production. If we go",
+      "start": 545.6,
+      "duration": 4.799
+    },
+    {
+      "text": "back to our sheet, it would be this",
+      "start": 548.72,
+      "duration": 3.84
+    },
+    {
+      "text": "column in particular. And what that note",
+      "start": 550.399,
+      "duration": 5.281
+    },
+    {
+      "text": "will do is get this first row that says",
+      "start": 552.56,
+      "duration": 4.8
+    },
+    {
+      "text": "for production because by the end of",
+      "start": 555.68,
+      "duration": 3.52
+    },
+    {
+      "text": "this automation, we will be marking this",
+      "start": 557.36,
+      "duration": 4.24
+    },
+    {
+      "text": "as done so that we can skip this video",
+      "start": 559.2,
+      "duration": 4.0
+    },
+    {
+      "text": "once it's created. So the last thing",
+      "start": 561.6,
+      "duration": 3.04
+    },
+    {
+      "text": "that you want to just set up here in",
+      "start": 563.2,
+      "duration": 4.0
+    },
+    {
+      "text": "this Google Sheets node is under option,",
+      "start": 564.64,
+      "duration": 4.639
+    },
+    {
+      "text": "click on return only first matching row",
+      "start": 567.2,
+      "duration": 4.56
+    },
+    {
+      "text": "and click and toggle that on. And now if",
+      "start": 569.279,
+      "duration": 4.24
+    },
+    {
+      "text": "you hit test step, it should look",
+      "start": 571.76,
+      "duration": 3.519
+    },
+    {
+      "text": "through your Google sheet and return to",
+      "start": 573.519,
+      "duration": 3.681
+    },
+    {
+      "text": "you the first matching row that says",
+      "start": 575.279,
+      "duration": 3.921
+    },
+    {
+      "text": "production status is for production",
+      "start": 577.2,
+      "duration": 4.72
+    },
+    {
+      "text": "which in our case is this idea about the",
+      "start": 579.2,
+      "duration": 4.88
+    },
+    {
+      "text": "stoic lion which is essentially just",
+      "start": 581.92,
+      "duration": 3.76
+    },
+    {
+      "text": "this row that I am highlighting. So",
+      "start": 584.08,
+      "duration": 3.199
+    },
+    {
+      "text": "that's good. We were able to get that",
+      "start": 585.68,
+      "duration": 3.52
+    },
+    {
+      "text": "properly. The last part in this input",
+      "start": 587.279,
+      "duration": 4.641
+    },
+    {
+      "text": "section is for us to set up this prompts",
+      "start": 589.2,
+      "duration": 4.96
+    },
+    {
+      "text": "and generate the image and voice text",
+      "start": 591.92,
+      "duration": 5.2
+    },
+    {
+      "text": "prompts for us. So to do that just find",
+      "start": 594.16,
+      "duration": 5.52
+    },
+    {
+      "text": "the node called basic LLM chain. Rename",
+      "start": 597.12,
+      "duration": 4.88
+    },
+    {
+      "text": "this as prompts so that you know how it",
+      "start": 599.68,
+      "duration": 4.159
+    },
+    {
+      "text": "works. And renaming by the way is",
+      "start": 602.0,
+      "duration": 3.44
+    },
+    {
+      "text": "important not only so that you know what",
+      "start": 603.839,
+      "duration": 4.0
+    },
+    {
+      "text": "it does but n actually references the",
+      "start": 605.44,
+      "duration": 4.079
+    },
+    {
+      "text": "nodes by their name as well. So it's",
+      "start": 607.839,
+      "duration": 3.841
+    },
+    {
+      "text": "important to name them properly. Anyway,",
+      "start": 609.519,
+      "duration": 4.081
+    },
+    {
+      "text": "let's set this up and just change it as",
+      "start": 611.68,
+      "duration": 5.04
+    },
+    {
+      "text": "defined below. And this text is going to",
+      "start": 613.6,
+      "duration": 5.359
+    },
+    {
+      "text": "be your prompt for this language model",
+      "start": 616.72,
+      "duration": 3.679
+    },
+    {
+      "text": "essentially. So if you just go to the",
+      "start": 618.959,
+      "duration": 3.44
+    },
+    {
+      "text": "community and copy this part in the",
+      "start": 620.399,
+      "duration": 4.241
+    },
+    {
+      "text": "prompts generator text, change this to",
+      "start": 622.399,
+      "duration": 4.241
+    },
+    {
+      "text": "expression and then paste that there.",
+      "start": 624.64,
+      "duration": 4.4
+    },
+    {
+      "text": "And if you expand that by clicking this,",
+      "start": 626.64,
+      "duration": 4.319
+    },
+    {
+      "text": "you'll see that the video title and then",
+      "start": 629.04,
+      "duration": 4.32
+    },
+    {
+      "text": "the video description, it is getting the",
+      "start": 630.959,
+      "duration": 4.32
+    },
+    {
+      "text": "caption coming from your Google sheet as",
+      "start": 633.36,
+      "duration": 3.68
+    },
+    {
+      "text": "well. So that's well and good. You also",
+      "start": 635.279,
+      "duration": 3.921
+    },
+    {
+      "text": "want to require it in a specific output",
+      "start": 637.04,
+      "duration": 3.6
+    },
+    {
+      "text": "format. And we'll go through that in a",
+      "start": 639.2,
+      "duration": 3.36
+    },
+    {
+      "text": "bit. And then under chat messages, you",
+      "start": 640.64,
+      "duration": 3.84
+    },
+    {
+      "text": "want to add a system prompt here. And",
+      "start": 642.56,
+      "duration": 3.76
+    },
+    {
+      "text": "this system prompt is going to instruct",
+      "start": 644.48,
+      "duration": 4.479
+    },
+    {
+      "text": "this model in its role in life, so to",
+      "start": 646.32,
+      "duration": 4.24
+    },
+    {
+      "text": "speak. So if you just go back to our",
+      "start": 648.959,
+      "duration": 3.361
+    },
+    {
+      "text": "page here in the community, there is a",
+      "start": 650.56,
+      "duration": 3.36
+    },
+    {
+      "text": "ready system prompt there which you can",
+      "start": 652.32,
+      "duration": 3.759
+    },
+    {
+      "text": "just copy, change this to expression and",
+      "start": 653.92,
+      "duration": 4.08
+    },
+    {
+      "text": "then paste it here. And if I expand",
+      "start": 656.079,
+      "duration": 4.0
+    },
+    {
+      "text": "that, you'll see that this is a set of",
+      "start": 658.0,
+      "duration": 4.399
+    },
+    {
+      "text": "instructions for our model where we are",
+      "start": 660.079,
+      "duration": 5.121
+    },
+    {
+      "text": "providing it its role. What is its task",
+      "start": 662.399,
+      "duration": 5.68
+    },
+    {
+      "text": "in this case is just to return 10 scenes",
+      "start": 665.2,
+      "duration": 4.4
+    },
+    {
+      "text": "essentially which you will see in a bit",
+      "start": 668.079,
+      "duration": 3.521
+    },
+    {
+      "text": "and then two attributes. One is the",
+      "start": 669.6,
+      "duration": 3.679
+    },
+    {
+      "text": "voice text which is going to be the",
+      "start": 671.6,
+      "duration": 4.4
+    },
+    {
+      "text": "voice over per scene and an image prompt",
+      "start": 673.279,
+      "duration": 4.321
+    },
+    {
+      "text": "which is going to be fed to an image",
+      "start": 676.0,
+      "duration": 4.079
+    },
+    {
+      "text": "model to generate the images that go",
+      "start": 677.6,
+      "duration": 4.479
+    },
+    {
+      "text": "along with that voice over text. And",
+      "start": 680.079,
+      "duration": 3.841
+    },
+    {
+      "text": "then there is just a couple of guiding",
+      "start": 682.079,
+      "duration": 3.44
+    },
+    {
+      "text": "principles there. But what's important",
+      "start": 683.92,
+      "duration": 3.919
+    },
+    {
+      "text": "to check is this green area which you",
+      "start": 685.519,
+      "duration": 3.921
+    },
+    {
+      "text": "can see in the right is translating to",
+      "start": 687.839,
+      "duration": 3.921
+    },
+    {
+      "text": "stoicism, lessons about stoicism etc.",
+      "start": 689.44,
+      "duration": 3.92
+    },
+    {
+      "text": "And that is actually coming from our",
+      "start": 691.76,
+      "duration": 3.44
+    },
+    {
+      "text": "Google Sheets as well. And then you also",
+      "start": 693.36,
+      "duration": 3.52
+    },
+    {
+      "text": "have this main character description",
+      "start": 695.2,
+      "duration": 3.04
+    },
+    {
+      "text": "which is coming from this character",
+      "start": 696.88,
+      "duration": 2.959
+    },
+    {
+      "text": "style prompt. So if in case that doesn't",
+      "start": 698.24,
+      "duration": 3.839
+    },
+    {
+      "text": "work for you, you can simply just drag",
+      "start": 699.839,
+      "duration": 4.801
+    },
+    {
+      "text": "and drop it into that part and that",
+      "start": 702.079,
+      "duration": 4.721
+    },
+    {
+      "text": "should work as intended. So now this is",
+      "start": 704.64,
+      "duration": 4.16
+    },
+    {
+      "text": "all set up actually. But if you just",
+      "start": 706.8,
+      "duration": 3.84
+    },
+    {
+      "text": "click away first before hitting test",
+      "start": 708.8,
+      "duration": 3.68
+    },
+    {
+      "text": "step, you will see that there are two",
+      "start": 710.64,
+      "duration": 4.08
+    },
+    {
+      "text": "sub nodes here. One is the model which",
+      "start": 712.48,
+      "duration": 4.08
+    },
+    {
+      "text": "is if you click on that, these are",
+      "start": 714.72,
+      "duration": 3.76
+    },
+    {
+      "text": "different AI models that are familiar",
+      "start": 716.56,
+      "duration": 4.08
+    },
+    {
+      "text": "maybe to you. And let's just use OpenAI",
+      "start": 718.48,
+      "duration": 3.84
+    },
+    {
+      "text": "because that's the most common one. And",
+      "start": 720.64,
+      "duration": 3.52
+    },
+    {
+      "text": "if you don't have a OpenAI account",
+      "start": 722.32,
+      "duration": 3.28
+    },
+    {
+      "text": "connected here yet, just click on create",
+      "start": 724.16,
+      "duration": 2.96
+    },
+    {
+      "text": "new credential. And you can see it's",
+      "start": 725.6,
+      "duration": 3.28
+    },
+    {
+      "text": "going to ask for an API key. And to get",
+      "start": 727.12,
+      "duration": 3.92
+    },
+    {
+      "text": "that you can do so here in this link and",
+      "start": 728.88,
+      "duration": 4.24
+    },
+    {
+      "text": "just create a new secret key here at the",
+      "start": 731.04,
+      "duration": 3.76
+    },
+    {
+      "text": "top right and paste that here. And now",
+      "start": 733.12,
+      "duration": 3.279
+    },
+    {
+      "text": "that you have that available I suggest",
+      "start": 734.8,
+      "duration": 4.479
+    },
+    {
+      "text": "to just use 40 for this case and then",
+      "start": 736.399,
+      "duration": 4.641
+    },
+    {
+      "text": "just click away. And now you also need",
+      "start": 739.279,
+      "duration": 4.161
+    },
+    {
+      "text": "an output parser. And what that would do",
+      "start": 741.04,
+      "duration": 4.799
+    },
+    {
+      "text": "is just make sure that whatever output",
+      "start": 743.44,
+      "duration": 4.959
+    },
+    {
+      "text": "your language model will provide adheres",
+      "start": 745.839,
+      "duration": 5.041
+    },
+    {
+      "text": "to what you would need. And for this one",
+      "start": 748.399,
+      "duration": 4.081
+    },
+    {
+      "text": "we will need the structured output",
+      "start": 750.88,
+      "duration": 3.44
+    },
+    {
+      "text": "parser. And in this field you can just",
+      "start": 752.48,
+      "duration": 3.919
+    },
+    {
+      "text": "delete that. And if you go back to our",
+      "start": 754.32,
+      "duration": 4.16
+    },
+    {
+      "text": "community and under structured output",
+      "start": 756.399,
+      "duration": 4.081
+    },
+    {
+      "text": "parser just copy this whole thing and",
+      "start": 758.48,
+      "duration": 4.32
+    },
+    {
+      "text": "leave that here. If I open that up it is",
+      "start": 760.48,
+      "duration": 4.64
+    },
+    {
+      "text": "essentially a JSON format which is an",
+      "start": 762.8,
+      "duration": 4.159
+    },
+    {
+      "text": "example of what we want this language",
+      "start": 765.12,
+      "duration": 4.159
+    },
+    {
+      "text": "model to provide us. So for every scene",
+      "start": 766.959,
+      "duration": 4.32
+    },
+    {
+      "text": "here it will have a voice text which is",
+      "start": 769.279,
+      "duration": 3.921
+    },
+    {
+      "text": "going to be the voice over and the image",
+      "start": 771.279,
+      "duration": 4.081
+    },
+    {
+      "text": "prompt which is going to be the prompt",
+      "start": 773.2,
+      "duration": 4.56
+    },
+    {
+      "text": "for our image model to create. So just",
+      "start": 775.36,
+      "duration": 4.24
+    },
+    {
+      "text": "click away and now you have this",
+      "start": 777.76,
+      "duration": 3.6
+    },
+    {
+      "text": "language model node all set up. So if",
+      "start": 779.6,
+      "duration": 3.12
+    },
+    {
+      "text": "you double click on that and click on",
+      "start": 781.36,
+      "duration": 3.76
+    },
+    {
+      "text": "test step, you'll now see the output",
+      "start": 782.72,
+      "duration": 5.04
+    },
+    {
+      "text": "where each scene has a voice text and an",
+      "start": 785.12,
+      "duration": 4.48
+    },
+    {
+      "text": "image prompt and there's going to be 10",
+      "start": 787.76,
+      "duration": 4.4
+    },
+    {
+      "text": "in total starting from 0 to 9. So if you",
+      "start": 789.6,
+      "duration": 4.479
+    },
+    {
+      "text": "look at schema here at the top right,",
+      "start": 792.16,
+      "duration": 3.52
+    },
+    {
+      "text": "these are now attributes that we can",
+      "start": 794.079,
+      "duration": 3.841
+    },
+    {
+      "text": "pass along to the succeeding nodes which",
+      "start": 795.68,
+      "duration": 4.64
+    },
+    {
+      "text": "is great. And there the input section is",
+      "start": 797.92,
+      "duration": 4.24
+    },
+    {
+      "text": "now done. So if you want to add those",
+      "start": 800.32,
+      "duration": 4.079
+    },
+    {
+      "text": "visual backgrounds, you can just add a",
+      "start": 802.16,
+      "duration": 4.0
+    },
+    {
+      "text": "sticky note, change the color, and then",
+      "start": 804.399,
+      "duration": 4.401
+    },
+    {
+      "text": "type something like input video topic",
+      "start": 806.16,
+      "duration": 4.799
+    },
+    {
+      "text": "and prompts and then just place that at",
+      "start": 808.8,
+      "duration": 4.0
+    },
+    {
+      "text": "the back to clean that up. So the next",
+      "start": 810.959,
+      "duration": 3.841
+    },
+    {
+      "text": "thing we need, which is the meat of this",
+      "start": 812.8,
+      "duration": 3.839
+    },
+    {
+      "text": "automation as well, is creating the",
+      "start": 814.8,
+      "duration": 3.68
+    },
+    {
+      "text": "video itself. So we'll do that next. And",
+      "start": 816.639,
+      "duration": 3.601
+    },
+    {
+      "text": "just to approach this step by step, the",
+      "start": 818.48,
+      "duration": 3.76
+    },
+    {
+      "text": "very first thing we will need is to get",
+      "start": 820.24,
+      "duration": 4.88
+    },
+    {
+      "text": "the music and intro video that plays at",
+      "start": 822.24,
+      "duration": 5.12
+    },
+    {
+      "text": "the beginning of every film. And then we",
+      "start": 825.12,
+      "duration": 4.399
+    },
+    {
+      "text": "will generate the full video itself so",
+      "start": 827.36,
+      "duration": 4.08
+    },
+    {
+      "text": "that we get the output that we will",
+      "start": 829.519,
+      "duration": 4.081
+    },
+    {
+      "text": "eventually upload to YouTube. And then",
+      "start": 831.44,
+      "duration": 4.88
+    },
+    {
+      "text": "the last part which is just important to",
+      "start": 833.6,
+      "duration": 5.12
+    },
+    {
+      "text": "avoid frustration is this section around",
+      "start": 836.32,
+      "duration": 4.639
+    },
+    {
+      "text": "handling errors. All right. So for us to",
+      "start": 838.72,
+      "duration": 4.479
+    },
+    {
+      "text": "get the music and the intro video, the",
+      "start": 840.959,
+      "duration": 4.161
+    },
+    {
+      "text": "easiest way is to just copy this Google",
+      "start": 843.199,
+      "duration": 4.961
+    },
+    {
+      "text": "sheet and paste it by hitting Ctrl + C",
+      "start": 845.12,
+      "duration": 5.279
+    },
+    {
+      "text": "and Ctrl +V. If I put it there and just",
+      "start": 848.16,
+      "duration": 3.919
+    },
+    {
+      "text": "connect it like that, you can now just",
+      "start": 850.399,
+      "duration": 3.841
+    },
+    {
+      "text": "open this node up and it is",
+      "start": 852.079,
+      "duration": 3.841
+    },
+    {
+      "text": "automatically connected to the sheet",
+      "start": 854.24,
+      "duration": 3.839
+    },
+    {
+      "text": "that you are using and then just change",
+      "start": 855.92,
+      "duration": 5.44
+    },
+    {
+      "text": "this sheet from sheet one onto sheet",
+      "start": 858.079,
+      "duration": 5.361
+    },
+    {
+      "text": "two. So if you go back to our template,",
+      "start": 861.36,
+      "duration": 4.32
+    },
+    {
+      "text": "if you look at sheet two, essentially",
+      "start": 863.44,
+      "duration": 4.16
+    },
+    {
+      "text": "you have this the one row that you will",
+      "start": 865.68,
+      "duration": 4.159
+    },
+    {
+      "text": "get and it has the intro video which",
+      "start": 867.6,
+      "duration": 3.919
+    },
+    {
+      "text": "will precede each and every film. You",
+      "start": 869.839,
+      "duration": 3.44
+    },
+    {
+      "text": "can watch this example clip which we can",
+      "start": 871.519,
+      "duration": 4.56
+    },
+    {
+      "text": "put into our videos and this randomize",
+      "start": 873.279,
+      "duration": 4.881
+    },
+    {
+      "text": "audio column which again if you click",
+      "start": 876.079,
+      "duration": 3.921
+    },
+    {
+      "text": "you'll be able to listen to a background",
+      "start": 878.16,
+      "duration": 3.84
+    },
+    {
+      "text": "music that we will be using. So if",
+      "start": 880.0,
+      "duration": 3.92
+    },
+    {
+      "text": "you're doing this to learn you can just",
+      "start": 882.0,
+      "duration": 4.56
+    },
+    {
+      "text": "go ahead and use these sample videos and",
+      "start": 883.92,
+      "duration": 4.56
+    },
+    {
+      "text": "audio or if you have your own you can",
+      "start": 886.56,
+      "duration": 4.56
+    },
+    {
+      "text": "also just put in the URL of those files",
+      "start": 888.48,
+      "duration": 4.799
+    },
+    {
+      "text": "into these cells. But obviously the",
+      "start": 891.12,
+      "duration": 4.48
+    },
+    {
+      "text": "trick is how do you actually create your",
+      "start": 893.279,
+      "duration": 5.521
+    },
+    {
+      "text": "own audio and video? So for audio is",
+      "start": 895.6,
+      "duration": 4.64
+    },
+    {
+      "text": "rather simple. You just head to",
+      "start": 898.8,
+      "duration": 3.36
+    },
+    {
+      "text": "sununo.com which we have here in the",
+      "start": 900.24,
+      "duration": 3.76
+    },
+    {
+      "text": "community as well. And when you're here,",
+      "start": 902.16,
+      "duration": 3.6
+    },
+    {
+      "text": "you can actually go ahead and create",
+      "start": 904.0,
+      "duration": 3.839
+    },
+    {
+      "text": "music for free. And they are quite",
+      "start": 905.76,
+      "duration": 4.8
+    },
+    {
+      "text": "generous with their free credits. So you",
+      "start": 907.839,
+      "duration": 4.161
+    },
+    {
+      "text": "can just go ahead and type in a prompt",
+      "start": 910.56,
+      "duration": 2.8
+    },
+    {
+      "text": "here, which a good technique that you",
+      "start": 912.0,
+      "duration": 3.519
+    },
+    {
+      "text": "can do is if you just head back to your",
+      "start": 913.36,
+      "duration": 4.4
+    },
+    {
+      "text": "chat GPD conversation from a while ago,",
+      "start": 915.519,
+      "duration": 4.161
+    },
+    {
+      "text": "ask it to give you a music prompt for",
+      "start": 917.76,
+      "duration": 4.0
+    },
+    {
+      "text": "Sunno for above and it will give you a",
+      "start": 919.68,
+      "duration": 4.159
+    },
+    {
+      "text": "prompt which you can just copy and paste",
+      "start": 921.76,
+      "duration": 4.8
+    },
+    {
+      "text": "into Sunno. and make sure to click",
+      "start": 923.839,
+      "duration": 4.961
+    },
+    {
+      "text": "instrumental if that is your intent and",
+      "start": 926.56,
+      "duration": 4.8
+    },
+    {
+      "text": "click create. So once those are created,",
+      "start": 928.8,
+      "duration": 4.64
+    },
+    {
+      "text": "you can download them via this ellipsus",
+      "start": 931.36,
+      "duration": 4.32
+    },
+    {
+      "text": "and download MP3 audio. So now that you",
+      "start": 933.44,
+      "duration": 4.32
+    },
+    {
+      "text": "have the MP3 file, you would somehow",
+      "start": 935.68,
+      "duration": 4.24
+    },
+    {
+      "text": "need to upload that into a URL which you",
+      "start": 937.76,
+      "duration": 3.84
+    },
+    {
+      "text": "can put here. And you can see that we",
+      "start": 939.92,
+      "duration": 3.68
+    },
+    {
+      "text": "are already using JSON to video for",
+      "start": 941.6,
+      "duration": 4.32
+    },
+    {
+      "text": "that. So if you just head to this link,",
+      "start": 943.6,
+      "duration": 4.4
+    },
+    {
+      "text": "that will take you to JSON to video",
+      "start": 945.92,
+      "duration": 3.599
+    },
+    {
+      "text": "which you can sign up for free by",
+      "start": 948.0,
+      "duration": 3.519
+    },
+    {
+      "text": "hitting this get your free API key. And",
+      "start": 949.519,
+      "duration": 3.68
+    },
+    {
+      "text": "once you're inside, we will go through",
+      "start": 951.519,
+      "duration": 3.521
+    },
+    {
+      "text": "all of these in turn. But for now, we",
+      "start": 953.199,
+      "duration": 3.921
+    },
+    {
+      "text": "just need to upload our song. And you",
+      "start": 955.04,
+      "duration": 3.84
+    },
+    {
+      "text": "don't have to use JSON to video for",
+      "start": 957.12,
+      "duration": 3.92
+    },
+    {
+      "text": "uploading your song. But for beginners,",
+      "start": 958.88,
+      "duration": 3.759
+    },
+    {
+      "text": "since you are already going to use this",
+      "start": 961.04,
+      "duration": 3.44
+    },
+    {
+      "text": "tool anyway, it's just better to do it",
+      "start": 962.639,
+      "duration": 3.681
+    },
+    {
+      "text": "here as well. So, if you head to movie",
+      "start": 964.48,
+      "duration": 4.0
+    },
+    {
+      "text": "templates, click on add new template,",
+      "start": 966.32,
+      "duration": 3.759
+    },
+    {
+      "text": "click on the pencil icon right beside",
+      "start": 968.48,
+      "duration": 3.84
+    },
+    {
+      "text": "that new template you created, and just",
+      "start": 970.079,
+      "duration": 4.161
+    },
+    {
+      "text": "go ahead and name this as something like",
+      "start": 972.32,
+      "duration": 4.16
+    },
+    {
+      "text": "uploader template because all this will",
+      "start": 974.24,
+      "duration": 5.039
+    },
+    {
+      "text": "really do is let us upload those songs.",
+      "start": 976.48,
+      "duration": 4.4
+    },
+    {
+      "text": "So, under scene here, just add a new",
+      "start": 979.279,
+      "duration": 4.48
+    },
+    {
+      "text": "element and find the audio. Click on add",
+      "start": 980.88,
+      "duration": 5.36
+    },
+    {
+      "text": "and if I click on audio under asset",
+      "start": 983.759,
+      "duration": 4.721
+    },
+    {
+      "text": "click on the pencil icon and then type",
+      "start": 986.24,
+      "duration": 4.959
+    },
+    {
+      "text": "in uploads and here you can upload those",
+      "start": 988.48,
+      "duration": 4.64
+    },
+    {
+      "text": "files which you just downloaded and you",
+      "start": 991.199,
+      "duration": 3.76
+    },
+    {
+      "text": "can see for me I already have these",
+      "start": 993.12,
+      "duration": 4.079
+    },
+    {
+      "text": "files available. So if I just select one",
+      "start": 994.959,
+      "duration": 4.401
+    },
+    {
+      "text": "of them and click on save it will",
+      "start": 997.199,
+      "duration": 4.161
+    },
+    {
+      "text": "provide me the source URL for that",
+      "start": 999.36,
+      "duration": 3.919
+    },
+    {
+      "text": "already. So, if I again just click on",
+      "start": 1001.36,
+      "duration": 4.399
+    },
+    {
+      "text": "this pencil icon, I now have the URL",
+      "start": 1003.279,
+      "duration": 5.281
+    },
+    {
+      "text": "which I can paste either here in column",
+      "start": 1005.759,
+      "duration": 5.52
+    },
+    {
+      "text": "C. If I'm only using one song for all of",
+      "start": 1008.56,
+      "duration": 4.8
+    },
+    {
+      "text": "the videos that I will upload or if you",
+      "start": 1011.279,
+      "duration": 4.8
+    },
+    {
+      "text": "want to randomize between songs for each",
+      "start": 1013.36,
+      "duration": 4.8
+    },
+    {
+      "text": "video, you can just generate them in",
+      "start": 1016.079,
+      "duration": 4.161
+    },
+    {
+      "text": "Suno, let's say 10 songs, which you can",
+      "start": 1018.16,
+      "duration": 3.84
+    },
+    {
+      "text": "generate for free, and then just place",
+      "start": 1020.24,
+      "duration": 4.079
+    },
+    {
+      "text": "them in these yellow cells. So, for",
+      "start": 1022.0,
+      "duration": 4.88
+    },
+    {
+      "text": "example, I just pasted four different",
+      "start": 1024.319,
+      "duration": 4.72
+    },
+    {
+      "text": "songs here, all uploaded in JSON to",
+      "start": 1026.88,
+      "duration": 4.24
+    },
+    {
+      "text": "video. And what this Excel formula from",
+      "start": 1029.039,
+      "duration": 4.241
+    },
+    {
+      "text": "the template is already doing is just",
+      "start": 1031.12,
+      "duration": 3.76
+    },
+    {
+      "text": "randomize that so that whenever I",
+      "start": 1033.28,
+      "duration": 3.84
+    },
+    {
+      "text": "refresh this template, it randomizes the",
+      "start": 1034.88,
+      "duration": 4.319
+    },
+    {
+      "text": "audio that it is going to get which you",
+      "start": 1037.12,
+      "duration": 3.52
+    },
+    {
+      "text": "can make use of if you want. And then",
+      "start": 1039.199,
+      "duration": 3.36
+    },
+    {
+      "text": "finally for the intro video, how do you",
+      "start": 1040.64,
+      "duration": 4.159
+    },
+    {
+      "text": "get this again? JSON to video has made",
+      "start": 1042.559,
+      "duration": 4.48
+    },
+    {
+      "text": "this quite easy. So if you just go back",
+      "start": 1044.799,
+      "duration": 4.721
+    },
+    {
+      "text": "this time, add a new element for a",
+      "start": 1047.039,
+      "duration": 4.64
+    },
+    {
+      "text": "video. Click on add and then click",
+      "start": 1049.52,
+      "duration": 4.399
+    },
+    {
+      "text": "video. And again under source URL, you",
+      "start": 1051.679,
+      "duration": 3.761
+    },
+    {
+      "text": "can see that there is a tab here for",
+      "start": 1053.919,
+      "duration": 4.321
+    },
+    {
+      "text": "pixels. And Pixels is a stock footage",
+      "start": 1055.44,
+      "duration": 4.88
+    },
+    {
+      "text": "website which provides a lot of videos",
+      "start": 1058.24,
+      "duration": 3.679
+    },
+    {
+      "text": "for free. So you can have a browse",
+      "start": 1060.32,
+      "duration": 3.44
+    },
+    {
+      "text": "through here of the videos that you want",
+      "start": 1061.919,
+      "duration": 4.161
+    },
+    {
+      "text": "to use for your intro or alternatively",
+      "start": 1063.76,
+      "duration": 4.159
+    },
+    {
+      "text": "you can just upload them here as well.",
+      "start": 1066.08,
+      "duration": 3.599
+    },
+    {
+      "text": "So once you select that, click on save.",
+      "start": 1067.919,
+      "duration": 3.12
+    },
+    {
+      "text": "It will once again give you the source",
+      "start": 1069.679,
+      "duration": 3.601
+    },
+    {
+      "text": "URL which you can just copy and paste",
+      "start": 1071.039,
+      "duration": 4.321
+    },
+    {
+      "text": "into that intro video section. And there",
+      "start": 1073.28,
+      "duration": 4.32
+    },
+    {
+      "text": "you now have this row all filled up. So",
+      "start": 1075.36,
+      "duration": 4.48
+    },
+    {
+      "text": "now if you go back to our N8N workflow,",
+      "start": 1077.6,
+      "duration": 3.92
+    },
+    {
+      "text": "you can remember that we are working on",
+      "start": 1079.84,
+      "duration": 3.839
+    },
+    {
+      "text": "this separate Google Sheets node and we",
+      "start": 1081.52,
+      "duration": 4.0
+    },
+    {
+      "text": "are looking at sheet two this time. And",
+      "start": 1083.679,
+      "duration": 3.681
+    },
+    {
+      "text": "now for the filter, you want the column",
+      "start": 1085.52,
+      "duration": 4.08
+    },
+    {
+      "text": "called two use and find the ones that",
+      "start": 1087.36,
+      "duration": 4.96
+    },
+    {
+      "text": "says final. And just to recap, it is",
+      "start": 1089.6,
+      "duration": 5.04
+    },
+    {
+      "text": "this column in particular where we are",
+      "start": 1092.32,
+      "duration": 4.16
+    },
+    {
+      "text": "getting this row. And so now if we hit",
+      "start": 1094.64,
+      "duration": 4.399
+    },
+    {
+      "text": "test step, all that will really do is",
+      "start": 1096.48,
+      "duration": 4.24
+    },
+    {
+      "text": "get that specific row that we are",
+      "start": 1099.039,
+      "duration": 4.0
+    },
+    {
+      "text": "working on with this randomized audio",
+      "start": 1100.72,
+      "duration": 4.24
+    },
+    {
+      "text": "which we'll use as background music and",
+      "start": 1103.039,
+      "duration": 4.0
+    },
+    {
+      "text": "this intro video which we will use",
+      "start": 1104.96,
+      "duration": 4.4
+    },
+    {
+      "text": "preceding each film that we will make.",
+      "start": 1107.039,
+      "duration": 4.481
+    },
+    {
+      "text": "And there now you have your audio and",
+      "start": 1109.36,
+      "duration": 4.24
+    },
+    {
+      "text": "video all set up. So just go ahead and",
+      "start": 1111.52,
+      "duration": 4.159
+    },
+    {
+      "text": "rename this to something like get music.",
+      "start": 1113.6,
+      "duration": 3.76
+    },
+    {
+      "text": "Then click away. And now the main part",
+      "start": 1115.679,
+      "duration": 3.601
+    },
+    {
+      "text": "is for us to generate the full video",
+      "start": 1117.36,
+      "duration": 4.4
+    },
+    {
+      "text": "itself. So if you just extend this and",
+      "start": 1119.28,
+      "duration": 4.96
+    },
+    {
+      "text": "find a node called HTTP request, what we",
+      "start": 1121.76,
+      "duration": 5.76
+    },
+    {
+      "text": "will be doing is send a post request to",
+      "start": 1124.24,
+      "duration": 5.679
+    },
+    {
+      "text": "JSON to video in order to create the",
+      "start": 1127.52,
+      "duration": 4.32
+    },
+    {
+      "text": "film that we'll be creating. So just set",
+      "start": 1129.919,
+      "duration": 4.721
+    },
+    {
+      "text": "that method to post under URL. Just find",
+      "start": 1131.84,
+      "duration": 6.0
+    },
+    {
+      "text": "this section in the community page and",
+      "start": 1134.64,
+      "duration": 5.68
+    },
+    {
+      "text": "copy this URL and paste that there. And",
+      "start": 1137.84,
+      "duration": 4.079
+    },
+    {
+      "text": "that's basically JSON to video's",
+      "start": 1140.32,
+      "duration": 4.52
+    },
+    {
+      "text": "designated URL for API connections. For",
+      "start": 1141.919,
+      "duration": 5.12
+    },
+    {
+      "text": "authentication, just click on generic",
+      "start": 1144.84,
+      "duration": 4.28
+    },
+    {
+      "text": "credential type. And then for the",
+      "start": 1147.039,
+      "duration": 4.321
+    },
+    {
+      "text": "authorization type, click on Heather.",
+      "start": 1149.12,
+      "duration": 4.0
+    },
+    {
+      "text": "And then for you to set it up, just",
+      "start": 1151.36,
+      "duration": 3.76
+    },
+    {
+      "text": "click on create new credential. You'll",
+      "start": 1153.12,
+      "duration": 4.96
+    },
+    {
+      "text": "see it'll ask for a name and value. So",
+      "start": 1155.12,
+      "duration": 6.4
+    },
+    {
+      "text": "for the name, just type in X API key,",
+      "start": 1158.08,
+      "duration": 5.68
+    },
+    {
+      "text": "paying attention to the capitalizations.",
+      "start": 1161.52,
+      "duration": 4.32
+    },
+    {
+      "text": "And for the value here, you can go ahead",
+      "start": 1163.76,
+      "duration": 4.799
+    },
+    {
+      "text": "and copy the API key from JSON to video",
+      "start": 1165.84,
+      "duration": 4.16
+    },
+    {
+      "text": "which should have been sent to your",
+      "start": 1168.559,
+      "duration": 3.36
+    },
+    {
+      "text": "email. But if you can find it, it's just",
+      "start": 1170.0,
+      "duration": 4.72
+    },
+    {
+      "text": "under the API keys here on the JSON",
+      "start": 1171.919,
+      "duration": 4.961
+    },
+    {
+      "text": "tovide dashboard. So just paste that as",
+      "start": 1174.72,
+      "duration": 4.8
+    },
+    {
+      "text": "a value and just rename this to JSON to",
+      "start": 1176.88,
+      "duration": 4.4
+    },
+    {
+      "text": "video so that you know what it's for and",
+      "start": 1179.52,
+      "duration": 3.36
+    },
+    {
+      "text": "click on save and make sure that",
+      "start": 1181.28,
+      "duration": 4.0
+    },
+    {
+      "text": "credential is selected and then finally",
+      "start": 1182.88,
+      "duration": 4.88
+    },
+    {
+      "text": "toggle send body as on and you want the",
+      "start": 1185.28,
+      "duration": 5.12
+    },
+    {
+      "text": "specified body to be using JSON. And now",
+      "start": 1187.76,
+      "duration": 4.88
+    },
+    {
+      "text": "you'll see it is waiting for a JSON",
+      "start": 1190.4,
+      "duration": 4.32
+    },
+    {
+      "text": "input here which if you go back to our",
+      "start": 1192.64,
+      "duration": 4.159
+    },
+    {
+      "text": "community page there's a section here",
+      "start": 1194.72,
+      "duration": 4.16
+    },
+    {
+      "text": "which you can just copy change this to",
+      "start": 1196.799,
+      "duration": 5.12
+    },
+    {
+      "text": "expression and then paste that in. Now",
+      "start": 1198.88,
+      "duration": 5.36
+    },
+    {
+      "text": "if I open that this looks quite complex",
+      "start": 1201.919,
+      "duration": 4.64
+    },
+    {
+      "text": "but just to explain it very quickly this",
+      "start": 1204.24,
+      "duration": 4.96
+    },
+    {
+      "text": "is the format that JSON tovide accepts",
+      "start": 1206.559,
+      "duration": 5.441
+    },
+    {
+      "text": "for their automation API and what it is",
+      "start": 1209.2,
+      "duration": 5.04
+    },
+    {
+      "text": "saying is to use this template with this",
+      "start": 1212.0,
+      "duration": 4.4
+    },
+    {
+      "text": "ID which is a template that I already",
+      "start": 1214.24,
+      "duration": 4.08
+    },
+    {
+      "text": "created for you and which I can show",
+      "start": 1216.4,
+      "duration": 4.0
+    },
+    {
+      "text": "later if you want to edit it and then it",
+      "start": 1218.32,
+      "duration": 4.719
+    },
+    {
+      "text": "will pass along these variables for that",
+      "start": 1220.4,
+      "duration": 4.32
+    },
+    {
+      "text": "specific video you're creating where",
+      "start": 1223.039,
+      "duration": 3.921
+    },
+    {
+      "text": "it's saying that we'll be using 11 labs",
+      "start": 1224.72,
+      "duration": 5.199
+    },
+    {
+      "text": "for your voice over using this specific",
+      "start": 1226.96,
+      "duration": 5.199
+    },
+    {
+      "text": "voice and if you're not familiar, 11",
+      "start": 1229.919,
+      "duration": 4.481
+    },
+    {
+      "text": "Labs is basically the leading voice",
+      "start": 1232.159,
+      "duration": 4.561
+    },
+    {
+      "text": "generator AI tool right now where if you",
+      "start": 1234.4,
+      "duration": 3.759
+    },
+    {
+      "text": "go to their app, you can go to the",
+      "start": 1236.72,
+      "duration": 3.199
+    },
+    {
+      "text": "voices section here and you can search",
+      "start": 1238.159,
+      "duration": 3.681
+    },
+    {
+      "text": "for several voices here which you can",
+      "start": 1239.919,
+      "duration": 3.841
+    },
+    {
+      "text": "sample and for you to use them just",
+      "start": 1241.84,
+      "duration": 4.8
+    },
+    {
+      "text": "click on view and click on this ID",
+      "start": 1243.76,
+      "duration": 5.44
+    },
+    {
+      "text": "because this ID is specifically pointing",
+      "start": 1246.64,
+      "duration": 5.039
+    },
+    {
+      "text": "to this voice in particular. And so the",
+      "start": 1249.2,
+      "duration": 4.8
+    },
+    {
+      "text": "voice that we are using is this one from",
+      "start": 1251.679,
+      "duration": 4.161
+    },
+    {
+      "text": "Nathaniel which I found to be just a",
+      "start": 1254.0,
+      "duration": 4.559
+    },
+    {
+      "text": "good fit for our topic of stoicism. So",
+      "start": 1255.84,
+      "duration": 4.16
+    },
+    {
+      "text": "if you're doing another topic, it's",
+      "start": 1258.559,
+      "duration": 3.441
+    },
+    {
+      "text": "worthwhile just exploring which voice is",
+      "start": 1260.0,
+      "duration": 4.72
+    },
+    {
+      "text": "good. But if you go back to N8N, the",
+      "start": 1262.0,
+      "duration": 4.48
+    },
+    {
+      "text": "great thing about JSON to video actually",
+      "start": 1264.72,
+      "duration": 3.6
+    },
+    {
+      "text": "is that you don't even need to create an",
+      "start": 1266.48,
+      "duration": 4.319
+    },
+    {
+      "text": "11labs account because they are already",
+      "start": 1268.32,
+      "duration": 4.8
+    },
+    {
+      "text": "managing a service under the hood and",
+      "start": 1270.799,
+      "duration": 4.081
+    },
+    {
+      "text": "you can just use that service without",
+      "start": 1273.12,
+      "duration": 3.039
+    },
+    {
+      "text": "connecting your account. So that's",
+      "start": 1274.88,
+      "duration": 2.799
+    },
+    {
+      "text": "pretty cool. And then for the image",
+      "start": 1276.159,
+      "duration": 3.441
+    },
+    {
+      "text": "model, we just set it as Flux Pro so",
+      "start": 1277.679,
+      "duration": 4.0
+    },
+    {
+      "text": "that we guess the best images. And then",
+      "start": 1279.6,
+      "duration": 3.76
+    },
+    {
+      "text": "the other variables here at the bottom",
+      "start": 1281.679,
+      "duration": 3.841
+    },
+    {
+      "text": "you will recognize because if we see the",
+      "start": 1283.36,
+      "duration": 3.679
+    },
+    {
+      "text": "result here on the right, this is",
+      "start": 1285.52,
+      "duration": 3.12
+    },
+    {
+      "text": "essentially the background music that we",
+      "start": 1287.039,
+      "duration": 3.841
+    },
+    {
+      "text": "got. This is the intro video for this",
+      "start": 1288.64,
+      "duration": 4.64
+    },
+    {
+      "text": "specific video. You also have the title",
+      "start": 1290.88,
+      "duration": 4.159
+    },
+    {
+      "text": "of the video which will appear as the",
+      "start": 1293.28,
+      "duration": 3.759
+    },
+    {
+      "text": "intro text. And you will have these",
+      "start": 1295.039,
+      "duration": 4.561
+    },
+    {
+      "text": "clips which are going to be the specific",
+      "start": 1297.039,
+      "duration": 4.561
+    },
+    {
+      "text": "set of scenes where a voice over will",
+      "start": 1299.6,
+      "duration": 4.64
+    },
+    {
+      "text": "speak this text and our image model via",
+      "start": 1301.6,
+      "duration": 4.88
+    },
+    {
+      "text": "JSON to video will generate this image.",
+      "start": 1304.24,
+      "duration": 4.16
+    },
+    {
+      "text": "And if I scroll that down, you can see",
+      "start": 1306.48,
+      "duration": 4.72
+    },
+    {
+      "text": "there's 10 scenes doing the same thing.",
+      "start": 1308.4,
+      "duration": 4.72
+    },
+    {
+      "text": "So if you just rename that to create",
+      "start": 1311.2,
+      "duration": 4.479
+    },
+    {
+      "text": "video and click on test step, if you",
+      "start": 1313.12,
+      "duration": 5.12
+    },
+    {
+      "text": "receive this success attribute as true,",
+      "start": 1315.679,
+      "duration": 4.401
+    },
+    {
+      "text": "then that means that your request has",
+      "start": 1318.24,
+      "duration": 4.16
+    },
+    {
+      "text": "been posted successfully. And a good way",
+      "start": 1320.08,
+      "duration": 4.32
+    },
+    {
+      "text": "for you to check how it's doing is if",
+      "start": 1322.4,
+      "duration": 3.92
+    },
+    {
+      "text": "you go back to JSON to video and click",
+      "start": 1324.4,
+      "duration": 4.48
+    },
+    {
+      "text": "on render logs. You can see I just sent",
+      "start": 1326.32,
+      "duration": 5.04
+    },
+    {
+      "text": "this request now and it is running at",
+      "start": 1328.88,
+      "duration": 4.24
+    },
+    {
+      "text": "the moment. And you can also see its",
+      "start": 1331.36,
+      "duration": 4.0
+    },
+    {
+      "text": "status there. Now, if in case that",
+      "start": 1333.12,
+      "duration": 3.919
+    },
+    {
+      "text": "request failed for you, it may be",
+      "start": 1335.36,
+      "duration": 4.24
+    },
+    {
+      "text": "possible that you ran out of credits, in",
+      "start": 1337.039,
+      "duration": 4.401
+    },
+    {
+      "text": "which case you can remedy that by",
+      "start": 1339.6,
+      "duration": 3.6
+    },
+    {
+      "text": "getting a subscription here. And if you",
+      "start": 1341.44,
+      "duration": 3.359
+    },
+    {
+      "text": "stick to the end of the video, I can",
+      "start": 1343.2,
+      "duration": 3.44
+    },
+    {
+      "text": "provide a discount code as well, so that",
+      "start": 1344.799,
+      "duration": 4.321
+    },
+    {
+      "text": "you get 50% off for the first month. And",
+      "start": 1346.64,
+      "duration": 5.36
+    },
+    {
+      "text": "while we're on the topic of costs, Jason",
+      "start": 1349.12,
+      "duration": 4.799
+    },
+    {
+      "text": "actually offers models that are free to",
+      "start": 1352.0,
+      "duration": 4.159
+    },
+    {
+      "text": "use without consuming any credits. So,",
+      "start": 1353.919,
+      "duration": 3.921
+    },
+    {
+      "text": "it's an option for you to use those",
+      "start": 1356.159,
+      "duration": 3.921
+    },
+    {
+      "text": "models first while you are testing. And",
+      "start": 1357.84,
+      "duration": 3.839
+    },
+    {
+      "text": "to make it easy, you can just head to",
+      "start": 1360.08,
+      "duration": 3.839
+    },
+    {
+      "text": "this section of the communities page and",
+      "start": 1361.679,
+      "duration": 4.641
+    },
+    {
+      "text": "instead of using 11 labs, use the Azure",
+      "start": 1363.919,
+      "duration": 4.561
+    },
+    {
+      "text": "model which is free as well as this",
+      "start": 1366.32,
+      "duration": 4.16
+    },
+    {
+      "text": "voice ID which you can just copy and",
+      "start": 1368.48,
+      "duration": 4.16
+    },
+    {
+      "text": "paste here. Same with the voice ID,",
+      "start": 1370.48,
+      "duration": 3.84
+    },
+    {
+      "text": "place that here. And for the image",
+      "start": 1372.64,
+      "duration": 4.159
+    },
+    {
+      "text": "model, you can use flux snell which is",
+      "start": 1374.32,
+      "duration": 4.88
+    },
+    {
+      "text": "also a free model and place it here. And",
+      "start": 1376.799,
+      "duration": 4.081
+    },
+    {
+      "text": "so with that set up, you can test",
+      "start": 1379.2,
+      "duration": 3.2
+    },
+    {
+      "text": "without consuming credits and just",
+      "start": 1380.88,
+      "duration": 3.279
+    },
+    {
+      "text": "replace them back to the stronger models",
+      "start": 1382.4,
+      "duration": 3.44
+    },
+    {
+      "text": "once you are satisfied. So now while",
+      "start": 1384.159,
+      "duration": 3.681
+    },
+    {
+      "text": "waiting for this video to finish, what",
+      "start": 1385.84,
+      "duration": 3.839
+    },
+    {
+      "text": "we can just do is complete this",
+      "start": 1387.84,
+      "duration": 4.48
+    },
+    {
+      "text": "workflow. So if I extend this, you would",
+      "start": 1389.679,
+      "duration": 4.48
+    },
+    {
+      "text": "want to add a wait node here. And the",
+      "start": 1392.32,
+      "duration": 3.839
+    },
+    {
+      "text": "reason for the wait node is specifically",
+      "start": 1394.159,
+      "duration": 3.76
+    },
+    {
+      "text": "because we are waiting for the video to",
+      "start": 1396.159,
+      "duration": 4.081
+    },
+    {
+      "text": "be completed now by JSON to video. So",
+      "start": 1397.919,
+      "duration": 4.801
+    },
+    {
+      "text": "we'll set a few minutes here later, but",
+      "start": 1400.24,
+      "duration": 4.72
+    },
+    {
+      "text": "for now just put it as 1 second so that",
+      "start": 1402.72,
+      "duration": 4.72
+    },
+    {
+      "text": "you can click on test step and proceed",
+      "start": 1404.96,
+      "duration": 4.56
+    },
+    {
+      "text": "with the automation and click away. And",
+      "start": 1407.44,
+      "duration": 3.359
+    },
+    {
+      "text": "you probably should hit on save",
+      "start": 1409.52,
+      "duration": 3.039
+    },
+    {
+      "text": "regularly. And then for the next node,",
+      "start": 1410.799,
+      "duration": 4.0
+    },
+    {
+      "text": "what you want is to copy this HTTP",
+      "start": 1412.559,
+      "duration": 4.881
+    },
+    {
+      "text": "request and paste it and just put it",
+      "start": 1414.799,
+      "duration": 5.36
+    },
+    {
+      "text": "here and connect that to your weight",
+      "start": 1417.44,
+      "duration": 5.2
+    },
+    {
+      "text": "node because if you double click that,",
+      "start": 1420.159,
+      "duration": 4.721
+    },
+    {
+      "text": "this node is essentially going to be for",
+      "start": 1422.64,
+      "duration": 4.96
+    },
+    {
+      "text": "you to get your video. So rename that as",
+      "start": 1424.88,
+      "duration": 5.12
+    },
+    {
+      "text": "is and you want the method now to be",
+      "start": 1427.6,
+      "duration": 4.88
+    },
+    {
+      "text": "get. The URL remains to be the same.",
+      "start": 1430.0,
+      "duration": 4.559
+    },
+    {
+      "text": "Your credentials also remain the same,",
+      "start": 1432.48,
+      "duration": 3.84
+    },
+    {
+      "text": "but this time you don't want to really",
+      "start": 1434.559,
+      "duration": 3.36
+    },
+    {
+      "text": "send a body because we're just getting",
+      "start": 1436.32,
+      "duration": 4.08
+    },
+    {
+      "text": "things. But for the query parameter, you",
+      "start": 1437.919,
+      "duration": 4.321
+    },
+    {
+      "text": "want to type in project. And you just",
+      "start": 1440.4,
+      "duration": 3.68
+    },
+    {
+      "text": "want to pull in the project from this",
+      "start": 1442.24,
+      "duration": 4.24
+    },
+    {
+      "text": "create video node into the value here.",
+      "start": 1444.08,
+      "duration": 4.959
+    },
+    {
+      "text": "And you can see that is the ID of your",
+      "start": 1446.48,
+      "duration": 4.799
+    },
+    {
+      "text": "specific project, which if we click on",
+      "start": 1449.039,
+      "duration": 4.401
+    },
+    {
+      "text": "test step, you'll see that the status is",
+      "start": 1451.279,
+      "duration": 4.64
+    },
+    {
+      "text": "now done. Which is great because now you",
+      "start": 1453.44,
+      "duration": 4.64
+    },
+    {
+      "text": "have this URL, which if you just copy",
+      "start": 1455.919,
+      "duration": 4.161
+    },
+    {
+      "text": "and paste in your browser, you'll be",
+      "start": 1458.08,
+      "duration": 4.4
+    },
+    {
+      "text": "able to watch that video in full. So",
+      "start": 1460.08,
+      "duration": 4.079
+    },
+    {
+      "text": "that's looking pretty good. And all of",
+      "start": 1462.48,
+      "duration": 3.36
+    },
+    {
+      "text": "that, the voice over, the images",
+      "start": 1464.159,
+      "duration": 3.76
+    },
+    {
+      "text": "themselves have all been generated by",
+      "start": 1465.84,
+      "duration": 4.24
+    },
+    {
+      "text": "the models that Jason to video has now",
+      "start": 1467.919,
+      "duration": 3.921
+    },
+    {
+      "text": "integrated. The animations of the",
+      "start": 1470.08,
+      "duration": 4.24
+    },
+    {
+      "text": "subtitles, the fading out of the images,",
+      "start": 1471.84,
+      "duration": 4.24
+    },
+    {
+      "text": "the zooming in of the images, all of",
+      "start": 1474.32,
+      "duration": 3.52
+    },
+    {
+      "text": "that has been handled by Jason to video",
+      "start": 1476.08,
+      "duration": 3.44
+    },
+    {
+      "text": "and the template that we created for",
+      "start": 1477.84,
+      "duration": 3.6
+    },
+    {
+      "text": "you, which again in the end I will show",
+      "start": 1479.52,
+      "duration": 4.08
+    },
+    {
+      "text": "how you can edit yourself if you wish",
+      "start": 1481.44,
+      "duration": 4.4
+    },
+    {
+      "text": "because obviously this one is meant for",
+      "start": 1483.6,
+      "duration": 4.64
+    },
+    {
+      "text": "this stoicism topic. But that's good and",
+      "start": 1485.84,
+      "duration": 4.719
+    },
+    {
+      "text": "you now have the video which is all you",
+      "start": 1488.24,
+      "duration": 4.88
+    },
+    {
+      "text": "need really. But this handle errors area",
+      "start": 1490.559,
+      "duration": 5.36
+    },
+    {
+      "text": "is quite optional, but it's easy to set",
+      "start": 1493.12,
+      "duration": 5.439
+    },
+    {
+      "text": "up. So it's advisable to do so anyway",
+      "start": 1495.919,
+      "duration": 4.88
+    },
+    {
+      "text": "because what you just need to do is to",
+      "start": 1498.559,
+      "duration": 5.201
+    },
+    {
+      "text": "extend it and find a node called switch.",
+      "start": 1500.799,
+      "duration": 4.721
+    },
+    {
+      "text": "And what the switch node does is",
+      "start": 1503.76,
+      "duration": 3.6
+    },
+    {
+      "text": "basically just a set of rules. So for",
+      "start": 1505.52,
+      "duration": 3.759
+    },
+    {
+      "text": "example, in this get video, there's an",
+      "start": 1507.36,
+      "duration": 4.08
+    },
+    {
+      "text": "attribute called status which tells us",
+      "start": 1509.279,
+      "duration": 4.561
+    },
+    {
+      "text": "if this video has already done or not.",
+      "start": 1511.44,
+      "duration": 4.08
+    },
+    {
+      "text": "So just drag it there and then we set",
+      "start": 1513.84,
+      "duration": 4.16
+    },
+    {
+      "text": "the value to done and then click on",
+      "start": 1515.52,
+      "duration": 4.8
+    },
+    {
+      "text": "rename output and just name that as",
+      "start": 1518.0,
+      "duration": 4.4
+    },
+    {
+      "text": "done. And so this routing rule will",
+      "start": 1520.32,
+      "duration": 4.479
+    },
+    {
+      "text": "happen if our video has already been",
+      "start": 1522.4,
+      "duration": 5.12
+    },
+    {
+      "text": "completed. If for example the status is",
+      "start": 1524.799,
+      "duration": 5.201
+    },
+    {
+      "text": "not yet done and instead it says running",
+      "start": 1527.52,
+      "duration": 4.0
+    },
+    {
+      "text": "which is the status that will appear",
+      "start": 1530.0,
+      "duration": 3.76
+    },
+    {
+      "text": "here if the video is still rendering",
+      "start": 1531.52,
+      "duration": 4.159
+    },
+    {
+      "text": "then you want a route for that as well.",
+      "start": 1533.76,
+      "duration": 3.84
+    },
+    {
+      "text": "So just go ahead and add that and rename",
+      "start": 1535.679,
+      "duration": 4.081
+    },
+    {
+      "text": "that to running. And then finally, what",
+      "start": 1537.6,
+      "duration": 5.76
+    },
+    {
+      "text": "if the status shows up as error, which",
+      "start": 1539.76,
+      "duration": 5.6
+    },
+    {
+      "text": "again sometimes the status does show",
+      "start": 1543.36,
+      "duration": 4.559
+    },
+    {
+      "text": "that if JSON to video has some sort of",
+      "start": 1545.36,
+      "duration": 4.48
+    },
+    {
+      "text": "error internally in generating your",
+      "start": 1547.919,
+      "duration": 4.64
+    },
+    {
+      "text": "video and so you want that third routing",
+      "start": 1549.84,
+      "duration": 5.12
+    },
+    {
+      "text": "rule as well. So now if you click away",
+      "start": 1552.559,
+      "duration": 4.161
+    },
+    {
+      "text": "here, you will see that there are now",
+      "start": 1554.96,
+      "duration": 3.92
+    },
+    {
+      "text": "three branches here and the basic logic",
+      "start": 1556.72,
+      "duration": 4.88
+    },
+    {
+      "text": "is if it is still running and JSON to",
+      "start": 1558.88,
+      "duration": 4.159
+    },
+    {
+      "text": "video is still rendering it, you just",
+      "start": 1561.6,
+      "duration": 3.6
+    },
+    {
+      "text": "want to wait a bit more, right? So just",
+      "start": 1563.039,
+      "duration": 4.081
+    },
+    {
+      "text": "click on wait as a node to extend that",
+      "start": 1565.2,
+      "duration": 3.76
+    },
+    {
+      "text": "to and wait something like 20 more",
+      "start": 1567.12,
+      "duration": 3.52
+    },
+    {
+      "text": "seconds and then click away and then",
+      "start": 1568.96,
+      "duration": 3.92
+    },
+    {
+      "text": "after 20 seconds what you want to do is",
+      "start": 1570.64,
+      "duration": 4.56
+    },
+    {
+      "text": "to retry that get video. So just go",
+      "start": 1572.88,
+      "duration": 4.0
+    },
+    {
+      "text": "ahead and extend that and link it back",
+      "start": 1575.2,
+      "duration": 3.599
+    },
+    {
+      "text": "to get video. So it's going to be a",
+      "start": 1576.88,
+      "duration": 3.919
+    },
+    {
+      "text": "simple loop so that if this get video is",
+      "start": 1578.799,
+      "duration": 4.24
+    },
+    {
+      "text": "still not yet done after 20 seconds it",
+      "start": 1580.799,
+      "duration": 4.0
+    },
+    {
+      "text": "will go back to the switch. It will",
+      "start": 1583.039,
+      "duration": 3.76
+    },
+    {
+      "text": "identify the status as still running and",
+      "start": 1584.799,
+      "duration": 5.201
+    },
+    {
+      "text": "it will wait a few more seconds up until",
+      "start": 1586.799,
+      "duration": 5.681
+    },
+    {
+      "text": "it gets finished. And if it runs into an",
+      "start": 1590.0,
+      "duration": 4.88
+    },
+    {
+      "text": "error. So if you just extend that, what",
+      "start": 1592.48,
+      "duration": 5.199
+    },
+    {
+      "text": "you just want to do is mark that in your",
+      "start": 1594.88,
+      "duration": 4.56
+    },
+    {
+      "text": "Google sheet, which you can either copy",
+      "start": 1597.679,
+      "duration": 3.681
+    },
+    {
+      "text": "your old Google Sheets node here in the",
+      "start": 1599.44,
+      "duration": 4.56
+    },
+    {
+      "text": "very beginning, just put it here. And",
+      "start": 1601.36,
+      "duration": 5.28
+    },
+    {
+      "text": "then we want to extend it and link it",
+      "start": 1604.0,
+      "duration": 4.799
+    },
+    {
+      "text": "there. Because if I open this, I can",
+      "start": 1606.64,
+      "duration": 4.159
+    },
+    {
+      "text": "rename it as something like error log.",
+      "start": 1608.799,
+      "duration": 3.841
+    },
+    {
+      "text": "And you can see this is already linked",
+      "start": 1610.799,
+      "duration": 4.48
+    },
+    {
+      "text": "to the sheet of my choice. But this time",
+      "start": 1612.64,
+      "duration": 5.039
+    },
+    {
+      "text": "change the operation to update row. And",
+      "start": 1615.279,
+      "duration": 4.801
+    },
+    {
+      "text": "then for the mapping, just leave it as",
+      "start": 1617.679,
+      "duration": 4.801
+    },
+    {
+      "text": "ID. Which again, if we go back to our",
+      "start": 1620.08,
+      "duration": 4.24
+    },
+    {
+      "text": "sheet template, it's going to be this",
+      "start": 1622.48,
+      "duration": 4.16
+    },
+    {
+      "text": "column. And then just go ahead and copy",
+      "start": 1624.32,
+      "duration": 4.239
+    },
+    {
+      "text": "this small piece of text in our",
+      "start": 1626.64,
+      "duration": 3.68
+    },
+    {
+      "text": "community page, change that to",
+      "start": 1628.559,
+      "duration": 3.921
+    },
+    {
+      "text": "expression, and place it there. And if",
+      "start": 1630.32,
+      "duration": 4.0
+    },
+    {
+      "text": "you do that, you'll see it is getting",
+      "start": 1632.48,
+      "duration": 4.24
+    },
+    {
+      "text": "the ID from your Google Sheets node, in",
+      "start": 1634.32,
+      "duration": 4.479
+    },
+    {
+      "text": "which case the number is one, which is",
+      "start": 1636.72,
+      "duration": 4.64
+    },
+    {
+      "text": "right because that is our first idea.",
+      "start": 1638.799,
+      "duration": 4.48
+    },
+    {
+      "text": "And then just set this production status",
+      "start": 1641.36,
+      "duration": 5.04
+    },
+    {
+      "text": "to update it into error. So that this",
+      "start": 1643.279,
+      "duration": 4.961
+    },
+    {
+      "text": "column will be updated from for",
+      "start": 1646.4,
+      "duration": 3.759
+    },
+    {
+      "text": "production to error so that you can",
+      "start": 1648.24,
+      "duration": 4.24
+    },
+    {
+      "text": "understand that that particular idea did",
+      "start": 1650.159,
+      "duration": 4.88
+    },
+    {
+      "text": "not generate properly. So click away and",
+      "start": 1652.48,
+      "duration": 4.48
+    },
+    {
+      "text": "there you go. You now have an error",
+      "start": 1655.039,
+      "duration": 3.681
+    },
+    {
+      "text": "handling portion of your automation",
+      "start": 1656.96,
+      "duration": 3.52
+    },
+    {
+      "text": "which is always good. And so the last",
+      "start": 1658.72,
+      "duration": 3.199
+    },
+    {
+      "text": "thing that you just want to set up here",
+      "start": 1660.48,
+      "duration": 4.16
+    },
+    {
+      "text": "is to change this first weight node into",
+      "start": 1661.919,
+      "duration": 5.36
+    },
+    {
+      "text": "something longer. I think 150 seconds is",
+      "start": 1664.64,
+      "duration": 4.159
+    },
+    {
+      "text": "usually good enough. And there you go.",
+      "start": 1667.279,
+      "duration": 3.121
+    },
+    {
+      "text": "You have just set up the creation",
+      "start": 1668.799,
+      "duration": 4.321
+    },
+    {
+      "text": "section of your agent. And so the last",
+      "start": 1670.4,
+      "duration": 5.44
+    },
+    {
+      "text": "part is to just set up this output",
+      "start": 1673.12,
+      "duration": 5.039
+    },
+    {
+      "text": "section which will publish your video to",
+      "start": 1675.84,
+      "duration": 4.48
+    },
+    {
+      "text": "YouTube as well. And to do that you just",
+      "start": 1678.159,
+      "duration": 3.76
+    },
+    {
+      "text": "need to add in a few more nodes here",
+      "start": 1680.32,
+      "duration": 3.76
+    },
+    {
+      "text": "starting with extending this done branch",
+      "start": 1681.919,
+      "duration": 4.161
+    },
+    {
+      "text": "with another Google sheet node. So to",
+      "start": 1684.08,
+      "duration": 3.839
+    },
+    {
+      "text": "make that easy just go ahead and copy",
+      "start": 1686.08,
+      "duration": 4.079
+    },
+    {
+      "text": "this sheet node and paste that here. And",
+      "start": 1687.919,
+      "duration": 3.841
+    },
+    {
+      "text": "if you just connect that and double",
+      "start": 1690.159,
+      "duration": 3.921
+    },
+    {
+      "text": "click you can just change this to add",
+      "start": 1691.76,
+      "duration": 5.2
+    },
+    {
+      "text": "video URL and rename that here. And",
+      "start": 1694.08,
+      "duration": 4.8
+    },
+    {
+      "text": "everything here should be good. But",
+      "start": 1696.96,
+      "duration": 4.24
+    },
+    {
+      "text": "obviously we won't change this to error.",
+      "start": 1698.88,
+      "duration": 4.64
+    },
+    {
+      "text": "Instead we will mark it as done. And",
+      "start": 1701.2,
+      "duration": 4.32
+    },
+    {
+      "text": "then for the final output you can just",
+      "start": 1703.52,
+      "duration": 4.08
+    },
+    {
+      "text": "change this to expression and then",
+      "start": 1705.52,
+      "duration": 4.8
+    },
+    {
+      "text": "either type in this text exactly or what",
+      "start": 1707.6,
+      "duration": 4.799
+    },
+    {
+      "text": "you can also do is go back to your",
+      "start": 1710.32,
+      "duration": 4.959
+    },
+    {
+      "text": "switch node click on test step so that",
+      "start": 1712.399,
+      "duration": 5.121
+    },
+    {
+      "text": "the automation continues and you can",
+      "start": 1715.279,
+      "duration": 4.721
+    },
+    {
+      "text": "pass along these outputs onto the next",
+      "start": 1717.52,
+      "duration": 4.399
+    },
+    {
+      "text": "node. So if you just click away you can",
+      "start": 1720.0,
+      "duration": 3.919
+    },
+    {
+      "text": "see this line has now been turned to",
+      "start": 1721.919,
+      "duration": 3.921
+    },
+    {
+      "text": "green. And if you click that again",
+      "start": 1723.919,
+      "duration": 3.441
+    },
+    {
+      "text": "you'll see the values being passed from",
+      "start": 1725.84,
+      "duration": 3.839
+    },
+    {
+      "text": "your switch node and this movie URL is",
+      "start": 1727.36,
+      "duration": 4.64
+    },
+    {
+      "text": "now green. Or you can also just find the",
+      "start": 1729.679,
+      "duration": 5.401
+    },
+    {
+      "text": "URL in that switch node and just drag it",
+      "start": 1732.0,
+      "duration": 6.0
+    },
+    {
+      "text": "here. And now if we click test step",
+      "start": 1735.08,
+      "duration": 5.4
+    },
+    {
+      "text": "there which you can see has been updated",
+      "start": 1738.0,
+      "duration": 4.799
+    },
+    {
+      "text": "properly. And if we go back to our",
+      "start": 1740.48,
+      "duration": 4.4
+    },
+    {
+      "text": "Google sheet that has been reflected as",
+      "start": 1742.799,
+      "duration": 4.561
+    },
+    {
+      "text": "well. So now the remaining step is to",
+      "start": 1744.88,
+      "duration": 4.399
+    },
+    {
+      "text": "just upload this on YouTube. So to do",
+      "start": 1747.36,
+      "duration": 4.559
+    },
+    {
+      "text": "that just extend this to do an HTTP",
+      "start": 1749.279,
+      "duration": 4.64
+    },
+    {
+      "text": "request and all you will really do for",
+      "start": 1751.919,
+      "duration": 4.801
+    },
+    {
+      "text": "this one is to grab that video file. So",
+      "start": 1753.919,
+      "duration": 4.801
+    },
+    {
+      "text": "from the latest Google sheet node, grab",
+      "start": 1756.72,
+      "duration": 3.92
+    },
+    {
+      "text": "that final output. Put that here. And",
+      "start": 1758.72,
+      "duration": 4.319
+    },
+    {
+      "text": "you can see it is grabbing the URL. And",
+      "start": 1760.64,
+      "duration": 4.08
+    },
+    {
+      "text": "now we can just rename this to something",
+      "start": 1763.039,
+      "duration": 4.24
+    },
+    {
+      "text": "like get video file. And if we click on",
+      "start": 1764.72,
+      "duration": 4.64
+    },
+    {
+      "text": "test step, you'll see that it returned",
+      "start": 1767.279,
+      "duration": 4.241
+    },
+    {
+      "text": "to you some binary data, which if you",
+      "start": 1769.36,
+      "duration": 4.0
+    },
+    {
+      "text": "view it would basically just show you a",
+      "start": 1771.52,
+      "duration": 4.96
+    },
+    {
+      "text": "preview of your video. So now that file",
+      "start": 1773.36,
+      "duration": 6.799
+    },
+    {
+      "text": "has been loaded to N8N, which is good",
+      "start": 1776.48,
+      "duration": 6.16
+    },
+    {
+      "text": "because the next step now is for you to",
+      "start": 1780.159,
+      "duration": 5.201
+    },
+    {
+      "text": "upload that file into YouTube. So search",
+      "start": 1782.64,
+      "duration": 5.36
+    },
+    {
+      "text": "the YouTube node and and select upload a",
+      "start": 1785.36,
+      "duration": 4.88
+    },
+    {
+      "text": "video for the action. And if in case you",
+      "start": 1788.0,
+      "duration": 4.159
+    },
+    {
+      "text": "don't have YouTube connected to your N8N",
+      "start": 1790.24,
+      "duration": 3.76
+    },
+    {
+      "text": "yet, you just need to again create new",
+      "start": 1792.159,
+      "duration": 3.681
+    },
+    {
+      "text": "credential here. And you'll see that it",
+      "start": 1794.0,
+      "duration": 4.48
+    },
+    {
+      "text": "is waiting for a client ID and client",
+      "start": 1795.84,
+      "duration": 4.8
+    },
+    {
+      "text": "secret. So to make that easy, I link",
+      "start": 1798.48,
+      "duration": 4.559
+    },
+    {
+      "text": "here the part of a previous video which",
+      "start": 1800.64,
+      "duration": 4.24
+    },
+    {
+      "text": "takes you through the exact steps to",
+      "start": 1803.039,
+      "duration": 4.481
+    },
+    {
+      "text": "connect YouTube to N8N. So it only takes",
+      "start": 1804.88,
+      "duration": 4.399
+    },
+    {
+      "text": "a minute or two and all you need to do",
+      "start": 1807.52,
+      "duration": 3.92
+    },
+    {
+      "text": "is to follow the steps and by the end of",
+      "start": 1809.279,
+      "duration": 3.681
+    },
+    {
+      "text": "that you'll have your client ID and",
+      "start": 1811.44,
+      "duration": 3.04
+    },
+    {
+      "text": "client secret which you can just click",
+      "start": 1812.96,
+      "duration": 3.68
+    },
+    {
+      "text": "on save here. So once you have that",
+      "start": 1814.48,
+      "duration": 4.559
+    },
+    {
+      "text": "credential now all that remains is to",
+      "start": 1816.64,
+      "duration": 4.88
+    },
+    {
+      "text": "map some of these values. So for the",
+      "start": 1819.039,
+      "duration": 5.36
+    },
+    {
+      "text": "title just go ahead and scroll to the",
+      "start": 1821.52,
+      "duration": 5.2
+    },
+    {
+      "text": "very bottom for your very first Google",
+      "start": 1824.399,
+      "duration": 4.321
+    },
+    {
+      "text": "Sheets node and find the title there",
+      "start": 1826.72,
+      "duration": 4.0
+    },
+    {
+      "text": "which is going to be your idea. And if",
+      "start": 1828.72,
+      "duration": 4.0
+    },
+    {
+      "text": "this error shows, all you need to do is",
+      "start": 1830.72,
+      "duration": 4.8
+    },
+    {
+      "text": "to replace this item with first with",
+      "start": 1832.72,
+      "duration": 4.88
+    },
+    {
+      "text": "open and close parenthesis since this",
+      "start": 1835.52,
+      "duration": 4.12
+    },
+    {
+      "text": "automation only deals with one idea",
+      "start": 1837.6,
+      "duration": 4.24
+    },
+    {
+      "text": "anyway. So change this region",
+      "start": 1839.64,
+      "duration": 4.36
+    },
+    {
+      "text": "appropriately, change this category as",
+      "start": 1841.84,
+      "duration": 4.319
+    },
+    {
+      "text": "well. And then for input binary field",
+      "start": 1844.0,
+      "duration": 4.24
+    },
+    {
+      "text": "that is left as data and then for the",
+      "start": 1846.159,
+      "duration": 4.481
+    },
+    {
+      "text": "optionals find the description because",
+      "start": 1848.24,
+      "duration": 4.72
+    },
+    {
+      "text": "that is going to be your caption. So",
+      "start": 1850.64,
+      "duration": 4.56
+    },
+    {
+      "text": "just drag that there and once again just",
+      "start": 1852.96,
+      "duration": 4.959
+    },
+    {
+      "text": "change that to from item to first. And",
+      "start": 1855.2,
+      "duration": 4.24
+    },
+    {
+      "text": "then the other thing that I want to add",
+      "start": 1857.919,
+      "duration": 3.921
+    },
+    {
+      "text": "is the privacy status to be set as",
+      "start": 1859.44,
+      "duration": 4.56
+    },
+    {
+      "text": "unlisted just so that there's a human in",
+      "start": 1861.84,
+      "duration": 3.92
+    },
+    {
+      "text": "the loop and you can review your channel",
+      "start": 1864.0,
+      "duration": 4.0
+    },
+    {
+      "text": "first before publishing. So now if it's",
+      "start": 1865.76,
+      "duration": 4.159
+    },
+    {
+      "text": "been executed successfully, you will see",
+      "start": 1868.0,
+      "duration": 4.0
+    },
+    {
+      "text": "that you now have your video here as",
+      "start": 1869.919,
+      "duration": 4.0
+    },
+    {
+      "text": "unlisted. And you can see it's uploaded",
+      "start": 1872.0,
+      "duration": 4.48
+    },
+    {
+      "text": "today along with the title and captions.",
+      "start": 1873.919,
+      "duration": 4.321
+    },
+    {
+      "text": "So that worked. And now the last thing",
+      "start": 1876.48,
+      "duration": 3.84
+    },
+    {
+      "text": "that you need to set up is to just mark",
+      "start": 1878.24,
+      "duration": 4.319
+    },
+    {
+      "text": "that row as done in your Google sheet",
+      "start": 1880.32,
+      "duration": 4.4
+    },
+    {
+      "text": "just so that in the next run you'll now",
+      "start": 1882.559,
+      "duration": 4.0
+    },
+    {
+      "text": "be picking up the succeeding row. So to",
+      "start": 1884.72,
+      "duration": 3.6
+    },
+    {
+      "text": "do that just copy this Google sheet",
+      "start": 1886.559,
+      "duration": 4.24
+    },
+    {
+      "text": "place that here extend then link that",
+      "start": 1888.32,
+      "duration": 5.359
+    },
+    {
+      "text": "and change the name into mark as done.",
+      "start": 1890.799,
+      "duration": 4.24
+    },
+    {
+      "text": "And now everything here should be set",
+      "start": 1893.679,
+      "duration": 3.36
+    },
+    {
+      "text": "up. So the only thing that you want to",
+      "start": 1895.039,
+      "duration": 4.321
+    },
+    {
+      "text": "change so just go ahead and remove these",
+      "start": 1897.039,
+      "duration": 4.161
+    },
+    {
+      "text": "so that we don't change them is to mark",
+      "start": 1899.36,
+      "duration": 3.84
+    },
+    {
+      "text": "the publishing status as done. And now",
+      "start": 1901.2,
+      "duration": 4.079
+    },
+    {
+      "text": "if we click on test step if we go back",
+      "start": 1903.2,
+      "duration": 3.76
+    },
+    {
+      "text": "to our Google sheet you now have the",
+      "start": 1905.279,
+      "duration": 4.24
+    },
+    {
+      "text": "publishing status as done as well. And",
+      "start": 1906.96,
+      "duration": 4.559
+    },
+    {
+      "text": "there you go. That is the automation in",
+      "start": 1909.519,
+      "duration": 4.241
+    },
+    {
+      "text": "full. And so if you toggle this as",
+      "start": 1911.519,
+      "duration": 4.64
+    },
+    {
+      "text": "active, it will run every day or even",
+      "start": 1913.76,
+      "duration": 4.96
+    },
+    {
+      "text": "every hour if you schedule it as such to",
+      "start": 1916.159,
+      "duration": 4.721
+    },
+    {
+      "text": "post long form YouTube videos for you on",
+      "start": 1918.72,
+      "duration": 4.64
+    },
+    {
+      "text": "the topic of your choice. So now to take",
+      "start": 1920.88,
+      "duration": 4.72
+    },
+    {
+      "text": "this further, if you want to customize",
+      "start": 1923.36,
+      "duration": 4.72
+    },
+    {
+      "text": "that template to go beyond what we did",
+      "start": 1925.6,
+      "duration": 5.04
+    },
+    {
+      "text": "of just stoicism into your specific",
+      "start": 1928.08,
+      "duration": 4.8
+    },
+    {
+      "text": "niche like these examples that I gave",
+      "start": 1930.64,
+      "duration": 4.56
+    },
+    {
+      "text": "earlier, then what you can do is go to",
+      "start": 1932.88,
+      "duration": 4.88
+    },
+    {
+      "text": "this second page in our community. And",
+      "start": 1935.2,
+      "duration": 4.8
+    },
+    {
+      "text": "there is a piece of script there which",
+      "start": 1937.76,
+      "duration": 4.48
+    },
+    {
+      "text": "you can just go ahead and copy the whole",
+      "start": 1940.0,
+      "duration": 4.24
+    },
+    {
+      "text": "thing. And if we go back to JSON to",
+      "start": 1942.24,
+      "duration": 4.48
+    },
+    {
+      "text": "video, go to movie templates, click on",
+      "start": 1944.24,
+      "duration": 4.72
+    },
+    {
+      "text": "add new template and just edit that.",
+      "start": 1946.72,
+      "duration": 4.079
+    },
+    {
+      "text": "Again, if you click this drop down at",
+      "start": 1948.96,
+      "duration": 4.0
+    },
+    {
+      "text": "the top and click on edit templates",
+      "start": 1950.799,
+      "duration": 4.48
+    },
+    {
+      "text": "JSON, you can just remove that and paste",
+      "start": 1952.96,
+      "duration": 4.8
+    },
+    {
+      "text": "what you copied here and click on update",
+      "start": 1955.279,
+      "duration": 4.721
+    },
+    {
+      "text": "JSON. And so now you have this template",
+      "start": 1957.76,
+      "duration": 4.48
+    },
+    {
+      "text": "which you can edit to your liking. And",
+      "start": 1960.0,
+      "duration": 4.08
+    },
+    {
+      "text": "the way to do that is through this JSON",
+      "start": 1962.24,
+      "duration": 4.159
+    },
+    {
+      "text": "template as well. So for example, for",
+      "start": 1964.08,
+      "duration": 4.24
+    },
+    {
+      "text": "the intro text, which is the text that",
+      "start": 1966.399,
+      "duration": 3.76
+    },
+    {
+      "text": "appears at the very beginning, you can",
+      "start": 1968.32,
+      "duration": 3.52
+    },
+    {
+      "text": "change the font size. You can change",
+      "start": 1970.159,
+      "duration": 3.921
+    },
+    {
+      "text": "where it's placed in the screen. For the",
+      "start": 1971.84,
+      "duration": 3.92
+    },
+    {
+      "text": "clips themselves, if you don't want them",
+      "start": 1974.08,
+      "duration": 4.0
+    },
+    {
+      "text": "to be desaturated, like in the Stoicism",
+      "start": 1975.76,
+      "duration": 3.6
+    },
+    {
+      "text": "example, you can just change the",
+      "start": 1978.08,
+      "duration": 3.12
+    },
+    {
+      "text": "saturation. If you want to change the",
+      "start": 1979.36,
+      "duration": 4.4
+    },
+    {
+      "text": "font of the subtitles, you can also do",
+      "start": 1981.2,
+      "duration": 5.12
+    },
+    {
+      "text": "that here and even the colors and so on",
+      "start": 1983.76,
+      "duration": 4.159
+    },
+    {
+      "text": "and so forth. And if you want to",
+      "start": 1986.32,
+      "duration": 3.359
+    },
+    {
+      "text": "customize that template to your liking,",
+      "start": 1987.919,
+      "duration": 4.401
+    },
+    {
+      "text": "the best places to go to would be Jason",
+      "start": 1989.679,
+      "duration": 4.321
+    },
+    {
+      "text": "to videos documentation, which is",
+      "start": 1992.32,
+      "duration": 3.76
+    },
+    {
+      "text": "available here. And this is essentially",
+      "start": 1994.0,
+      "duration": 4.0
+    },
+    {
+      "text": "all the things you need to know about",
+      "start": 1996.08,
+      "duration": 3.599
+    },
+    {
+      "text": "editing that template. And one of the",
+      "start": 1998.0,
+      "duration": 3.36
+    },
+    {
+      "text": "most useful tools that they launch is",
+      "start": 1999.679,
+      "duration": 3.521
+    },
+    {
+      "text": "this chatbot as well. So if you just go",
+      "start": 2001.36,
+      "duration": 4.64
+    },
+    {
+      "text": "to that it is basically like a chatgpt",
+      "start": 2003.2,
+      "duration": 5.199
+    },
+    {
+      "text": "style bot. So you can see if I just",
+      "start": 2006.0,
+      "duration": 4.799
+    },
+    {
+      "text": "paste like my JSON to that it can",
+      "start": 2008.399,
+      "duration": 4.321
+    },
+    {
+      "text": "actually understand that and also give",
+      "start": 2010.799,
+      "duration": 3.76
+    },
+    {
+      "text": "you a few tips depending on the",
+      "start": 2012.72,
+      "duration": 4.16
+    },
+    {
+      "text": "complexity of what you are doing. So",
+      "start": 2014.559,
+      "duration": 4.801
+    },
+    {
+      "text": "that's just a useful way to do that. And",
+      "start": 2016.88,
+      "duration": 4.159
+    },
+    {
+      "text": "when you are happy with that template",
+      "start": 2019.36,
+      "duration": 3.36
+    },
+    {
+      "text": "you can click render movie here at the",
+      "start": 2021.039,
+      "duration": 3.681
+    },
+    {
+      "text": "bottom for you to preview what it would",
+      "start": 2022.72,
+      "duration": 4.48
+    },
+    {
+      "text": "create and then click on show template",
+      "start": 2024.72,
+      "duration": 4.88
+    },
+    {
+      "text": "ID which you can just copy. And if you",
+      "start": 2027.2,
+      "duration": 4.959
+    },
+    {
+      "text": "go back to our automation under the",
+      "start": 2029.6,
+      "duration": 4.72
+    },
+    {
+      "text": "create video module, you just need to",
+      "start": 2032.159,
+      "duration": 4.161
+    },
+    {
+      "text": "replace this template with that template",
+      "start": 2034.32,
+      "duration": 3.76
+    },
+    {
+      "text": "that you have. And there you go. You",
+      "start": 2036.32,
+      "duration": 3.76
+    },
+    {
+      "text": "just created the long form video YouTube",
+      "start": 2038.08,
+      "duration": 4.64
+    },
+    {
+      "text": "creator agent. And whenever you set the",
+      "start": 2040.08,
+      "duration": 4.64
+    },
+    {
+      "text": "direction for the month, let's say your",
+      "start": 2042.72,
+      "duration": 4.24
+    },
+    {
+      "text": "ideas agent will create new ideas while",
+      "start": 2044.72,
+      "duration": 4.32
+    },
+    {
+      "text": "your creator agent will be hard at work",
+      "start": 2046.96,
+      "duration": 4.719
+    },
+    {
+      "text": "with producing and pushing those videos",
+      "start": 2049.04,
+      "duration": 4.96
+    },
+    {
+      "text": "out daily. When selecting a topic, I",
+      "start": 2051.679,
+      "duration": 4.321
+    },
+    {
+      "text": "suggest that you select one that you",
+      "start": 2054.0,
+      "duration": 3.599
+    },
+    {
+      "text": "like yourself because since it's",
+      "start": 2056.0,
+      "duration": 3.44
+    },
+    {
+      "text": "automated and it's something that you",
+      "start": 2057.599,
+      "duration": 3.841
+    },
+    {
+      "text": "get daily, then it's always good to have",
+      "start": 2059.44,
+      "duration": 3.76
+    },
+    {
+      "text": "content that you like yourself so that",
+      "start": 2061.44,
+      "duration": 3.76
+    },
+    {
+      "text": "you'll be an audience of one. And that's",
+      "start": 2063.2,
+      "duration": 3.84
+    },
+    {
+      "text": "also a sure way to test because if you",
+      "start": 2065.2,
+      "duration": 3.679
+    },
+    {
+      "text": "like the content and are getting value",
+      "start": 2067.04,
+      "duration": 3.76
+    },
+    {
+      "text": "yourself from the videos that your",
+      "start": 2068.879,
+      "duration": 4.081
+    },
+    {
+      "text": "agents are producing, then other people",
+      "start": 2070.8,
+      "duration": 4.0
+    },
+    {
+      "text": "will as well. So, if you like this",
+      "start": 2072.96,
+      "duration": 4.24
+    },
+    {
+      "text": "lesson, do check out our community. If",
+      "start": 2074.8,
+      "duration": 3.92
+    },
+    {
+      "text": "you head here on the classroom, there",
+      "start": 2077.2,
+      "duration": 3.76
+    },
+    {
+      "text": "are tons of other lessons here around AI",
+      "start": 2078.72,
+      "duration": 4.08
+    },
+    {
+      "text": "and automation which you can learn about",
+      "start": 2080.96,
+      "duration": 3.439
+    },
+    {
+      "text": "which if you go through each one, you'll",
+      "start": 2082.8,
+      "duration": 3.44
+    },
+    {
+      "text": "see all the prompts, all the toolkits",
+      "start": 2084.399,
+      "duration": 3.601
+    },
+    {
+      "text": "that you need in order to get started",
+      "start": 2086.24,
+      "duration": 3.919
+    },
+    {
+      "text": "are cleanly organized for you. And we",
+      "start": 2088.0,
+      "duration": 4.079
+    },
+    {
+      "text": "also have a lot of events lined up as",
+      "start": 2090.159,
+      "duration": 3.601
+    },
+    {
+      "text": "well as community rewards and",
+      "start": 2092.079,
+      "duration": 4.0
+    },
+    {
+      "text": "initiatives for our more than 1,000",
+      "start": 2093.76,
+      "duration": 4.8
+    },
+    {
+      "text": "members. Now, paid opportunities also",
+      "start": 2096.079,
+      "duration": 4.481
+    },
+    {
+      "text": "get posted here regularly, either by",
+      "start": 2098.56,
+      "duration": 4.08
+    },
+    {
+      "text": "myself or by other members of the",
+      "start": 2100.56,
+      "duration": 3.44
+    },
+    {
+      "text": "community. So, if you want to get",
+      "start": 2102.64,
+      "duration": 3.439
+    },
+    {
+      "text": "started with earning from AI, then this",
+      "start": 2104.0,
+      "duration": 3.92
+    },
+    {
+      "text": "group may be for you. And if you're part",
+      "start": 2106.079,
+      "duration": 3.361
+    },
+    {
+      "text": "of the community, we also have an",
+      "start": 2107.92,
+      "duration": 3.28
+    },
+    {
+      "text": "exclusive discount code, which you can",
+      "start": 2109.44,
+      "duration": 3.36
+    },
+    {
+      "text": "just click here to get, and that will",
+      "start": 2111.2,
+      "duration": 4.159
+    },
+    {
+      "text": "provide you 50% off on your first month,",
+      "start": 2112.8,
+      "duration": 4.72
+    },
+    {
+      "text": "which is always good. And as a bonus, if",
+      "start": 2115.359,
+      "duration": 4.321
+    },
+    {
+      "text": "you head to this page in our community,",
+      "start": 2117.52,
+      "duration": 4.559
+    },
+    {
+      "text": "I've also provided there 15 niche ideas",
+      "start": 2119.68,
+      "duration": 4.24
+    },
+    {
+      "text": "for a YouTube creator agent, which",
+      "start": 2122.079,
+      "duration": 3.52
+    },
+    {
+      "text": "hopefully would inspire you to create",
+      "start": 2123.92,
+      "duration": 3.919
+    },
+    {
+      "text": "your own. So, check out the RoboNuggets",
+      "start": 2125.599,
+      "duration": 4.161
+    },
+    {
+      "text": "community just in the link in the video",
+      "start": 2127.839,
+      "duration": 3.76
+    },
+    {
+      "text": "description if you want access to",
+      "start": 2129.76,
+      "duration": 4.16
+    },
+    {
+      "text": "step-by-step AI tutorials, automation",
+      "start": 2131.599,
+      "duration": 4.801
+    },
+    {
+      "text": "blueprints that are ready to load, and a",
+      "start": 2133.92,
+      "duration": 4.72
+    },
+    {
+      "text": "community of AI professionals who are",
+      "start": 2136.4,
+      "duration": 4.16
+    },
+    {
+      "text": "doing really great work in this evolving",
+      "start": 2138.64,
+      "duration": 3.92
+    },
+    {
+      "text": "space. So, check that out if you haven't",
+      "start": 2140.56,
+      "duration": 3.6
+    },
+    {
+      "text": "yet. See you there, and thanks for",
+      "start": 2142.56,
+      "duration": 5.32
+    },
+    {
+      "text": "watching. Thank you.",
+      "start": 2144.16,
+      "duration": 3.72
+    }
+  ]
+}

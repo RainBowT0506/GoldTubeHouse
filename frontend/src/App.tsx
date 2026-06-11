@@ -5,7 +5,8 @@ import {
   formatTime,
   cleanAndJoinSubtitles,
   generateSegments,
-  getCleanedSubtitlesAndMappings
+  getCleanedSubtitlesAndMappings,
+  resolveSubtitleOverlaps
 } from './utils';
 
 // Helper to determine caret offset inside contentEditable
@@ -65,15 +66,16 @@ function App() {
   });
   const [loadingText, setLoadingText] = useState<string>('正在載入，請稍候...');
   const [ytUrl, setYtUrl] = useState<string>(() => {
-    return localStorage.getItem('gth_ytUrl') || 'https://www.youtube.com/watch?v=2GZ2SNXWK-c';
+    const saved = localStorage.getItem('gth_ytUrl_v2');
+    return saved !== null ? saved : '';
   });
   const [videoData, setVideoData] = useState<any | null>(() => {
-    const data = localStorage.getItem('gth_videoData');
+    const data = localStorage.getItem('gth_videoData_v2');
     if (data) {
       try {
         const parsed = JSON.parse(data);
         if (parsed && parsed.subtitles) {
-          parsed.subtitles = parsed.subtitles.map((s: any, idx: number) => ({
+          parsed.subtitles = resolveSubtitleOverlaps(parsed.subtitles).map((s: any, idx: number) => ({
             ...s,
             globalIndex: idx
           }));
@@ -86,13 +88,8 @@ function App() {
     return null;
   });
   const [chaptersInput, setChaptersInput] = useState<string>(() => {
-    return localStorage.getItem('gth_chaptersInput') || `00:00:00 Introduction
-00:01:25 The n8n basics
-01:11:41 Foundational concepts
-03:11:09 Javascript functions
-05:04:47 Setting up self-hosting
-05:28:07 Comparing n8n vs make & which to use when
-05:55:27 Outro`;
+    const saved = localStorage.getItem('gth_chaptersInput_v2');
+    return saved !== null ? saved : '';
   });
   const [userCustomSplits, setUserCustomSplits] = useState<ChapterSplit[]>(() => {
     const data = localStorage.getItem('gth_userCustomSplits');
@@ -144,9 +141,18 @@ function App() {
   const [activeTab, setActiveTab] = useState<'edit' | 'notes' | 'term'>(() => {
     return (localStorage.getItem('gth_activeTab') as any) || 'edit';
   });
-  const [settingsInterval, setSettingsInterval] = useState<number>(20);
-  const [settingsNoSegment, setSettingsNoSegment] = useState<number>(30);
-  const [settingsSubSegment, setSettingsSubSegment] = useState<number>(30);
+  const [settingsInterval, setSettingsInterval] = useState<number>(() => {
+    const saved = localStorage.getItem('gth_settingsInterval');
+    return saved ? Number(saved) : 20;
+  });
+  const [settingsNoSegment, setSettingsNoSegment] = useState<number>(() => {
+    const saved = localStorage.getItem('gth_settingsNoSegment');
+    return saved ? Number(saved) : 30;
+  });
+  const [settingsSubSegment, setSettingsSubSegment] = useState<number>(() => {
+    const saved = localStorage.getItem('gth_settingsSubSegment');
+    return saved ? Number(saved) : 30;
+  });
   const [showCostEstimation, setShowCostEstimation] = useState<boolean>(() => {
     return localStorage.getItem('gth_showCostEstimation') === 'true';
   });
@@ -175,19 +181,19 @@ function App() {
   }, [screen]);
 
   useEffect(() => {
-    localStorage.setItem('gth_ytUrl', ytUrl);
+    localStorage.setItem('gth_ytUrl_v2', ytUrl);
   }, [ytUrl]);
 
   useEffect(() => {
     if (videoData) {
-      localStorage.setItem('gth_videoData', JSON.stringify(videoData));
+      localStorage.setItem('gth_videoData_v2', JSON.stringify(videoData));
     } else {
-      localStorage.removeItem('gth_videoData');
+      localStorage.removeItem('gth_videoData_v2');
     }
   }, [videoData]);
 
   useEffect(() => {
-    localStorage.setItem('gth_chaptersInput', chaptersInput);
+    localStorage.setItem('gth_chaptersInput_v2', chaptersInput);
   }, [chaptersInput]);
 
   useEffect(() => {
@@ -240,13 +246,13 @@ function App() {
 
   useEffect(() => {
     if (videoData && videoData.video_id) {
-      const savedVideoId = localStorage.getItem('gth_chaptersVideoId');
+      const savedVideoId = localStorage.getItem('gth_chaptersVideoId_v2');
       if (savedVideoId !== videoData.video_id) {
         setChaptersInput('');
-        localStorage.setItem('gth_chaptersVideoId', videoData.video_id);
+        localStorage.setItem('gth_chaptersVideoId_v2', videoData.video_id);
       }
     } else {
-      localStorage.removeItem('gth_chaptersVideoId');
+      localStorage.removeItem('gth_chaptersVideoId_v2');
     }
   }, [videoData]);
 
@@ -386,7 +392,12 @@ function App() {
         body: JSON.stringify({ url: ytUrl })
       });
 
-      const result = await response.json();
+      let result;
+      try {
+        result = await response.json();
+      } catch (jsonErr) {
+        throw new Error(`伺服器回應格式錯誤 (HTTP ${response.status})。請確認後端服務運作正常。`);
+      }
 
       if (response.ok && result.status === 'success') {
         setUserCustomSplits([]);
@@ -398,7 +409,7 @@ function App() {
         setShowCostEstimation(false);
 
         if (result.subtitles) {
-          result.subtitles = result.subtitles.map((s: any, idx: number) => ({
+          result.subtitles = resolveSubtitleOverlaps(result.subtitles).map((s: any, idx: number) => ({
             ...s,
             globalIndex: idx
           }));
@@ -406,7 +417,7 @@ function App() {
         setVideoData(result);
         setScreen('app');
       } else {
-        throw new Error(result.message || '無法下載或處理該影片。請確認網址，且該影片有提供字幕。');
+        throw new Error(result?.message || '無法下載或處理該影片。請確認網址，且該影片有提供字幕。');
       }
     } catch (err: any) {
       setScreen('home');
@@ -424,7 +435,7 @@ function App() {
 05:04:47 Setting up self-hosting
 05:28:07 Comparing n8n vs make & which to use when
 05:55:27 Outro`);
-      localStorage.setItem('gth_chaptersVideoId', '2GZ2SNXWK-c');
+      localStorage.setItem('gth_chaptersVideoId_v2', '2GZ2SNXWK-c');
     } else if (url.includes('EH5jx5qPabU')) {
       setChaptersInput(`0:00 Intro
 0:33 What is an Agent?
@@ -445,10 +456,10 @@ function App() {
 15:54 Adding Tools
 22:48 Testing and Debugging
 24:53 Possibilities From Here`);
-      localStorage.setItem('gth_chaptersVideoId', 'EH5jx5qPabU');
+      localStorage.setItem('gth_chaptersVideoId_v2', 'EH5jx5qPabU');
     } else {
       setChaptersInput('');
-      localStorage.removeItem('gth_chaptersVideoId');
+      localStorage.removeItem('gth_chaptersVideoId_v2');
     }
     showToast('已預填測試範例影片網址與章節。');
   };
@@ -586,16 +597,22 @@ function App() {
           }
         }
       } else if (targetCharOffset >= cleanText.length) {
-        // Cursor is at the end of the entry, split time is the end of this entry
-        splitTime = targetEntry.start + targetEntry.duration;
+        // Cursor is at the end of the entry.
+        // If there is a next entry in this segment, split at its start time.
+        if (targetLocalIdx + 1 < seg.subtitles.length) {
+          splitTime = seg.subtitles[targetLocalIdx + 1].start;
+        } else {
+          showToast('⚠️ 請在區塊內部的字句中間或句尾進行分割。');
+          return;
+        }
       } else {
         // Cursor is at the start of the entry
         splitTime = targetEntry.start;
       }
 
       const distanceFromStart = splitTime - seg.start;
-      if (distanceFromStart < 300) {
-        showToast('⚠️ 分割出的前半段需大於 5 分鐘，已自動合併。');
+      if (distanceFromStart < 1) {
+        showToast('⚠️ 請在區塊內部的字句中間或句尾進行分割。');
         return;
       }
 
@@ -732,15 +749,16 @@ function App() {
     };
 
     // Construct initial states for blocks
+    const totalP1 = Object.keys(p1Groups).length;
     const initialNotes: AIBlock[] = Object.keys(p1Groups)
       .map(Number)
       .sort((a, b) => a - b)
-      .map((bIdx) => {
+      .map((bIdx, idx) => {
         const groupSegs = p1Groups[bIdx];
         const combinedText = groupSegs.map((s) => `### ${s.title}\n${s.text}`).join('\n\n');
         const minStart = Math.min(...groupSegs.map((s) => s.start));
         const maxEnd = Math.max(...groupSegs.map((s) => s.end));
-        const title = `影片時間 ${formatSecondsToTime(minStart)} ~ ${formatSecondsToTime(maxEnd)} 重點整理`;
+        const title = `影片時間 ${formatSecondsToTime(minStart)} ~ ${formatSecondsToTime(maxEnd)} 重點整理 (第 ${idx + 1} / ${totalP1} 次)`;
         return {
           title,
           content: '⏳ 正在呼叫 AI 整理中...',
@@ -749,15 +767,16 @@ function App() {
         };
       });
 
+    const totalP2 = Object.keys(p2Groups).length;
     const initialTerms: AIBlock[] = Object.keys(p2Groups)
       .map(Number)
       .sort((a, b) => a - b)
-      .map((bIdx) => {
+      .map((bIdx, idx) => {
         const groupSegs = p2Groups[bIdx];
         const combinedText = groupSegs.map((s) => s.text).join('\n');
         const minStart = Math.min(...groupSegs.map((s) => s.start));
         const maxEnd = Math.max(...groupSegs.map((s) => s.end));
-        const title = `影片時間 ${formatSecondsToTime(minStart)} ~ ${formatSecondsToTime(maxEnd)} 專業術語對照`;
+        const title = `影片時間 ${formatSecondsToTime(minStart)} ~ ${formatSecondsToTime(maxEnd)} 專業術語對照 (第 ${idx + 1} / ${totalP2} 次)`;
         return {
           title,
           content: '⏳ 正在呼叫 AI 整理中...',
@@ -868,8 +887,11 @@ function App() {
       return;
     }
     let fullNotesMarkdown = '';
-    completedBlocks.forEach((item) => {
-      fullNotesMarkdown += `# ${item.title}\n\n${item.content}\n\n---\n\n`;
+    completedBlocks.forEach((item, index) => {
+      fullNotesMarkdown += `# ${item.title}\n\n${item.content}`;
+      if (index < completedBlocks.length - 1) {
+        fullNotesMarkdown += '\n\n---\n\n';
+      }
     });
     copyTextToClipboard(fullNotesMarkdown);
     showToast('已複製全部 AI 重點整理筆記！');
@@ -883,8 +905,11 @@ function App() {
       return;
     }
     let fullTermsMarkdown = '';
-    completedBlocks.forEach((item) => {
-      fullTermsMarkdown += `# ${item.title}\n\n${item.content}\n\n---\n\n`;
+    completedBlocks.forEach((item, index) => {
+      fullTermsMarkdown += `# ${item.title}\n\n${item.content}`;
+      if (index < completedBlocks.length - 1) {
+        fullTermsMarkdown += '\n\n---\n\n';
+      }
     });
     copyTextToClipboard(fullTermsMarkdown);
     showToast('已複製全部 AI 專業術語對照表！');
@@ -1147,7 +1172,7 @@ function App() {
                     {aiNotesResult.map((item, idx) => (
                       <div key={idx} style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '20px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '10px' }}>
-                          <h3 style={{ color: '#60a5fa', fontSize: '16px', fontWeight: 600 }}>{item.title}</h3>
+                          <h3 style={{ color: 'var(--primary)', fontSize: '16px', fontWeight: 600 }}>{item.title}</h3>
                           <div style={{ display: 'flex', gap: '8px' }}>
                             {item.status === 'error' && (
                               <button className="btn-copy" style={{ borderColor: 'var(--error)', color: 'var(--error)' }} onClick={() => retryNoteBlock(item)}>
@@ -1280,7 +1305,7 @@ function App() {
                           style={{
                             fontSize: '11px',
                             marginTop: '5px',
-                            color: '#60a5fa',
+                            color: 'var(--primary)',
                             cursor: 'pointer',
                             lineHeight: '1.4'
                           }}
@@ -1298,7 +1323,7 @@ function App() {
                         style={{
                           fontSize: '14px',
                           fontWeight: 600,
-                          color: '#60a5fa',
+                          color: 'var(--primary)',
                           background: 'rgba(255, 255, 255, 0.03)',
                           border: '1px solid var(--border-color)',
                           borderRadius: '6px',

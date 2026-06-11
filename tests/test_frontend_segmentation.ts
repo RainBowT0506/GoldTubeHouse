@@ -1,4 +1,4 @@
-import { generateSegments } from '../frontend/src/utils.ts';
+import { generateSegments, resolveSubtitleOverlaps } from '../frontend/src/utils.ts';
 
 // Mock subtitles for basic tests (realistically distributed)
 const mockSubtitlesBasic = [
@@ -182,6 +182,49 @@ if (segments35m.length === 2) {
   console.log("✅ PASS: 35 minutes video splits initially into two segments (20m + 15m).");
 } else {
   console.error(`❌ FAIL: 35 minutes video should split into 2 segments initially, but got ${segments35m.length}!`);
+  process.exit(1);
+}
+
+// ----------------------------------------------------
+// Test 6: Overlapping Timelines Split Resolution (n8n Video exact bug)
+// ----------------------------------------------------
+console.log("\n[Test 6] Overlapping timelines split simulation:");
+const overlappingSubtitles = [
+  { start: 810.959, duration: 3.841, text: "the back to clean that up. So the next" },
+  { start: 812.8, duration: 3.839, text: "thing we need, which is the meat of this" }
+];
+
+// Cleaned / resolved subtitles
+const resolvedSubtitles = resolveSubtitleOverlaps(overlappingSubtitles);
+
+// Test splitting before "So the next" (offset 26 inside resolvedSubtitles[0])
+const targetEntryP6 = resolvedSubtitles[0];
+const cleanTextP6 = targetEntryP6.text.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+const targetCharOffsetP6 = 26; // index of "So the next"
+
+const ratioP6 = targetCharOffsetP6 / cleanTextP6.length;
+const duration1P6 = targetEntryP6.duration * ratioP6;
+const duration2P6 = targetEntryP6.duration * (1 - ratioP6);
+const start2P6 = targetEntryP6.start + duration1P6;
+
+const entry1P6 = { start: targetEntryP6.start, duration: duration1P6, text: cleanTextP6.substring(0, targetCharOffsetP6).trim() };
+const entry2P6 = { start: start2P6, duration: duration2P6, text: cleanTextP6.substring(targetCharOffsetP6).trim() };
+
+const updatedSubtitlesP6 = [entry1P6, entry2P6, resolvedSubtitles[1]];
+const testSplitsP6 = [{ time: start2P6, title: "Custom Split" }];
+const segmentsP6 = generateSegments(updatedSubtitlesP6, 2149, testSplitsP6, 1200, 1800, 1800);
+
+console.log(`- Generated segments count: ${segmentsP6.length}`);
+const finalSeg1 = segmentsP6[0].subtitles.map(s => s.text).join(' ');
+const finalSeg2 = segmentsP6[1].subtitles.map(s => s.text).join(' ');
+
+console.log(`- Segment 1: '${finalSeg1}'`);
+console.log(`- Segment 2: '${finalSeg2}'`);
+
+if (finalSeg1.endsWith("the back to clean that up.") && finalSeg2.startsWith("So the next thing we need")) {
+  console.log("✅ PASS: Overlapping timeline was successfully resolved and split accurately!");
+} else {
+  console.error("❌ FAIL: Overlapping split failed!");
   process.exit(1);
 }
 
