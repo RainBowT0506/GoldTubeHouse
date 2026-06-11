@@ -268,7 +268,7 @@ async def serve_index():
 
 # API 路由：下載並剖析影片與字幕
 @app.post("/api/process-video")
-async def process_video(request: VideoRequest):
+def process_video(request: VideoRequest):
     video_id = get_video_id(request.url)
     if not video_id:
         return JSONResponse(
@@ -398,7 +398,7 @@ def flatten_markdown_lists(text: str) -> str:
     return '\n'.join(flattened)
 
 @app.post("/api/generate-block-note")
-async def generate_block_note(request: BlockNoteRequest):
+def generate_block_note(request: BlockNoteRequest):
     api_key = request.api_key.strip()
     model = request.model
     title = request.title
@@ -448,7 +448,7 @@ Ex.中文專業術語（英文）
     }
 
 @app.post("/api/generate-block-terms")
-async def generate_block_terms(request: BlockTermsRequest):
+def generate_block_terms(request: BlockTermsRequest):
     api_key = request.api_key.strip()
     model = request.model
     text = request.text
@@ -492,7 +492,7 @@ async def generate_block_terms(request: BlockTermsRequest):
     }
 
 @app.post("/api/save-segments")
-async def save_segments(request: SaveSegmentsRequest):
+def save_segments(request: SaveSegmentsRequest):
     import os
     import json
     os.makedirs("scratch", exist_ok=True)
