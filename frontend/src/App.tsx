@@ -676,9 +676,56 @@ function App() {
     showToast(`已複製整章「${group.chapterTitle}」內容！`);
   };
 
-  const lockAndEstimateCost = () => {
+  const lockAndEstimateCost = async () => {
     setShowCostEstimation(true);
     showToast('🔒 已鎖定當前段落，請於右側查看 API 費用預估！');
+
+    // Send segments data to backend for inspection/verification
+    if (videoData && videoData.video_id) {
+      const flatSegments: { title: string; text: string; start: number; end: number }[] = [];
+      currentSegments.forEach((seg) => {
+        if (seg.isGroup && seg.subSegments) {
+          seg.subSegments.forEach((sub) => {
+            const segId = sub.id || '';
+            const text =
+              editedSegmentTexts[segId] !== undefined
+                ? editedSegmentTexts[segId]
+                : cleanAndJoinSubtitles(sub.subtitles);
+            flatSegments.push({
+              title: `${sub.chapterTitle} (${sub.subTitle})`,
+              text: text,
+              start: sub.start,
+              end: sub.end
+            });
+          });
+        } else {
+          const segId = seg.id || '';
+          const text =
+            editedSegmentTexts[segId] !== undefined
+              ? editedSegmentTexts[segId]
+              : cleanAndJoinSubtitles(seg.subtitles);
+          flatSegments.push({
+            title: `${seg.chapterTitle} (${seg.subTitle})`,
+            text: text,
+            start: seg.start,
+            end: seg.end
+          });
+        }
+      });
+
+      try {
+        await fetch('/api/save-segments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            video_id: videoData.video_id,
+            segments: flatSegments
+          })
+        });
+      } catch (e) {
+        console.error('儲存分段資料失敗:', e);
+      }
+    }
   };
 
   const runAIGeneration = async () => {

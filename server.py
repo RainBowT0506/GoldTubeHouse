@@ -36,6 +36,10 @@ class BlockTermsRequest(BaseModel):
     model: str
     text: str
 
+class SaveSegmentsRequest(BaseModel):
+    video_id: str
+    segments: list[SegmentData]
+
 # 剖析影片 ID
 def get_video_id(url: str):
     patterns = [
@@ -486,6 +490,21 @@ async def generate_block_terms(request: BlockTermsRequest):
         "status": "success",
         "content": processed_response
     }
+
+@app.post("/api/save-segments")
+async def save_segments(request: SaveSegmentsRequest):
+    import os
+    import json
+    os.makedirs("scratch", exist_ok=True)
+    with open("scratch/user_segments.json", "w", encoding="utf-8") as f:
+        # Convert SegmentData list to list of dicts for serialization
+        data = {
+            "video_id": request.video_id,
+            "segments": [seg.model_dump() for seg in request.segments]
+        }
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    print(f"已儲存用戶分段資料 (Video ID: {request.video_id})")
+    return {"status": "success"}
 
 # 掛載靜態檔案目錄 (用於 React 構建的靜態資源)
 dist_dir = os.path.join("frontend", "dist")
