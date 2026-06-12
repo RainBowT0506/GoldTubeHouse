@@ -1,26 +1,37 @@
 import React from 'react';
 
+/**
+ * AIBlock represents a segment of AI-generated content (notes or terms).
+ */
 interface AIBlock {
-  title: string;
-  content: string;
-  status: 'loading' | 'done' | 'error';
-  text: string;
+  title: string;        // The segment/chapter range title
+  content: string;      // Markdown content returned from the AI
+  status: 'loading' | 'done' | 'error'; // Loading status of this block
+  text: string;         // Raw subtitle text used for this generation
   currentTitle?: string;
   fullChapters?: string;
 }
 
+/**
+ * Props for the AINotesTab component.
+ */
 interface AINotesTabProps {
-  aiNotesResult: AIBlock[];
-  collapsedNotes: Set<string>;
-  toggleCollapseNote: (title: string) => void;
-  retryNoteBlock: (block: AIBlock) => void;
-  copyTextToClipboard: (text: string) => void;
-  showToast: (msg: string) => void;
-  expandAllNotes: () => void;
-  collapseAllNotes: () => void;
-  copyAllAINotes: () => void;
+  aiNotesResult: AIBlock[];                               // Array of AI note blocks
+  collapsedNotes: Set<string>;                            // Set of note titles that are collapsed in the UI
+  toggleCollapseNote: (title: string) => void;           // Callback to toggle collapse state for a note
+  retryNoteBlock: (block: AIBlock) => void;               // Callback to retry generation for a failed note block
+  copyTextToClipboard: (text: string) => void;            // Helper to copy text to clipboard
+  showToast: (msg: string) => void;                       // Callback to display a status toast message
+  expandAllNotes: () => void;                             // Callback to expand all notes
+  collapseAllNotes: () => void;                           // Callback to collapse all notes
+  copyAllAINotes: () => void;                             // Callback to copy all notes combined
 }
 
+/**
+ * AINotesTab component renders the AI-generated study notes/summaries.
+ * It features bulk actions (expand, collapse, copy all) and individual block
+ * collapse/expand, copy, and retry controls.
+ */
 export const AINotesTab: React.FC<AINotesTabProps> = ({
   aiNotesResult,
   collapsedNotes,

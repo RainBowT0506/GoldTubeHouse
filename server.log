@@ -1,0 +1,98 @@
+INFO:     Started server process [52259]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:64422 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64422 - "GET /assets/index-D0TLsK0N.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64423 - "GET /assets/index-SbGTu6Cx.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64422 - "GET /api/check-env HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64422 - "GET /favicon.svg HTTP/1.1" 200 OK
+已儲存用戶分段資料 (Video ID: DkV7ztrhLh8)，合併邊界數量: 68
+INFO:     127.0.0.1:64422 - "POST /api/save-segments HTTP/1.1" 200 OK
+正在為 block '影片時間 00:00 ~ 16:38 重點整理 (第 1 / 17 次)' 生成 AI 筆記...
+正在為 block '影片時間 16:38 ~ 36:50 重點整理 (第 2 / 17 次)' 生成 AI 筆記...
+正在為 block '影片時間 36:50 ~ 53:07 重點整理 (第 3 / 17 次)' 生成 AI 筆記...
+正在為 block '影片時間 53:07 ~ 01:13:20 重點整理 (第 4 / 17 次)' 生成 AI 筆記...
+正在為 block '影片時間 01:13:20 ~ 01:38:37 重點整理 (第 5 / 17 次)' 生成 AI 筆記...
+正在為 block '影片時間 01:38:37 ~ 01:55:56 重點整理 (第 6 / 17 次)' 生成 AI 筆記...
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_065122.json
+INFO:     127.0.0.1:64486 - "POST /api/generate-block-note HTTP/1.1" 200 OK
+正在為 block '影片時間 01:55:56 ~ 02:27:32 重點整理 (第 7 / 17 次)' 生成 AI 筆記...
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_065125.json
+INFO:     127.0.0.1:64484 - "POST /api/generate-block-note HTTP/1.1" 200 OK
+正在為 block '影片時間 02:27:32 ~ 03:00:38 重點整理 (第 8 / 17 次)' 生成 AI 筆記...
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_065127.json
+INFO:     127.0.0.1:64489 - "POST /api/generate-block-note HTTP/1.1" 200 OK
+正在為 block '影片時間 03:00:38 ~ 03:31:37 重點整理 (第 9 / 17 次)' 生成 AI 筆記...
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_065128.json
+INFO:     127.0.0.1:64485 - "POST /api/generate-block-note HTTP/1.1" 200 OK
+正在為 block '影片時間 03:31:37 ~ 03:51:44 重點整理 (第 10 / 17 次)' 生成 AI 筆記...
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_065133.json
+INFO:     127.0.0.1:64488 - "POST /api/generate-block-note HTTP/1.1" 200 OK
+正在為 block '影片時間 03:51:44 ~ 04:27:29 重點整理 (第 11 / 17 次)' 生成 AI 筆記...
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_065137.json
+INFO:     127.0.0.1:64487 - "POST /api/generate-block-note HTTP/1.1" 200 OK
+正在為 block '影片時間 04:27:29 ~ 05:01:32 重點整理 (第 12 / 17 次)' 生成 AI 筆記...
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_065153.json
+INFO:     127.0.0.1:64484 - "POST /api/generate-block-note HTTP/1.1" 200 OK
+正在為 block '影片時間 05:01:32 ~ 05:33:45 重點整理 (第 13 / 17 次)' 生成 AI 筆記...
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_065153.json
+INFO:     127.0.0.1:64485 - "POST /api/generate-block-note HTTP/1.1" 200 OK
+正在為 block '影片時間 05:33:45 ~ 06:03:19 重點整理 (第 14 / 17 次)' 生成 AI 筆記...
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_065158.json
+INFO:     127.0.0.1:64486 - "POST /api/generate-block-note HTTP/1.1" 200 OK
+正在為 block '影片時間 06:03:19 ~ 06:35:19 重點整理 (第 15 / 17 次)' 生成 AI 筆記...
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_065209.json
+INFO:     127.0.0.1:64489 - "POST /api/generate-block-note HTTP/1.1" 200 OK
+正在為 block '影片時間 06:35:19 ~ 07:04:03 重點整理 (第 16 / 17 次)' 生成 AI 筆記...
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_065210.json
+INFO:     127.0.0.1:64487 - "POST /api/generate-block-note HTTP/1.1" 200 OK
+正在為 block '影片時間 07:04:03 ~ 07:31:18 重點整理 (第 17 / 17 次)' 生成 AI 筆記...
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_065214.json
+INFO:     127.0.0.1:64488 - "POST /api/generate-block-note HTTP/1.1" 200 OK
+正在為區間生成 AI 專業術語...
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_065227.json
+INFO:     127.0.0.1:64486 - "POST /api/generate-block-note HTTP/1.1" 200 OK
+正在為區間生成 AI 專業術語...
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_065232.json
+INFO:     127.0.0.1:64485 - "POST /api/generate-block-note HTTP/1.1" 200 OK
+正在為區間生成 AI 專業術語...
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_065236.json
+INFO:     127.0.0.1:64484 - "POST /api/generate-block-note HTTP/1.1" 200 OK
+正在為區間生成 AI 專業術語...
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_065238.json
+INFO:     127.0.0.1:64488 - "POST /api/generate-block-terms HTTP/1.1" 200 OK
+正在為區間生成 AI 專業術語...
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_065241.json
+INFO:     127.0.0.1:64489 - "POST /api/generate-block-note HTTP/1.1" 200 OK
+正在為區間生成 AI 專業術語...
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_065246.json
+INFO:     127.0.0.1:64486 - "POST /api/generate-block-terms HTTP/1.1" 200 OK
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_065249.json
+INFO:     127.0.0.1:64487 - "POST /api/generate-block-note HTTP/1.1" 200 OK
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_065250.json
+INFO:     127.0.0.1:64485 - "POST /api/generate-block-terms HTTP/1.1" 200 OK
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_065253.json
+INFO:     127.0.0.1:64484 - "POST /api/generate-block-terms HTTP/1.1" 200 OK
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_065255.json
+INFO:     127.0.0.1:64488 - "POST /api/generate-block-terms HTTP/1.1" 200 OK
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_065301.json
+INFO:     127.0.0.1:64489 - "POST /api/generate-block-terms HTTP/1.1" 200 OK
+開始處理影片 (ID: ZHH3sr234zY)...
+[API] 偵測到 cookies.txt，已成功載入 Cookie 快取進行請求。
+處理完成！影片標題: n8n Masterclass: Build AI Agents & Automate Workflows (Beginner to Pro)
+INFO:     127.0.0.1:55797 - "POST /api/process-video HTTP/1.1" 200 OK
+已儲存用戶分段資料 (Video ID: ZHH3sr234zY)，合併邊界數量: 90
+INFO:     127.0.0.1:56887 - "POST /api/save-segments HTTP/1.1" 200 OK
+正在為 block '影片時間 00:00 ~ 36:55 重點整理 (第 1 / 3 次)' 生成 AI 筆記...
+正在為 block '影片時間 36:55 ~ 01:02:31 重點整理 (第 2 / 3 次)' 生成 AI 筆記...
+正在為 block '影片時間 01:02:31 ~ 01:31:43 重點整理 (第 3 / 3 次)' 生成 AI 筆記...
+正在為區間生成 AI 專業術語...
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_072759.json
+INFO:     127.0.0.1:57068 - "POST /api/generate-block-terms HTTP/1.1" 200 OK
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_072823.json
+INFO:     127.0.0.1:57065 - "POST /api/generate-block-note HTTP/1.1" 200 OK
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_072825.json
+INFO:     127.0.0.1:57066 - "POST /api/generate-block-note HTTP/1.1" 200 OK
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_072847.json
+INFO:     127.0.0.1:57067 - "POST /api/generate-block-note HTTP/1.1" 200 OK

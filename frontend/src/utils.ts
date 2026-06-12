@@ -395,6 +395,10 @@ export function groupSegmentsForTerms(
     }];
   }
 
+  // Dynamically calculate target duration to ensure total batches do not exceed 7
+  const targetDuration = Math.max(3600, Math.ceil(totalDuration / 7));
+  const minRemaining = Math.max(1800, Math.ceil(targetDuration / 2));
+
   const batches: TermsBatch[] = [];
   let startIdx = 0;
 
@@ -402,16 +406,16 @@ export function groupSegmentsForTerms(
     const startSeg = segments[startIdx];
     const startVal = startSeg.start;
     
-    // Find the first segment boundary that is >= 3600 seconds from startVal
-    // AND leaves at least 1800 seconds to the end of the video.
+    // Find the first segment boundary that is >= targetDuration from startVal
+    // AND leaves at least minRemaining seconds to the end of the video.
     let foundSplitIdx = -1;
     for (let i = startIdx; i < segments.length; i++) {
       const currentEnd = segments[i].end;
       const duration = currentEnd - startVal;
       const remaining = totalDuration - currentEnd;
 
-      if (duration >= 3600) {
-        if (remaining >= 1800 || remaining === 0) {
+      if (duration >= targetDuration) {
+        if (remaining >= minRemaining || remaining === 0) {
           foundSplitIdx = i;
           break;
         }

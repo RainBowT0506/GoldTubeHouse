@@ -1,0 +1,37 @@
+{
+  "video_title": "n8n AI Agent Masterclass: RAG, Vector DBs, APIs & Best Practices",
+  "youtube_url": "https://www.youtube.com/watch?v=ZHH3sr234zY",
+  "video_id": "ZHH3sr234zY",
+  "saved_at": "2026-06-13T07:27:00",
+  "removed_boundary_times": [
+    170.0,
+    293.0,
+    309.0,
+    505.0,
+    585.0,
+    965.0,
+    988.0,
+    1140.0,
+    2188.0,
+    2303.0,
+    2647.0,
+    3716.0,
+    3923.0,
+    4220.0,
+    4293.0,
+    4369.0,
+    4394.0,
+    4504.0,
+    4902.0,
+    4944.0,
+    5180.0,
+    5310.0
+  ],
+  "merged_count": 22,
+  "expected_note_count": 3,
+  "notes_structure_description": [
+    "1. Range 1: Basic Automations & Core Concepts (Merged: 00:00 ~ 36:55)",
+    "2. Range 2: RAG & AI Agent Implementation (Merged: 36:55 ~ 1:02:31)",
+    "3. Range 3: Custom Tools, APIs, HTTP Requests & Best Practices (Merged: 1:02:31 ~ End)"
+  ]
+}

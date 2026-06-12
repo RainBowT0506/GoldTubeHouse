@@ -1,0 +1,30 @@
+{
+  "video_id": "ZHH3sr234zY",
+  "chapters_input": "00:00 What is n8n?\n02:50 Why Should You Learn n8n?\n04:53 Part 1: Getting Started\n05:09 Self-Hosted vs Cloud\n08:25 Workflows, Nodes, Executions\n09:45 n8n Interface\n16:05 Part 2: Core Concepts\n16:28 Types of Nodes\n19:00 Building Example Workflow\n36:28 Part 3: RAG and Vector Databases\n36:55 What is RAG?\n38:23 What are Vector Databases?\n44:07 Building RAG AI Agent\n1:01:56 Part 4: Expanding Agents\n1:02:31 n8n Workflows as Tools\n1:05:23 Showcasing Agent Examples\n1:10:20 Part 5: APIs & HTTP Requests\n1:11:33 What is an API?\n1:12:49 What is an HTTP Request?\n1:13:14 How They Work Together\n1:15:04 HTTP Request Examples in n8n\n1:21:42 Part 6: The Final Part\n1:22:24 Error Workflows\n1:26:20 Best Practices\n1:28:30 Next Steps",
+  "removed_boundary_times": [
+    170.0,
+    293.0,
+    309.0,
+    505.0,
+    585.0,
+    965.0,
+    988.0,
+    1140.0,
+    2188.0,
+    2303.0,
+    2647.0,
+    3716.0,
+    3923.0,
+    4220.0,
+    4293.0,
+    4369.0,
+    4394.0,
+    4504.0,
+    4902.0,
+    4944.0,
+    5180.0,
+    5310.0
+  ],
+  "saved_at": "2026-06-13T07:27:00",
+  "merged_count": 22
+}

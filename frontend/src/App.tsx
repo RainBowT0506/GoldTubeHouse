@@ -364,11 +364,15 @@ function App() {
   // 範圍合併的下拉選單選項
   const rangeOptions = useMemo(() => {
     return flatActiveSegments.map((seg, index) => {
-      const timeStr = formatTime(seg.start);
+      const timeStr = `${formatTime(seg.start)} ~ ${formatTime(seg.end)}`;
+      const diffSecs = seg.end - seg.start;
+      const diffMin = Math.floor(diffSecs / 60);
+      const diffSec = Math.floor(diffSecs % 60);
+      const durationStr = diffSec > 0 ? `${diffMin}分${diffSec}秒` : `${diffMin}分`;
       return {
         index,
         time: seg.start,
-        label: `${timeStr} - ${seg.chapterTitle}${seg.isSubSegment ? ' (細分區間)' : ''}`
+        label: `${timeStr} (${durationStr}) - ${seg.chapterTitle}${seg.isSubSegment ? ' (細分區間)' : ''}`
       };
     });
   }, [flatActiveSegments]);
@@ -384,13 +388,71 @@ function App() {
     }
   }, [flatActiveSegments]);
 
-  // 當已合併時間或扁平卡片變動時，確保選擇的起始/結束索引不會落在已被合併的區間（避免選取已合併區塊）
+  // 找出目前已合併的區間
+  const mergedRanges = useMemo(() => {
+    const ranges: { startIdx: number; endIdx: number; start: number; end: number; label: string; count: number }[] = [];
+    if (flatActiveSegments.length === 0) return ranges;
+
+    let currentRange: { startIdx: number; endIdx: number; start: number; end: number; count: number } | null = null;
+
+    for (let i = 0; i < flatActiveSegments.length; i++) {
+      const seg = flatActiveSegments[i];
+      const isMergedWithPrev = i > 0 && removedBoundaryTimes.includes(seg.start);
+
+      if (isMergedWithPrev) {
+        if (!currentRange) {
+          currentRange = {
+            startIdx: i - 1,
+            endIdx: i,
+            start: flatActiveSegments[i - 1].start,
+            end: seg.end,
+            count: 2
+          };
+        } else {
+          currentRange.endIdx = i;
+          currentRange.end = seg.end;
+          currentRange.count += 1;
+        }
+      } else {
+        if (currentRange) {
+          ranges.push({
+            ...currentRange,
+            label: `${formatTime(currentRange.start)} ~ ${formatTime(currentRange.end)}`
+          });
+          currentRange = null;
+        }
+      }
+    }
+
+    if (currentRange) {
+      ranges.push({
+        ...currentRange,
+        label: `${formatTime(currentRange.start)} ~ ${formatTime(currentRange.end)}`
+      });
+    }
+
+    return ranges;
+  }, [flatActiveSegments, removedBoundaryTimes]);
+
+  const maxMergedEndIdx = useMemo(() => {
+    if (mergedRanges.length === 0) return -1;
+    return Math.max(...mergedRanges.map(r => r.endIdx));
+  }, [mergedRanges]);
+
+  // 當已合併時間或扁平卡片變動時，確保選擇的起始/結束索引不會落在已被合併或已處理/跳過的區間（避免選取已合併/已處理區塊）
   useEffect(() => {
     if (flatActiveSegments.length === 0) return;
 
     const getValidIndex = (idx: number): number => {
-      if (idx < 0) return 0;
-      if (idx >= flatActiveSegments.length) return flatActiveSegments.length - 1;
+      let targetIdx = idx;
+      // 確保索引大於最後一個已合併的索引（避免選取前面已合併或已跳過的區塊）
+      if (maxMergedEndIdx !== -1 && targetIdx <= maxMergedEndIdx) {
+        targetIdx = maxMergedEndIdx + 1;
+      }
+
+      if (targetIdx >= flatActiveSegments.length) {
+        targetIdx = flatActiveSegments.length - 1;
+      }
 
       const isMerged = (i: number): boolean => {
         if (i < 0 || i >= flatActiveSegments.length) return false;
@@ -400,19 +462,22 @@ function App() {
         );
       };
 
-      if (!isMerged(idx)) {
-        return idx;
+      if (!isMerged(targetIdx)) {
+        return targetIdx;
       }
 
-      // 優先往回尋找未合併的區塊
-      for (let i = idx - 1; i >= 0; i--) {
+      // 優先往回尋找未合併且未跳過的區塊
+      for (let i = targetIdx - 1; i >= 0; i--) {
+        if (maxMergedEndIdx !== -1 && i <= maxMergedEndIdx) {
+          break; // 不可小於等於 maxMergedEndIdx
+        }
         if (!isMerged(i)) {
           return i;
         }
       }
 
       // 往後尋找未合併的區塊
-      for (let i = idx + 1; i < flatActiveSegments.length; i++) {
+      for (let i = targetIdx + 1; i < flatActiveSegments.length; i++) {
         if (!isMerged(i)) {
           return i;
         }
@@ -421,9 +486,16 @@ function App() {
       return 0;
     };
 
-    setBatchStartIdx(prev => getValidIndex(prev));
-    setBatchEndIdx(prev => getValidIndex(prev));
-  }, [removedBoundaryTimes, flatActiveSegments]);
+    setBatchStartIdx(prev => {
+      const nextStart = getValidIndex(prev);
+      return nextStart;
+    });
+    setBatchEndIdx(prev => {
+      const nextEnd = getValidIndex(prev);
+      const nextStart = getValidIndex(batchStartIdx);
+      return Math.max(nextStart, nextEnd);
+    });
+  }, [removedBoundaryTimes, flatActiveSegments, maxMergedEndIdx]);
 
   // AI 整合群組介面 (根據 removedBoundaryTimes 將相鄰 segments 文字串連，對齊發送與計費)
   interface AIGroup {
@@ -1059,7 +1131,9 @@ function App() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             video_id: videoData.video_id,
-            segments: flatSegments
+            segments: flatSegments,
+            removed_boundary_times: removedBoundaryTimes,  // 合併設定：已移除的邊界時間點
+            chapters_input: chaptersInput                   // 使用者貼入的章節文字
           })
         });
       } catch (e) {

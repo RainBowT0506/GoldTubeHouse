@@ -1,26 +1,37 @@
 import React from 'react';
 
+/**
+ * AIBlock represents a segment of AI-generated content (notes or terms).
+ */
 interface AIBlock {
-  title: string;
-  content: string;
-  status: 'loading' | 'done' | 'error';
-  text: string;
+  title: string;        // The segment/chapter range title
+  content: string;      // Markdown content returned from the AI
+  status: 'loading' | 'done' | 'error'; // Loading status of this block
+  text: string;         // Raw subtitle text used for this generation
   currentTitle?: string;
   fullChapters?: string;
 }
 
+/**
+ * Props for the AITermsTabProps component.
+ */
 interface AITermsTabProps {
-  aiTermsResult: AIBlock[];
-  collapsedTerms: Set<string>;
-  toggleCollapseTerm: (title: string) => void;
-  retryTermsBlock: (block: AIBlock) => void;
-  copyTextToClipboard: (text: string) => void;
-  showToast: (msg: string) => void;
-  expandAllTerms: () => void;
-  collapseAllTerms: () => void;
-  copyAllAITerms: () => void;
+  aiTermsResult: AIBlock[];                               // Array of AI terms blocks
+  collapsedTerms: Set<string>;                            // Set of term titles that are collapsed in the UI
+  toggleCollapseTerm: (title: string) => void;           // Callback to toggle collapse state for a terms block
+  retryTermsBlock: (block: AIBlock) => void;              // Callback to retry generation for a failed terms block
+  copyTextToClipboard: (text: string) => void;            // Helper to copy text to clipboard
+  showToast: (msg: string) => void;                       // Callback to display a status toast message
+  expandAllTerms: () => void;                             // Callback to expand all terms
+  collapseAllTerms: () => void;                           // Callback to collapse all terms
+  copyAllAITerms: () => void;                             // Callback to copy all terms combined
 }
 
+/**
+ * AITermsTab component renders the AI-generated professional terms table.
+ * It features bulk actions (expand, collapse, copy all) and individual block
+ * collapse/expand, copy, and retry controls.
+ */
 export const AITermsTab: React.FC<AITermsTabProps> = ({
   aiTermsResult,
   collapsedTerms,

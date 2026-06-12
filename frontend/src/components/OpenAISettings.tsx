@@ -1,12 +1,20 @@
 import React from 'react';
 
+/**
+ * Props for the OpenAISettings component.
+ */
 interface OpenAISettingsProps {
-  openaiKey: string;
-  setOpenaiKey: (val: string) => void;
-  hasEnvKey: boolean;
-  loadEnvKey: () => void;
+  openaiKey: string;                 // The user-provided OpenAI API Key
+  setOpenaiKey: (val: string) => void; // State setter to update the key
+  hasEnvKey: boolean;                // Flag indicating if a key exists in the backend environment
+  loadEnvKey: () => void;            // Callback to retrieve the key from the backend environment
 }
 
+/**
+ * OpenAISettings component renders the OpenAI API key input field in the sidebar.
+ * It provides a quick-import button if a key is detected in the backend .env file,
+ * and indicates that the target model is fixed to "gpt-5.1".
+ */
 export const OpenAISettings: React.FC<OpenAISettingsProps> = ({
   openaiKey,
   setOpenaiKey,

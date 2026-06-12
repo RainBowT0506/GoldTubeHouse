@@ -422,5 +422,27 @@ if (case9Batches.length === 2 &&
   process.exit(1);
 }
 
+// Case 10: Video length 7.5 hours (27000s). Chapters: 8 chapters of 3375s each.
+// Expected: Since totalDuration / 7 = 3857s > 3600s, targetDuration scales up.
+// Therefore, the 8 segments are grouped into at most 7 batches.
+const case10Segs = [
+  createMockSegment(0, 3375, "Ch1"),
+  createMockSegment(3375, 6750, "Ch2"),
+  createMockSegment(6750, 10125, "Ch3"),
+  createMockSegment(10125, 13500, "Ch4"),
+  createMockSegment(13500, 16875, "Ch5"),
+  createMockSegment(16875, 20250, "Ch6"),
+  createMockSegment(20250, 23625, "Ch7"),
+  createMockSegment(23625, 27000, "Ch8")
+];
+const case10Batches = groupSegmentsForTerms(case10Segs, 27000);
+console.log(`[Case 10] Batches count: ${case10Batches.length} (expected: <= 7)`);
+if (case10Batches.length <= 7) {
+  console.log("✅ PASS: Case 10 correctly limited the total batches count to 7 or less via dynamic scaling.");
+} else {
+  console.error(`❌ FAIL: Case 10 generated ${case10Batches.length} batches, exceeding the maximum allowed limit of 7!`);
+  process.exit(1);
+}
+
 console.log("\n🎉 All frontend segmentation, boundary, entry-split, and professional terms batching tests passed!");
 

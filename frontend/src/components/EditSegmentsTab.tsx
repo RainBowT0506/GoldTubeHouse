@@ -3,30 +3,42 @@ import type { Segment } from '../utils';
 import { formatTime } from '../utils';
 import SegmentCard from './SegmentCard';
 
+/**
+ * RenderingAIGroup represents a group of chapters or segments merged via removedBoundaryTimes,
+ * used for visual grouping in the UI.
+ */
 interface RenderingAIGroup {
-  id: string;
-  start: number;
-  end: number;
-  title: string;
-  items: Segment[];
+  id: string;                       // Unique group identifier
+  start: number;                    // Starting time of group in seconds
+  end: number;                      // Ending time of group in seconds
+  title: string;                    // Title listing all merged chapters (e.g. "Intro + Basics")
+  items: Segment[];                 // Individual segment items within this merged group
 }
 
+/**
+ * Props for the EditSegmentsTab component.
+ */
 interface EditSegmentsTabProps {
-  segmentsCount: number;
-  renderingAIGroups: RenderingAIGroup[];
-  collapsedChapters: Set<string>;
-  toggleChapterCollapse: (key: string) => void;
-  copyEntireChapter: (group: Segment) => void;
-  removedBoundaryTimes: number[];
-  handleMergeWithNext: (nextChapterStartTime: number) => void;
-  editedSegmentTexts: Record<string, string>;
-  copySegmentText: (segId: string, segment: Segment, withHeader: boolean) => void;
-  handleSegmentTextChange: (segId: string, text: string) => void;
-  handleSegmentKeydown: (event: React.KeyboardEvent<HTMLDivElement>, seg: Segment) => void;
-  collapsedAIGroups: Set<string>;
-  toggleAIGroupCollapse: (key: string) => void;
+  segmentsCount: number;                            // Total number of segments
+  renderingAIGroups: RenderingAIGroup[];             // Array of rendering-optimized segment groups
+  collapsedChapters: Set<string>;                   // Set of chapter group IDs that are visually collapsed
+  toggleChapterCollapse: (key: string) => void;      // Callback to toggle chapter fold/unfold state
+  copyEntireChapter: (group: Segment) => void;       // Callback to copy all subtitles within a whole chapter
+  removedBoundaryTimes: number[];                   // Times (seconds) where chapter/subsegment boundaries were removed
+  handleMergeWithNext: (nextStartTime: number) => void; // Callback to toggle merge/unmerge at a timestamp
+  editedSegmentTexts: Record<string, string>;       // Key-value store of user edits (Segment ID -> modified text)
+  copySegmentText: (segId: string, segment: Segment, withHeader: boolean) => void; // Copy text handler
+  handleSegmentTextChange: (segId: string, text: string) => void; // Text change commit handler
+  handleSegmentKeydown: (event: React.KeyboardEvent<HTMLDivElement>, seg: Segment) => void; // Keydown handler (for Enter splittings)
+  collapsedAIGroups: Set<string>;                   // Set of AI group container IDs that are folded
+  toggleAIGroupCollapse: (key: string) => void;     // Callback to fold/unfold AI group container
 }
 
+/**
+ * EditSegmentsTab component renders the main subtitle editing dashboard.
+ * Users can view, edit text, trigger manual splits with Enter, fold/unfold chapters,
+ * and merge/unmerge adjacent chapters or subsegments.
+ */
 export const EditSegmentsTab: React.FC<EditSegmentsTabProps> = ({
   segmentsCount,
   renderingAIGroups,

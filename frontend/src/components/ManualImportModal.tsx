@@ -1,15 +1,23 @@
 import React from 'react';
 
+/**
+ * Props for the ManualImportModal component.
+ */
 interface ManualImportModalProps {
-  show: boolean;
-  onClose: () => void;
-  importTitle: string;
-  setImportTitle: (val: string) => void;
-  importText: string;
-  setImportText: (val: string) => void;
-  handleManualImport: () => void;
+  show: boolean;                     // Determines if the modal is currently open
+  onClose: () => void;               // Callback to close the modal
+  importTitle: string;               // State value of the imported video title
+  setImportTitle: (val: string) => void; // State setter for imported title
+  importText: string;                // State value of the raw subtitle text to import
+  setImportText: (val: string) => void;  // State setter for imported subtitle text
+  handleManualImport: () => void;    // Callback to process and parse the text into subtitles
 }
 
+/**
+ * ManualImportModal component renders a pop-up overlay modal.
+ * It allows users to manually import subtitle text in VTT, SRT, JSON, or plain text formats,
+ * bypassing the need for a YouTube URL download.
+ */
 export const ManualImportModal: React.FC<ManualImportModalProps> = ({
   show,
   onClose,

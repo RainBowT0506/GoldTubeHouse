@@ -8,42 +8,50 @@ import RangeMerging from './RangeMerging';
 import SettingsParameters from './SettingsParameters';
 import CostEstimation from './CostEstimation';
 
+/**
+ * Props for the Sidebar component.
+ */
 interface SidebarProps {
-  videoData: any;
-  openaiKey: string;
-  setOpenaiKey: (val: string) => void;
-  hasEnvKey: boolean;
-  loadEnvKey: () => void;
-  chaptersInput: string;
-  setChaptersInput: (val: string) => void;
-  applyChapters: () => void;
-  clearChapters: () => void;
-  flatActiveSegments: Segment[];
-  batchStartIdx: number;
-  setBatchStartIdx: (val: number) => void;
-  batchEndIdx: number;
-  setBatchEndIdx: (val: number) => void;
-  rangeOptions: { index: number; time: number; label: string }[];
-  handleBatchMerge: () => void;
-  handleBatchSplit: () => void;
-  settingsInterval: number;
-  setSettingsInterval: (val: number) => void;
-  setPresetInterval: (val: number) => void;
-  settingsNoSegment: number;
-  setSettingsNoSegment: (val: number) => void;
-  settingsSubSegment: number;
-  setSettingsSubSegment: (val: number) => void;
-  lockAndEstimateCost: () => void;
-  showCostEstimation: boolean;
-  estCostInfo: any;
-  showCostDetails: boolean;
-  setShowCostDetails: (val: boolean) => void;
-  runAIGeneration: () => void;
-  goBackToHome: () => void;
-  removedBoundaryTimes: number[];
-  handleSplitSpecificRange: (startIdx: number, endIdx: number) => void;
+  videoData: any;                     // YouTube video details (title, duration, ID, thumbnail)
+  openaiKey: string;                 // The user-provided OpenAI API Key
+  setOpenaiKey: (val: string) => void; // State setter to update the key
+  hasEnvKey: boolean;                // Flag indicating if a key exists in the backend environment
+  loadEnvKey: () => void;            // Callback to retrieve the key from backend .env
+  chaptersInput: string;             // The raw multiline string of chapters pasted by the user
+  setChaptersInput: (val: string) => void; // State setter for raw chapters string
+  applyChapters: () => void;         // Callback to parse and apply chapters
+  clearChapters: () => void;         // Callback to clear chapters
+  flatActiveSegments: Segment[];     // Flattened array of all active segment objects
+  batchStartIdx: number;             // State value for start index of range merge
+  setBatchStartIdx: (val: number) => void; // Setter for start index
+  batchEndIdx: number;               // State value for end index of range merge
+  setBatchEndIdx: (val: number) => void; // Setter for end index
+  rangeOptions: { index: number; time: number; label: string }[]; // Formatted options list for range selects
+  handleBatchMerge: () => void;      // Callback to merge selected range of segments
+  handleBatchSplit: () => void;      // Callback to split/reset selected range of segments
+  settingsInterval: number;          // Default/Custom segment duration interval (minutes)
+  setSettingsInterval: (val: number) => void; // State setter for segment interval
+  setPresetInterval: (val: number) => void;    // Helper callback to select preset minutes
+  settingsNoSegment: number;         // Threshold below which no automatic splitting occurs (minutes)
+  setSettingsNoSegment: (val: number) => void; // State setter for direct-display threshold
+  settingsSubSegment: number;        // Threshold above which long chapters are sub-segmented (minutes)
+  setSettingsSubSegment: (val: number) => void; // State setter for sub-segment threshold
+  lockAndEstimateCost: () => void;   // Callback to lock edits, sync to backend, and calculate cost
+  showCostEstimation: boolean;       // Controls visibility of the cost estimation box
+  estCostInfo: any;                  // Estimated cost statistics object (tokens, calls, USD/TWD cost)
+  showCostDetails: boolean;          // Controls visibility of detailed cost breakdown
+  setShowCostDetails: (val: boolean) => void; // Setter for showCostDetails
+  runAIGeneration: () => void;       // Callback to proceed and run the AI pipeline
+  goBackToHome: () => void;          // Callback to reset state and return to URL input home page
+  removedBoundaryTimes: number[];    // Times (seconds) where chapter/subsegment boundaries were removed
+  handleSplitSpecificRange: (startIdx: number, endIdx: number) => void; // Splits specific range
 }
 
+/**
+ * Sidebar component acts as the container layout for all sidebar panels:
+ * Video Info, API key settings, Chapters import, Range merging selector, and Parameters.
+ * It also holds the final action footer (cost estimation & call AI buttons).
+ */
 export const Sidebar: React.FC<SidebarProps> = ({
   videoData,
   openaiKey,

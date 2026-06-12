@@ -1,13 +1,21 @@
 import React from 'react';
 
+/**
+ * Props for the HomeScreen component.
+ */
 interface HomeScreenProps {
-  ytUrl: string;
-  setYtUrl: (val: string) => void;
-  handleUrlSubmit: () => void;
-  setShowImportModal: (val: boolean) => void;
-  useExample: (url: string) => void;
+  ytUrl: string;                     // Current state value of the YouTube URL input field
+  setYtUrl: (val: string) => void;   // Callback to update the YouTube URL state
+  handleUrlSubmit: () => void;       // Callback to trigger subtitle fetching and processing for the URL
+  setShowImportModal: (val: boolean) => void; // Callback to show/hide the manual subtitle import modal
+  useExample: (url: string) => void; // Helper callback to pre-fill URL and Chapters with testing presets
 }
 
+/**
+ * HomeScreen component represents the entry/landing dashboard.
+ * Features a URL input field, a button to open manual import, test examples,
+ * and a grid introducing system features (Enter splits, sentence alignment, AI notebooks).
+ */
 export const HomeScreen: React.FC<HomeScreenProps> = ({
   ytUrl,
   setYtUrl,

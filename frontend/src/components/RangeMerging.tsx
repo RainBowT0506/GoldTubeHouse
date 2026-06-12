@@ -2,26 +2,37 @@ import React from 'react';
 import { formatTime } from '../utils';
 import type { Segment } from '../utils';
 
+/**
+ * RangeOption represents a drop-down menu option for choosing start/end indexes during range merging.
+ */
 interface RangeOption {
-  index: number;
-  time: number;
-  label: string;
+  index: number;                    // Zero-based index in the flatActiveSegments list
+  time: number;                     // Starting timestamp of the segment in seconds
+  label: string;                    // Time range and chapter name label (e.g. "00:00~16:38 (16分) - Intro")
 }
 
+/**
+ * Props for the RangeMerging component.
+ */
 interface RangeMergingProps {
-  flatActiveSegmentsCount: number;
-  batchStartIdx: number;
-  setBatchStartIdx: (val: number) => void;
-  batchEndIdx: number;
-  setBatchEndIdx: (val: number) => void;
-  rangeOptions: RangeOption[];
-  handleBatchMerge: () => void;
-  handleBatchSplit: () => void;
-  removedBoundaryTimes: number[];
-  flatActiveSegments: Segment[];
-  handleSplitSpecificRange: (startIdx: number, endIdx: number) => void;
+  flatActiveSegmentsCount: number;                  // Total count of active segments
+  batchStartIdx: number;                            // State value representing start index of range merge
+  setBatchStartIdx: (val: number) => void;          // Setter for start index
+  batchEndIdx: number;                              // State value representing end index of range merge
+  setBatchEndIdx: (val: number) => void;            // Setter for end index
+  rangeOptions: RangeOption[];                       // Generated list of selectable range options
+  handleBatchMerge: () => void;                     // Callback to merge selected range of segments
+  handleBatchSplit: () => void;                     // Callback to split/reset selected range of segments
+  removedBoundaryTimes: number[];                   // List of timestamps (seconds) where boundaries are removed
+  flatActiveSegments: Segment[];                    // Flattened array of all segment objects
+  handleSplitSpecificRange: (startIdx: number, endIdx: number) => void; // Splits a specific previously-merged range
 }
 
+/**
+ * RangeMerging component renders bulk-merging settings in the sidebar.
+ * Users can pick a start and end block to merge multiple adjacent segments into a single AI block,
+ * and view/unmerge already merged ranges.
+ */
 export const RangeMerging: React.FC<RangeMergingProps> = ({
   flatActiveSegmentsCount,
   batchStartIdx,
@@ -82,6 +93,11 @@ export const RangeMerging: React.FC<RangeMergingProps> = ({
 
     return ranges;
   }, [flatActiveSegments, removedBoundaryTimes]);
+
+  const maxMergedEndIdx = React.useMemo(() => {
+    if (mergedRanges.length === 0) return -1;
+    return Math.max(...mergedRanges.map(r => r.endIdx));
+  }, [mergedRanges]);
 
   return (
     <div className="sidebar-card">
@@ -196,6 +212,12 @@ export const RangeMerging: React.FC<RangeMergingProps> = ({
                 (opt.index + 1 < flatActiveSegments.length && removedBoundaryTimes.includes(flatActiveSegments[opt.index + 1].start))
               );
               if (isMerged) return null; // 已經選取就直接不要顯示了
+              
+              // 隱藏最後一個已合併區塊之前的所有區塊（不顯示已經跳過/處理過的區間）
+              if (maxMergedEndIdx !== -1 && opt.index <= maxMergedEndIdx) {
+                return null;
+              }
+              
               return (
                 <option
                   key={opt.index}
@@ -227,6 +249,10 @@ export const RangeMerging: React.FC<RangeMergingProps> = ({
                 (opt.index + 1 < flatActiveSegments.length && removedBoundaryTimes.includes(flatActiveSegments[opt.index + 1].start))
               );
               if (isMerged) return null; // 已經選取就直接不要顯示了
+              
+              // 結束區塊不可小於起始區塊
+              if (opt.index < batchStartIdx) return null;
+              
               return (
                 <option
                   key={opt.index}

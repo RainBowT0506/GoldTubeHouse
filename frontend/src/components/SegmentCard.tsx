@@ -2,15 +2,18 @@ import React from 'react';
 import type { Segment } from '../utils';
 import { cleanAndJoinSubtitles } from '../utils';
 
+/**
+ * EditableSegmentText component renders a div with `contentEditable` to allow direct subtitle editing.
+ */
 export const EditableSegmentText = ({
   initialText,
   onBlur,
   onKeydown
 }: {
-  segId: string;
-  initialText: string;
-  onBlur: (text: string) => void;
-  onKeydown: (event: React.KeyboardEvent<HTMLDivElement>) => void;
+  segId: string;                    // Unique identifier of the segment being edited
+  initialText: string;              // Initial/saved subtitle text
+  onBlur: (text: string) => void;   // Callback when focus is lost, committing the changes
+  onKeydown: (event: React.KeyboardEvent<HTMLDivElement>) => void; // Keyboard event handler (captures Enter)
 }) => {
   return (
     <div
@@ -26,15 +29,22 @@ export const EditableSegmentText = ({
   );
 };
 
+/**
+ * Props for the SegmentCard component.
+ */
 interface SegmentCardProps {
-  seg: Segment;
-  isSub: boolean;
-  editedText?: string;
-  copySegmentText: (segId: string, segment: Segment, withHeader: boolean) => void;
-  handleSegmentTextChange: (segId: string, text: string) => void;
-  handleSegmentKeydown: (event: React.KeyboardEvent<HTMLDivElement>, seg: Segment) => void;
+  seg: Segment;                                           // The Segment object containing time, title, and subtitles list
+  isSub: boolean;                                         // True if this card is a sub-segment (subdivision of a chapter)
+  editedText?: string;                                    // Optional user-edited text override
+  copySegmentText: (segId: string, segment: Segment, withHeader: boolean) => void; // Callback to copy text
+  handleSegmentTextChange: (segId: string, text: string) => void; // Callback to save text changes
+  handleSegmentKeydown: (event: React.KeyboardEvent<HTMLDivElement>, seg: Segment) => void; // Keydown handler
 }
 
+/**
+ * SegmentCard component displays a single subtitle block.
+ * Renders the segment header (title, actions to copy subtitles) and the editable body text.
+ */
 export const SegmentCard: React.FC<SegmentCardProps> = ({
   seg,
   isSub,

@@ -1,15 +1,22 @@
 import React from 'react';
 import { formatTime } from '../utils';
 
+/**
+ * Props for the VideoCard component.
+ */
 interface VideoCardProps {
   videoData: {
-    video_id: string;
-    title: string;
-    thumbnail?: string;
-    duration: number;
+    video_id: string;               // YouTube Video ID (used to generate YouTube links and thumbnails)
+    title: string;                  // Title of the YouTube video
+    thumbnail?: string;             // Optional thumbnail image URL
+    duration: number;               // Total duration in seconds
   };
 }
 
+/**
+ * VideoCard component displays details of the selected YouTube video in the sidebar.
+ * It shows the video title, duration, ID, and thumbnail image, which links directly to the YouTube video.
+ */
 export const VideoCard: React.FC<VideoCardProps> = ({ videoData }) => {
   return (
     <div className="sidebar-card video-card">

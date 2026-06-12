@@ -1,12 +1,19 @@
 import React from 'react';
 
+/**
+ * Props for the ChaptersInput component.
+ */
 interface ChaptersInputProps {
-  chaptersInput: string;
-  setChaptersInput: (val: string) => void;
-  applyChapters: () => void;
-  clearChapters: () => void;
+  chaptersInput: string;            // The raw multiline string of chapters pasted by the user
+  setChaptersInput: (val: string) => void; // State setter to update the raw chapters string
+  applyChapters: () => void;         // Callback to parse and apply the chapters into splits
+  clearChapters: () => void;         // Callback to clear the input and reset parsed chapters
 }
 
+/**
+ * ChaptersInput component provides a textarea in the sidebar where users can paste
+ * YouTube-style chapter timestamps (e.g. "00:00:00 Intro") to define semantic boundaries.
+ */
 export const ChaptersInput: React.FC<ChaptersInputProps> = ({
   chaptersInput,
   setChaptersInput,

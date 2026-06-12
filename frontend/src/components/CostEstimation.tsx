@@ -1,28 +1,35 @@
 import React from 'react';
 
+/**
+ * Props for the CostEstimation component.
+ */
 interface CostEstimationProps {
-  showCostEstimation: boolean;
+  showCostEstimation: boolean;       // Controls visibility of the entire cost box
   estCostInfo: {
-    segments: number;
-    chars: number;
-    costUSD: number;
-    costTWD: number;
-    videoDuration: number;
-    p1Calls: number;
-    p2Calls: number;
-    estInputTokens: number;
-    estOutputP1: number;
-    estOutputP2: number;
-    estOutputTokens: number;
-    inputCost: number;
-    outputCost: number;
+    segments: number;                // Total number of segments
+    chars: number;                   // Total character length of the subtitles
+    costUSD: number;                 // Estimated USD cost based on token counts
+    costTWD: number;                 // Estimated TWD cost
+    videoDuration: number;           // Total video duration in seconds
+    p1Calls: number;                 // Number of calls for note generation (1 call per segment group)
+    p2Calls: number;                 // Number of calls for term extraction (1 call per 60-min interval)
+    estInputTokens: number;          // Estimated input tokens
+    estOutputP1: number;             // Estimated output tokens for notes
+    estOutputP2: number;             // Estimated output tokens for terms
+    estOutputTokens: number;         // Total estimated output tokens
+    inputCost: number;               // Cost of input tokens in USD
+    outputCost: number;              // Cost of output tokens in USD
   };
-  showCostDetails: boolean;
-  setShowCostDetails: (val: boolean) => void;
-  runAIGeneration: () => void;
-  lockAndEstimateCost: () => void;
+  showCostDetails: boolean;          // Controls visibility of detailed breakdown
+  setShowCostDetails: (val: boolean) => void; // Setter for showCostDetails
+  runAIGeneration: () => void;       // Callback to proceed and run the AI pipeline
+  lockAndEstimateCost: () => void;   // Callback to lock edits, sync to backend, and calculate cost
 }
 
+/**
+ * CostEstimation component provides the lock button and displays the estimated API costs,
+ * with optional dropdown detailed breakdown. Uses fixed pricing rules (e.g. gpt-5.1 rates).
+ */
 export const CostEstimation: React.FC<CostEstimationProps> = ({
   showCostEstimation,
   estCostInfo,

@@ -1,15 +1,22 @@
 import React from 'react';
 
+/**
+ * Props for the SettingsParameters component.
+ */
 interface SettingsParametersProps {
-  settingsInterval: number;
-  setSettingsInterval: (val: number) => void;
-  setPresetInterval: (val: number) => void;
-  settingsNoSegment: number;
-  setSettingsNoSegment: (val: number) => void;
-  settingsSubSegment: number;
-  setSettingsSubSegment: (val: number) => void;
+  settingsInterval: number;          // Default/Custom segment duration interval (minutes)
+  setSettingsInterval: (val: number) => void; // State setter for segment interval
+  setPresetInterval: (val: number) => void;    // Helper callback to select custom preset minutes (e.g. 5, 10, 20)
+  settingsNoSegment: number;         // Threshold below which no automatic splitting occurs (minutes)
+  setSettingsNoSegment: (val: number) => void; // State setter for direct-display threshold
+  settingsSubSegment: number;        // Threshold above which long chapters are sub-segmented (minutes)
+  setSettingsSubSegment: (val: number) => void; // State setter for sub-segment threshold
 }
 
+/**
+ * SettingsParameters component renders the parameter adjustment controls in the sidebar.
+ * Allows users to set default segment interval, direct display threshold, and sub-segment threshold.
+ */
 export const SettingsParameters: React.FC<SettingsParametersProps> = ({
   settingsInterval,
   setSettingsInterval,

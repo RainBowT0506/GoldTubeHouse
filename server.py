@@ -45,6 +45,8 @@ class BlockTermsRequest(BaseModel):
 class SaveSegmentsRequest(BaseModel):
     video_id: str
     segments: list[SegmentData]
+    removed_boundary_times: list[float] = []  # 已移除的邊界時間點（秒），代表合併設定
+    chapters_input: str = ""                   # 使用者貼入的章節文字（原始格式）
 
 # 引入擷取與解析模組
 from subtitle_extractor import (
@@ -231,7 +233,31 @@ def flatten_markdown_lists(text: str) -> str:
             flattened.append(f"{marker} {content}")
         else:
             flattened.append(line)
-    return '\n'.join(flattened)
+
+    # 額外處理：移除夾在無序清單項目之間的空行，避免造成清單視覺間隙過大
+    final_lines = []
+    for i, line in enumerate(flattened):
+        if line.strip() == "":
+            prev_item = None
+            for j in range(i - 1, -1, -1):
+                if flattened[j].strip() != "":
+                    prev_item = flattened[j].strip()
+                    break
+            next_item = None
+            for j in range(i + 1, len(flattened)):
+                if flattened[j].strip() != "":
+                    next_item = flattened[j].strip()
+                    break
+            
+            if prev_item and next_item:
+                is_prev_list = prev_item.startswith(('-', '*', '+'))
+                is_next_list = next_item.startswith(('-', '*', '+'))
+                if is_prev_list and is_next_list:
+                    # 這是夾在清單項目之間的空行，將其濾除
+                    continue
+        final_lines.append(line)
+
+    return '\n'.join(final_lines)
 
 def get_prompt_template(file_path: str, default_template: str) -> str:
     try:
@@ -266,16 +292,15 @@ def generate_block_note(request: BlockNoteRequest):
     print(f"正在為 block '{title}' 生成 AI 筆記...")
 
     # Default Prompt 1
-    default_prompt_1 = """幫我分多個段落作重點整理
-段落用標題(#)
-每個段落下的內容重點整理用無序清單，
-注意：重點只需要一層，不要有第二層無序清單，清單不要標籤文字。
-不需幫我做總結
-不需花俏的圖示而是專注於筆記內容
-不要提供額外協助的建議
-如果有專業術語幫我附上英文
-Ex.中文專業術語（英文）
-繁體中文回答
+    default_prompt_1 = """幫我分多個段落作重點整理。請嚴格遵守以下格式規範：
+1. 段落請用 Markdown 標題（#）標註。段落標題必須是具體的內容子主題（例如「# Webhook 觸發器設定」），而非直接使用章節時間。請確保所有整理出的子主題與內容皆符合【目前正在整理的章節】（例如 Automation 1 或 Automation 1 Indepth）的語意範圍與主題。
+2. 每個段落下的內容重點整理只允許使用單一層級的無序清單（全部使用 `-` 開頭），絕對不要出現縮排的第二層清單。
+3. 若有分類、子項目或步驟，請勿將分類標題單獨做成一個無序清單項目（例如不要寫「- 常見 HTTP 方法：」後面接著子項目清單），請將分類標題直接寫成一般的段落文字（不加 `-` 符號），隨後再以單層清單列出子項目。
+4. 清單項目之間不要留空行。
+5. 清單的內容文字中不要有額外的分類標籤或前綴文字。
+6. 不需幫我做總結，不要提供額外協助的建議，不需花俏的圖示，請專注於筆記內容。
+7. 如果有專業術語幫我附上英文，格式為：中文專業術語（英文）。
+8. 請以繁體中文回答。
 
 【整體影片章節結構（上下文參考）】：
 {full_chapters}
@@ -368,14 +393,27 @@ def save_segments(request: SaveSegmentsRequest):
     import os
     import json
     os.makedirs("scratch", exist_ok=True)
+
+    # 儲存分段資料
     with open("scratch/user_segments.json", "w", encoding="utf-8") as f:
-        # Convert SegmentData list to list of dicts for serialization
         data = {
             "video_id": request.video_id,
             "segments": [seg.model_dump() for seg in request.segments]
         }
         json.dump(data, f, ensure_ascii=False, indent=2)
-    print(f"已儲存用戶分段資料 (Video ID: {request.video_id})")
+
+    # 同步儲存合併設定（AI 整合範圍合併紀錄）
+    merge_config = {
+        "video_id": request.video_id,
+        "chapters_input": request.chapters_input,
+        "removed_boundary_times": request.removed_boundary_times,
+        "saved_at": datetime.now().isoformat(),
+        "merged_count": len(request.removed_boundary_times)
+    }
+    with open("scratch/merge_config.json", "w", encoding="utf-8") as f:
+        json.dump(merge_config, f, ensure_ascii=False, indent=2)
+
+    print(f"已儲存用戶分段資料 (Video ID: {request.video_id})，合併邊界數量: {len(request.removed_boundary_times)}")
     return {"status": "success"}
 
 # 掛載靜態檔案目錄 (用於 React 構建的靜態資源)
