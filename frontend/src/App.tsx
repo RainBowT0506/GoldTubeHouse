@@ -104,6 +104,12 @@ function App() {
       return data ? new Set<string>(JSON.parse(data)) : new Set<string>();
     } catch { return new Set<string>(); }
   });
+  const [collapsedAIGroups, setCollapsedAIGroups] = useState<Set<string>>(() => {
+    try {
+      const data = localStorage.getItem('gth_collapsedAIGroups');
+      return data ? new Set<string>(JSON.parse(data)) : new Set<string>();
+    } catch { return new Set<string>(); }
+  });
   const [removedBoundaryTimes, setRemovedBoundaryTimes] = useState<number[]>(() => {
     try {
       const data = localStorage.getItem('gth_removedBoundaryTimes');
@@ -263,6 +269,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem('gth_removedBoundaryTimes', JSON.stringify(removedBoundaryTimes));
   }, [removedBoundaryTimes]);
+
+  useEffect(() => {
+    localStorage.setItem('gth_collapsedAIGroups', JSON.stringify([...collapsedAIGroups]));
+  }, [collapsedAIGroups]);
 
   useEffect(() => {
     if (aiNotesResult) {
@@ -474,6 +484,44 @@ function App() {
 
     return groups;
   }, [flatActiveSegments, removedBoundaryTimes, editedSegmentTexts]);
+
+  interface RenderingAIGroup {
+    id: string;
+    start: number;
+    end: number;
+    title: string;
+    items: Segment[];
+  }
+
+  const renderingAIGroups = useMemo<RenderingAIGroup[]>(() => {
+    const groups: RenderingAIGroup[] = [];
+    let currentGroup: RenderingAIGroup | null = null;
+
+    currentSegments.forEach((item, index) => {
+      const isMergedWithPrev = index > 0 && removedBoundaryTimes.includes(item.start);
+
+      if (isMergedWithPrev && currentGroup) {
+        currentGroup.items.push(item);
+        currentGroup.end = item.end;
+      } else {
+        currentGroup = {
+          id: `render_group_${index}`,
+          start: item.start,
+          end: item.end,
+          title: '',
+          items: [item]
+        };
+        groups.push(currentGroup);
+      }
+    });
+
+    groups.forEach((g) => {
+      const titles = g.items.map((it) => it.chapterTitle);
+      g.title = titles.join(' + ');
+    });
+
+    return groups;
+  }, [currentSegments, removedBoundaryTimes]);
 
   const segmentsCount = useMemo(() => {
     let count = 0;
@@ -698,6 +746,7 @@ function App() {
     setEditedSegmentTexts({});
     setRemovedBoundaryTimes([]);
     setCollapsedChapters(new Set());
+    setCollapsedAIGroups(new Set());
     showToast('已清除章節與自訂切分點。');
   };
 
@@ -706,6 +755,14 @@ function App() {
       const next = new Set(prev);
       if (next.has(key)) next.delete(key); else next.add(key);
       localStorage.setItem('gth_collapsedChapters', JSON.stringify([...next]));
+      return next;
+    });
+  };
+
+  const toggleAIGroupCollapse = (key: string) => {
+    setCollapsedAIGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
       return next;
     });
   };
@@ -1379,92 +1436,151 @@ function App() {
                   </div>
 
                   <div className="subtitle-scroll-area">
-                    {currentSegments.length === 0 ? (
+                    {renderingAIGroups.length === 0 ? (
                       <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
                         無分段資料，請確認字幕下載正確。
                       </div>
                     ) : (
-                      currentSegments.map((item, index) => {
-                        if (item.isGroup) {
-                          const groupKey = `group_ch_${index}_${item.chapterTitle}`;
-                          const isCollapsed = collapsedChapters.has(groupKey);
-                          const nextItem = index + 1 < currentSegments.length ? currentSegments[index + 1] : null;
-                          return (
-                            <React.Fragment key={groupKey}>
-                              <div className="chapter-group">
+                      renderingAIGroups.map((group, groupIdx) => {
+                        const nextGroup = groupIdx + 1 < renderingAIGroups.length ? renderingAIGroups[groupIdx + 1] : null;
+
+                        const renderGroupItem = (item: Segment, idxInGroup: number, groupItems: Segment[]) => {
+                          const nextItemInGroup = idxInGroup + 1 < groupItems.length ? groupItems[idxInGroup + 1] : null;
+
+                          if (item.isGroup) {
+                            const groupKey = `group_ch_${item.start}_${item.chapterTitle}`;
+                            const isCollapsed = collapsedChapters.has(groupKey);
+                            return (
+                              <React.Fragment key={groupKey}>
+                                <div className="chapter-group">
+                                  <div
+                                    className="chapter-group-header"
+                                    onClick={() => toggleChapterCollapse(groupKey)}
+                                    style={{ cursor: 'pointer' }}
+                                  >
+                                    <div className="chapter-group-title">
+                                      <span className="collapse-arrow">{isCollapsed ? '▶' : '▼'}</span>
+                                      📁 <span># {item.chapterTitle}</span>
+                                    </div>
+                                    <div
+                                      style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
+                                      onClick={e => e.stopPropagation()}
+                                    >
+                                      <span className="chapter-group-time">
+                                        {formatTime(item.start)} ~ {formatTime(item.end)}
+                                      </span>
+                                      {!isCollapsed && (
+                                        <button className="btn-copy-group" onClick={() => copyEntireChapter(item)}>
+                                          複製整章
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                  {!isCollapsed && item.subSegments?.map((subSeg, subIdx) => {
+                                    const subSegs = item.subSegments || [];
+                                    const isLastSub = subIdx === subSegs.length - 1;
+                                    return (
+                                      <React.Fragment key={subSeg.id || `sub_${subIdx}`}>
+                                        {renderSegmentCard(subSeg, true)}
+                                        {!isLastSub && subSegs[subIdx + 1] && (() => {
+                                          const isMerged = removedBoundaryTimes.includes(subSegs[subIdx + 1].start);
+                                          return (
+                                            <div className={`merge-btn-row subsegment-merge ${isMerged ? 'merged-ai' : ''}`}>
+                                              <div className="merge-line" />
+                                              <button
+                                                className={`btn-merge-next btn-merge-sub ${isMerged ? 'merged' : ''}`}
+                                                onClick={() => handleMergeWithNext(subSegs[subIdx + 1].start)}
+                                                title={isMerged ? "取消合併此子段落" : "合併此子段落與下一段 (AI 整合)"}
+                                              >
+                                                {isMerged ? '⊖ 取消 AI 整合' : '⊕ 合併子段落'}
+                                              </button>
+                                              <div className="merge-line" />
+                                            </div>
+                                          );
+                                        })()}
+                                      </React.Fragment>
+                                    );
+                                  })}
+                                </div>
+                                {nextItemInGroup && nextItemInGroup.isGroup && (() => {
+                                  const isMerged = removedBoundaryTimes.includes(nextItemInGroup.start);
+                                  return (
+                                    <div className={`merge-btn-row ${isMerged ? 'merged-ai' : ''}`}>
+                                      <div className="merge-line" />
+                                      <button
+                                        className={`btn-merge-next ${isMerged ? 'merged' : ''}`}
+                                        onClick={() => handleMergeWithNext(nextItemInGroup.start)}
+                                        title={isMerged ? `取消合併「${item.chapterTitle}」與「${nextItemInGroup.chapterTitle}」` : `合併「${item.chapterTitle}」與「${nextItemInGroup.chapterTitle}」 (AI 整合)`}
+                                      >
+                                        {isMerged ? '⊖ 取消 AI 整合' : '⊕ 合併此章節 (AI 整合)'}
+                                      </button>
+                                      <div className="merge-line" />
+                                    </div>
+                                  );
+                                })()}
+                              </React.Fragment>
+                            );
+                          } else {
+                            return renderSegmentCard(item, false);
+                          }
+                        };
+
+                        const isMergedGroup = group.items.length > 1;
+                        const isGroupCollapsed = collapsedAIGroups.has(group.id);
+
+                        return (
+                          <React.Fragment key={group.id}>
+                            {isMergedGroup ? (
+                              <div className="ai-merged-group-container">
                                 <div
-                                  className="chapter-group-header"
-                                  onClick={() => toggleChapterCollapse(groupKey)}
+                                  className="ai-merged-group-header"
+                                  onClick={() => toggleAIGroupCollapse(group.id)}
                                   style={{ cursor: 'pointer' }}
                                 >
-                                  <div className="chapter-group-title">
-                                    <span className="collapse-arrow">{isCollapsed ? '▶' : '▼'}</span>
-                                    📁 <span># {item.chapterTitle}</span>
+                                  <div className="ai-merged-group-title">
+                                    <span className="collapse-arrow">{isGroupCollapsed ? '▶' : '▼'}</span>
+                                    <span>🧠 AI 整合區間 ({group.items.length} 個章節)</span>
                                   </div>
-                                  <div
-                                    style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
-                                    onClick={e => e.stopPropagation()}
-                                  >
-                                    <span className="chapter-group-time">
-                                      {formatTime(item.start)} ~ {formatTime(item.end)}
-                                    </span>
-                                    {!isCollapsed && (
-                                      <button className="btn-copy-group" onClick={() => copyEntireChapter(item)}>
-                                        複製整章
-                                      </button>
-                                    )}
-                                  </div>
+                                  <span className="ai-merged-group-time">
+                                    {formatTime(group.start)} ~ {formatTime(group.end)}
+                                  </span>
                                 </div>
-                                {!isCollapsed && item.subSegments?.map((subSeg, subIdx) => {
-                                  const subSegs = item.subSegments || [];
-                                  const isLastSub = subIdx === subSegs.length - 1;
-                                  return (
-                                    <React.Fragment key={subSeg.id || `sub_${subIdx}`}>
-                                      {renderSegmentCard(subSeg, true)}
-                                      {!isLastSub && subSegs[subIdx + 1] && (() => {
-                                        const isMerged = removedBoundaryTimes.includes(subSegs[subIdx + 1].start);
-                                        return (
-                                          <div className={`merge-btn-row subsegment-merge ${isMerged ? 'merged-ai' : ''}`}>
-                                            <div className="merge-line" />
-                                            <button
-                                              className={`btn-merge-next btn-merge-sub ${isMerged ? 'merged' : ''}`}
-                                              onClick={() => handleMergeWithNext(subSegs[subIdx + 1].start)}
-                                              title={isMerged ? "取消合併此子段落" : "合併此子段落與下一段 (AI 整合)"}
-                                            >
-                                              {isMerged ? '⊖ 取消 AI 整合' : '⊕ 合併子段落'}
-                                            </button>
-                                            <div className="merge-line" />
-                                          </div>
-                                        );
-                                      })()}
-                                    </React.Fragment>
-                                  );
-                                })}
+                                {!isGroupCollapsed && (
+                                  <div className="ai-merged-group-content">
+                                    {group.items.map((item, idx) => renderGroupItem(item, idx, group.items))}
+                                  </div>
+                                )}
                               </div>
-                              {nextItem && nextItem.isGroup && (() => {
-                                const isMerged = removedBoundaryTimes.includes(nextItem.start);
+                            ) : (
+                              renderGroupItem(group.items[0], 0, group.items)
+                            )}
+
+                            {/* 渲染此 AI 群組與下一個 AI 群組之間的合併邊界按鈕 */}
+                            {nextGroup && (() => {
+                              const lastItemOfCurrent = group.items[group.items.length - 1];
+                              const firstItemOfNext = nextGroup.items[0];
+                              if (lastItemOfCurrent.isGroup && firstItemOfNext.isGroup) {
+                                const isMerged = removedBoundaryTimes.includes(firstItemOfNext.start);
                                 return (
                                   <div className={`merge-btn-row ${isMerged ? 'merged-ai' : ''}`}>
                                     <div className="merge-line" />
                                     <button
                                       className={`btn-merge-next ${isMerged ? 'merged' : ''}`}
-                                      onClick={() => handleMergeWithNext(nextItem.start)}
-                                      title={isMerged ? `取消合併「${item.chapterTitle}」與「${nextItem.chapterTitle}」` : `合併「${item.chapterTitle}」與「${nextItem.chapterTitle}」 (AI 整合)`}
+                                      onClick={() => handleMergeWithNext(firstItemOfNext.start)}
+                                      title={isMerged ? `取消合併「${lastItemOfCurrent.chapterTitle}」與「${firstItemOfNext.chapterTitle}」` : `合併「${lastItemOfCurrent.chapterTitle}」與「${firstItemOfNext.chapterTitle}」 (AI 整合)`}
                                     >
                                       {isMerged ? '⊖ 取消 AI 整合' : '⊕ 合併此章節 (AI 整合)'}
                                     </button>
                                     <div className="merge-line" />
                                   </div>
                                 );
-                              })()}
-                            </React.Fragment>
-                          );
-                        } else {
-                          return renderSegmentCard(item, false);
-                        }
+                              }
+                              return null;
+                            })()}
+                          </React.Fragment>
+                        );
                       })
                     )}
-
                   </div>
                 </div>
               )}
