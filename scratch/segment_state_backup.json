@@ -1,0 +1,36 @@
+{
+  "video_id": "2GZ2SNXWK-c",
+  "saved_at": "2026-06-13T00:55:00+08:00",
+  "note": "完整分段狀態備份 - 可手動貼回 localStorage 恢復",
+  "chaptersInput": "00:00:00 Introduction\n00:01:25 The n8n basics\n01:11:41 Foundational concepts\n03:11:09 Javascript functions\n05:04:47 Setting up self-hosting\n05:28:07 Comparing n8n vs make & which to use when\n05:55:27 Outro",
+  "userCustomSplits": [
+    { "time": 2587.92, "title": "" },
+    { "time": 5597.548000000001, "title": "" },
+    { "time": 7106.4884999999995, "title": "" },
+    { "time": 8406.332631578947, "title": "" },
+    { "time": 9671.359, "title": "" },
+    { "time": 12802.176368421053, "title": "" },
+    { "time": 14043.848289473684, "title": "" },
+    { "time": 15486.870588235295, "title": "" },
+    { "time": 16530.596923076922, "title": "" }
+  ],
+  "segments_summary": [
+    { "no": 1,  "title": "Introduction",                           "start": "00:00:00", "end": "00:01:25" },
+    { "no": 2,  "title": "The n8n basics (sub1)",                  "start": "00:01:25", "end": "00:21:37" },
+    { "no": 3,  "title": "The n8n basics (sub2)",                  "start": "00:21:37", "end": "00:43:07" },
+    { "no": 4,  "title": "自訂分段 2",                              "start": "00:43:07", "end": "01:11:41" },
+    { "no": 5,  "title": "Foundational concepts (sub1)",           "start": "01:11:41", "end": "01:33:17" },
+    { "no": 6,  "title": "自訂分段 4",                              "start": "01:33:17", "end": "01:58:26" },
+    { "no": 7,  "title": "自訂分段 5",                              "start": "01:58:26", "end": "02:20:06" },
+    { "no": 8,  "title": "自訂分段 6",                              "start": "02:20:06", "end": "02:41:11" },
+    { "no": 9,  "title": "自訂分段 7",                              "start": "02:41:11", "end": "03:11:09" },
+    { "no": 10, "title": "Javascript functions (sub1)",            "start": "03:11:09", "end": "03:33:22" },
+    { "no": 11, "title": "自訂分段 9",                              "start": "03:33:22", "end": "03:54:03" },
+    { "no": 12, "title": "自訂分段 10",                             "start": "03:54:03", "end": "04:18:06" },
+    { "no": 13, "title": "自訂分段 11",                             "start": "04:18:06", "end": "04:35:30" },
+    { "no": 14, "title": "自訂分段 12",                             "start": "04:35:30", "end": "05:04:47" },
+    { "no": 15, "title": "Setting up self-hosting",                "start": "05:04:47", "end": "05:28:07" },
+    { "no": 16, "title": "Comparing n8n vs make & which to use when", "start": "05:28:07", "end": "05:55:27" },
+    { "no": 17, "title": "Outro",                                  "start": "05:55:27", "end": "05:58:32" }
+  ]
+}

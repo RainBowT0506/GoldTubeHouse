@@ -166,15 +166,17 @@ export function cleanAndJoinSubtitles(entries: SubtitleEntry[]): string {
 export function generateSegments(
   subtitles: SubtitleEntry[],
   duration: number,
-  splits: ChapterSplit[],
+  chapterSplits: ChapterSplit[],   // 來自 parsedChapters（Chapter 層級邊界）
+  customSplits: ChapterSplit[],    // 來自 userCustomSplits（Chapter 內的自訂切分點）
   interval: number,
   noSegThreshold: number,
-  subSegThreshold: number
+  subSegThreshold: number,
+  removedBoundaryTimes: number[] = []
 ): Segment[] {
   const segments: Segment[] = [];
 
-  // Scenario 1: No split points
-  if (splits.length === 0) {
+  // ── 情況 1：沒有任何分割點 → 自動依時間間隔分段 ──────────────────────────
+  if (chapterSplits.length === 0 && customSplits.length === 0) {
     if (duration <= noSegThreshold) {
       segments.push({
         id: 'seg_all',
@@ -191,7 +193,6 @@ export function generateSegments(
       while (t < duration) {
         const target = t + interval;
         if (target >= duration) {
-          const sub = subtitles.filter(s => s.start >= t);
           segments.push({
             id: `seg_time_${idx}`,
             chapterTitle: `分段區塊 ${idx + 1}`,
@@ -199,21 +200,14 @@ export function generateSegments(
             isSubSegment: false,
             start: t,
             end: duration,
-            subtitles: sub
+            subtitles: subtitles.filter(s => s.start >= t)
           });
           break;
         }
-
         const bestIdx = findBestSplitIndex(subtitles, target, 120);
-        let nextT = (bestIdx < subtitles.length) ? subtitles[bestIdx].start : duration;
-        if (nextT <= t) nextT = t + interval; // Avoid infinite loop
-
-        // If the remaining duration after nextT is too short, merge it into the current segment
-        if (duration - nextT < Math.min(360, interval * 0.5)) {
-          nextT = duration;
-        }
-
-        const sub = subtitles.filter(s => s.start >= t && s.start < nextT);
+        let nextT = bestIdx < subtitles.length ? subtitles[bestIdx].start : duration;
+        if (nextT <= t) nextT = t + interval;
+        if (duration - nextT < Math.min(360, interval * 0.5)) nextT = duration;
         segments.push({
           id: `seg_time_${idx}`,
           chapterTitle: `分段區塊 ${idx + 1}`,
@@ -221,98 +215,146 @@ export function generateSegments(
           isSubSegment: false,
           start: t,
           end: nextT,
-          subtitles: sub
+          subtitles: subtitles.filter(s => s.start >= t && s.start < nextT)
         });
         t = nextT;
         idx++;
       }
     }
-  } else {
-    // Scenario 2: With split points (chapters or custom splits)
-    // Make sure it starts from 0
-    const localSplits = [...splits];
-    if (localSplits.length > 0 && localSplits[0].time > 0) {
-      localSplits.unshift({ time: 0, title: '影片開始' });
-    } else if (localSplits.length === 0) {
-      localSplits.unshift({ time: 0, title: '影片開始' });
-    }
+    return segments;
+  }
 
-    for (let i = 0; i < localSplits.length; i++) {
-      const start = localSplits[i].time;
-      const end = (i + 1 < localSplits.length) ? localSplits[i + 1].time : duration;
-      const chapterTitle = localSplits[i].title || `自訂分段 ${i}`;
-      const chapterDuration = end - start;
+  // ── 情況 2：只有自訂切分（沒有 Chapters）→ 平面清單 ──────────────────────
+  if (chapterSplits.length === 0 && customSplits.length > 0) {
+    const pts = [...customSplits].sort((a, b) => a.time - b.time);
+    if (pts[0].time > 0) pts.unshift({ time: 0, title: '' });
+    pts.forEach((sp, i) => {
+      const start = sp.time;
+      const end = i + 1 < pts.length ? pts[i + 1].time : duration;
+      segments.push({
+        isGroup: false,
+        id: `seg_custom_${i}`,
+        chapterTitle: sp.title || `自訂分段 ${i + 1}`,
+        subTitle: `${formatTime(start)} ~ ${formatTime(end)}`,
+        isSubSegment: false,
+        start,
+        end,
+        subtitles: subtitles.filter(s => s.start >= start && s.start < end)
+      });
+    });
+    return segments;
+  }
 
-      if (chapterDuration > subSegThreshold) {
-        let t = start;
-        let subIdx = 0;
-        const chapterSubtitles = subtitles.filter(s => s.start >= start && s.start < end);
-        const subSegments: Segment[] = [];
+  // ── 情況 3：有 Chapters → 層次結構（所有 Chapter 均顯示為資料夾）──────────
+  const localChapters = [...chapterSplits].sort((a, b) => a.time - b.time);
+  // 確保從 0 開始
+  if (localChapters[0].time > 0) {
+    localChapters.unshift({ time: 0, title: '影片開始' });
+  }
 
-        while (t < end) {
+  const isTimeRemoved = (time: number) => {
+    return removedBoundaryTimes.some(r => Math.abs(r - time) < 0.05);
+  };
+
+  for (let ci = 0; ci < localChapters.length; ci++) {
+    const chStart = localChapters[ci].time;
+    const chEnd = ci + 1 < localChapters.length ? localChapters[ci + 1].time : duration;
+    const chTitle = localChapters[ci].title || `章節 ${ci + 1}`;
+    const chSubs = subtitles.filter(s => s.start >= chStart && s.start < chEnd);
+
+    // 找出落在此 Chapter 範圍內的自訂切分點
+    const inChCustom = customSplits
+      .filter(cs => cs.time > chStart && cs.time < chEnd)
+      .sort((a, b) => a.time - b.time);
+
+    // 組成「本 Chapter 的分割點清單」，起點 + 自訂切分
+    const subPts: ChapterSplit[] = [{ time: chStart, title: '' }, ...inChCustom];
+
+    const subSegments: Segment[] = [];
+
+    for (let si = 0; si < subPts.length; si++) {
+      const segStart = subPts[si].time;
+      const segEnd = si + 1 < subPts.length ? subPts[si + 1].time : chEnd;
+      const segSubs = chSubs.filter(s => s.start >= segStart && s.start < segEnd);
+      const segDur = segEnd - segStart;
+
+      if (segDur > subSegThreshold) {
+        // 還需要自動再切分
+        let t = segStart;
+        let autoIdx = 0;
+        while (t < segEnd) {
           const target = t + interval;
-          if (target >= end) {
-            const sub = chapterSubtitles.filter(s => s.start >= t);
+          if (target >= segEnd) {
             subSegments.push({
-              id: `seg_chap_${i}_sub_${subIdx}`,
-              chapterTitle: chapterTitle,
-              subTitle: `${formatTime(t)} ~ ${formatTime(end)}`,
+              id: `seg_ch${ci}_sp${si}_a${autoIdx}`,
+              chapterTitle: chTitle,
+              subTitle: `${formatTime(t)} ~ ${formatTime(segEnd)}`,
               isSubSegment: true,
               start: t,
-              end: end,
-              subtitles: sub
+              end: segEnd,
+              subtitles: segSubs.filter(s => s.start >= t)
             });
             break;
           }
-          const bestIdx = findBestSplitIndex(chapterSubtitles, target, 120);
-          let nextT = (bestIdx < chapterSubtitles.length) ? chapterSubtitles[bestIdx].start : end;
+          const bestIdx = findBestSplitIndex(segSubs, target, 120);
+          let nextT = bestIdx < segSubs.length ? segSubs[bestIdx].start : segEnd;
           if (nextT <= t) nextT = t + interval;
 
-          // If the remaining duration in this chapter after nextT is too short, merge it into the current sub-segment
-          if (end - nextT < Math.min(360, interval * 0.5)) {
-            nextT = end;
+          // 如果這個切分點被合併了，往後尋找下一個切分點
+          while (isTimeRemoved(nextT) && nextT < segEnd) {
+            const nextTarget = nextT + interval;
+            if (nextTarget >= segEnd) {
+              nextT = segEnd;
+              break;
+            }
+            const nextBestIdx = findBestSplitIndex(segSubs, nextTarget, 120);
+            let candidateT = nextBestIdx < segSubs.length ? segSubs[nextBestIdx].start : segEnd;
+            if (candidateT <= nextT) candidateT = nextT + interval;
+            nextT = candidateT;
           }
 
-          const sub = chapterSubtitles.filter(s => s.start >= t && s.start < nextT);
+          if (segEnd - nextT < Math.min(360, interval * 0.5)) nextT = segEnd;
           subSegments.push({
-            id: `seg_chap_${i}_sub_${subIdx}`,
-            chapterTitle: chapterTitle,
+            id: `seg_ch${ci}_sp${si}_a${autoIdx}`,
+            chapterTitle: chTitle,
             subTitle: `${formatTime(t)} ~ ${formatTime(nextT)}`,
             isSubSegment: true,
             start: t,
             end: nextT,
-            subtitles: sub
+            subtitles: segSubs.filter(s => s.start >= t && s.start < nextT)
           });
           t = nextT;
-          subIdx++;
+          autoIdx++;
         }
-
-        segments.push({
-          isGroup: true,
-          chapterTitle: chapterTitle,
-          start: start,
-          end: end,
-          subtitles: [],
-          subSegments: subSegments
-        });
       } else {
-        const sub = subtitles.filter(s => s.start >= start && s.start < end);
-        segments.push({
-          isGroup: false,
-          id: `seg_chap_${i}`,
-          chapterTitle: chapterTitle,
-          subTitle: `${formatTime(start)} ~ ${formatTime(end)}`,
-          isSubSegment: false,
-          start: start,
-          end: end,
-          subtitles: sub
+        // 短到可以直接當一個子分段
+        subSegments.push({
+          id: `seg_ch${ci}_sp${si}`,
+          chapterTitle: chTitle,
+          subTitle: `${formatTime(segStart)} ~ ${formatTime(segEnd)}`,
+          isSubSegment: true,
+          start: segStart,
+          end: segEnd,
+          subtitles: segSubs
         });
       }
     }
+
+    // 所有 Chapter 均以 isGroup: true 顯示為資料夾
+    segments.push({
+      isGroup: true,
+      chapterTitle: chTitle,
+      start: chStart,
+      end: chEnd,
+      subtitles: [],
+      subSegments
+    });
   }
 
   return segments;
 }
+
+
 
 export function resolveSubtitleOverlaps(entries: SubtitleEntry[]): SubtitleEntry[] {
   if (!entries || entries.length === 0) return [];
@@ -328,4 +370,129 @@ export function resolveSubtitleOverlaps(entries: SubtitleEntry[]): SubtitleEntry
     }
   }
   return sorted;
+}
+
+export function parseSubtitlesText(text: string): SubtitleEntry[] {
+  const cleaned = text.trim();
+  
+  // 1. Try JSON
+  if (cleaned.startsWith('[') && cleaned.endsWith(']')) {
+    try {
+      const parsed = JSON.parse(cleaned);
+      if (Array.isArray(parsed)) {
+        const subs: SubtitleEntry[] = [];
+        for (const item of parsed) {
+          const t = item.text || item.content || "";
+          let start = 0;
+          if (typeof item.start === 'number') start = item.start;
+          else if (typeof item.start === 'string') start = parseTimeToSeconds(item.start);
+          
+          let duration = 2;
+          if (typeof item.duration === 'number') {
+            duration = item.duration;
+          } else if (typeof item.end === 'number') {
+            duration = Math.max(0, item.end - start);
+          } else if (typeof item.end === 'string') {
+            duration = Math.max(0, parseTimeToSeconds(item.end) - start);
+          }
+          subs.push({ text: t, start, duration });
+        }
+        if (subs.length > 0) return subs;
+      }
+    } catch (e) {
+      console.warn("JSON parse failed, falling back to VTT/SRT", e);
+    }
+  }
+
+  // 2. VTT / SRT parser
+  const lines = text.split(/\r?\n/);
+  const subs: SubtitleEntry[] = [];
+  let currentStart = -1;
+  let currentEnd = -1;
+  let currentTextLines: string[] = [];
+
+  const timeRegex = /([\d:,.]+)\s*-->\s*([\d:,.]+)/;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    const match = trimmed.match(timeRegex);
+    
+    if (match) {
+      // If we have an active subtitle, save it
+      if (currentStart >= 0 && currentTextLines.length > 0) {
+        subs.push({
+          text: currentTextLines.join(' '),
+          start: currentStart,
+          duration: Math.max(0.1, currentEnd - currentStart)
+        });
+      }
+      // Reset for next
+      currentStart = parseTimestampToSeconds(match[1]);
+      currentEnd = parseTimestampToSeconds(match[2]);
+      currentTextLines = [];
+    } else if (trimmed === "" || /^\d+$/.test(trimmed) || trimmed === "WEBVTT") {
+      // Blank line or sequence number or WEBVTT header
+      // If blank line, we can optionally save current subtitle if it's the end of block
+      if (trimmed === "" && currentStart >= 0 && currentTextLines.length > 0) {
+        subs.push({
+          text: currentTextLines.join(' '),
+          start: currentStart,
+          duration: Math.max(0.1, currentEnd - currentStart)
+        });
+        currentStart = -1;
+        currentEnd = -1;
+        currentTextLines = [];
+      }
+    } else {
+      if (currentStart >= 0) {
+        currentTextLines.push(trimmed);
+      }
+    }
+  }
+
+  // Save the last subtitle if any
+  if (currentStart >= 0 && currentTextLines.length > 0) {
+    subs.push({
+      text: currentTextLines.join(' '),
+      start: currentStart,
+      duration: Math.max(0.1, currentEnd - currentStart)
+    });
+  }
+
+  // 3. Fallback to Plain Text (if no subtitles were parsed)
+  if (subs.length === 0) {
+    const lines = text.split(/\n+/).map(p => p.trim()).filter(p => p.length > 0);
+    let time = 0;
+    for (const line of lines) {
+      subs.push({
+        text: line,
+        start: time,
+        duration: 8
+      });
+      time += 8;
+    }
+  }
+
+  return subs;
+}
+
+export function parseTimestampToSeconds(ts: string): number {
+  const clean = ts.trim().replace(',', '.');
+  const parts = clean.split(':').map(Number);
+  
+  if (parts.length === 3) {
+    // HH:MM:SS.mmm
+    const h = parts[0];
+    const m = parts[1];
+    const s = parts[2];
+    return h * 3600 + m * 60 + s;
+  } else if (parts.length === 2) {
+    // MM:SS.mmm
+    const m = parts[0];
+    const s = parts[1];
+    return m * 60 + s;
+  } else if (!isNaN(Number(clean))) {
+    return Number(clean);
+  }
+  return 0;
 }

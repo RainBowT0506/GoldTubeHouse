@@ -6,7 +6,8 @@ import {
   cleanAndJoinSubtitles,
   generateSegments,
   getCleanedSubtitlesAndMappings,
-  resolveSubtitleOverlaps
+  resolveSubtitleOverlaps,
+  parseSubtitlesText
 } from './utils';
 
 // Helper to determine caret offset inside contentEditable
@@ -95,6 +96,18 @@ function App() {
     const data = localStorage.getItem('gth_userCustomSplits');
     return data ? JSON.parse(data) : [];
   });
+  const [collapsedChapters, setCollapsedChapters] = useState<Set<string>>(() => {
+    try {
+      const data = localStorage.getItem('gth_collapsedChapters');
+      return data ? new Set<string>(JSON.parse(data)) : new Set<string>();
+    } catch { return new Set<string>(); }
+  });
+  const [removedBoundaryTimes, setRemovedBoundaryTimes] = useState<number[]>(() => {
+    try {
+      const data = localStorage.getItem('gth_removedBoundaryTimes');
+      return data ? JSON.parse(data) : [];
+    } catch { return []; }
+  });
   const [editedSegmentTexts, setEditedSegmentTexts] = useState<Record<string, string>>(() => {
     const data = localStorage.getItem('gth_editedSegmentTexts');
     return data ? JSON.parse(data) : {};
@@ -156,8 +169,14 @@ function App() {
   const [showCostEstimation, setShowCostEstimation] = useState<boolean>(() => {
     return localStorage.getItem('gth_showCostEstimation') === 'true';
   });
+  const [showCostDetails, setShowCostDetails] = useState<boolean>(false);
   const [hasEnvKey, setHasEnvKey] = useState<boolean>(false);
   const [toast, setToast] = useState<{ show: boolean; message: string }>({ show: false, message: '' });
+
+  // --- Manual Import States ---
+  const [showImportModal, setShowImportModal] = useState<boolean>(false);
+  const [importTitle, setImportTitle] = useState<string>('');
+  const [importText, setImportText] = useState<string>('');
 
   // --- Effects for checkEnvKey ---
   useEffect(() => {
@@ -203,6 +222,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem('gth_editedSegmentTexts', JSON.stringify(editedSegmentTexts));
   }, [editedSegmentTexts]);
+
+  useEffect(() => {
+    localStorage.setItem('gth_removedBoundaryTimes', JSON.stringify(removedBoundaryTimes));
+  }, [removedBoundaryTimes]);
 
   useEffect(() => {
     if (aiNotesResult) {
@@ -290,28 +313,38 @@ function App() {
     return list;
   }, [chaptersInput]);
 
-  const combinedSplits = useMemo<ChapterSplit[]>(() => {
-    const combined = [...parsedChapters];
-    userCustomSplits.forEach((custom) => {
-      if (!combined.some((s) => Math.abs(s.time - custom.time) < 5)) {
-        combined.push(custom);
+  // 過濾掉被「合併」移除的 Chapter 分界點
+  const filteredChapterSplits = useMemo<ChapterSplit[]>(() => {
+    console.log('[Merge Debug] parsedChapters:', parsedChapters);
+    console.log('[Merge Debug] removedBoundaryTimes:', removedBoundaryTimes);
+    const result = parsedChapters.filter(ch => {
+      const isRemoved = removedBoundaryTimes.includes(ch.time);
+      if (isRemoved) {
+        console.log('[Merge Debug] Filtering out chapter split:', ch.title, 'at time:', ch.time);
       }
+      return !isRemoved;
     });
-    combined.sort((a, b) => a.time - b.time);
-    return combined;
-  }, [parsedChapters, userCustomSplits]);
+    return result;
+  }, [parsedChapters, removedBoundaryTimes]);
+
+  // 過濾掉被移除的自訂切分點
+  const filteredCustomSplits = useMemo<ChapterSplit[]>(() => {
+    return userCustomSplits.filter(cs => !removedBoundaryTimes.includes(cs.time));
+  }, [userCustomSplits, removedBoundaryTimes]);
 
   const currentSegments = useMemo<Segment[]>(() => {
     if (!videoData || !videoData.subtitles) return [];
     return generateSegments(
       videoData.subtitles,
       videoData.duration,
-      combinedSplits,
+      filteredChapterSplits,
+      filteredCustomSplits,
       settingsInterval * 60,
       settingsNoSegment * 60,
-      settingsSubSegment * 60
+      settingsSubSegment * 60,
+      removedBoundaryTimes
     );
-  }, [videoData, combinedSplits, settingsInterval, settingsNoSegment, settingsSubSegment]);
+  }, [videoData, filteredChapterSplits, filteredCustomSplits, settingsInterval, settingsNoSegment, settingsSubSegment, removedBoundaryTimes]);
 
   const segmentsCount = useMemo(() => {
     let count = 0;
@@ -329,6 +362,7 @@ function App() {
   const estCostInfo = useMemo(() => {
     let totalChars = 0;
     let totalSegmentsCount = 0;
+    const flatSegmentsList: { start: number; end: number; chars: number }[] = [];
 
     currentSegments.forEach((seg) => {
       if (seg.isGroup && seg.subSegments) {
@@ -340,6 +374,11 @@ function App() {
               ? editedSegmentTexts[segId]
               : cleanAndJoinSubtitles(sub.subtitles);
           totalChars += text.length;
+          flatSegmentsList.push({
+            start: sub.start,
+            end: sub.end,
+            chars: text.length
+          });
         });
       } else {
         totalSegmentsCount++;
@@ -349,12 +388,25 @@ function App() {
             ? editedSegmentTexts[segId]
             : cleanAndJoinSubtitles(seg.subtitles);
         totalChars += text.length;
+        flatSegmentsList.push({
+          start: seg.start,
+          end: seg.end,
+          chars: text.length
+        });
       }
     });
 
+    // Group for Prompt 2 (every 60 minutes = 3600 seconds)
+    const p2Groups: Record<number, any[]> = {};
+    flatSegmentsList.forEach((seg) => {
+      const bIdx = Math.floor(seg.start / 3600);
+      if (!p2Groups[bIdx]) p2Groups[bIdx] = [];
+      p2Groups[bIdx].push(seg);
+    });
+
     const videoDuration = videoData?.duration || 0;
-    const p1Calls = Math.max(1, Math.ceil(videoDuration / 1200)); // 20 minutes = 1200 seconds
-    const p2Calls = Math.max(1, Math.ceil(videoDuration / 3600)); // 60 minutes = 3600 seconds
+    const p1Calls = totalSegmentsCount;
+    const p2Calls = Object.keys(p2Groups).length;
 
     const estInputTokens = Math.ceil(totalChars * 1.2);
     const estOutputP1 = p1Calls * 500;
@@ -369,7 +421,16 @@ function App() {
       segments: totalSegmentsCount,
       chars: totalChars,
       costUSD: totalCost,
-      costTWD: totalCost * 32.5
+      costTWD: totalCost * 32.5,
+      videoDuration,
+      p1Calls,
+      p2Calls,
+      estInputTokens,
+      estOutputP1,
+      estOutputP2,
+      estOutputTokens,
+      inputCost,
+      outputCost
     };
   }, [currentSegments, editedSegmentTexts, videoData]);
 
@@ -422,6 +483,57 @@ function App() {
     } catch (err: any) {
       setScreen('home');
       alert(err.message || '發生未知錯誤，請重試。');
+    }
+  };
+
+  const handleManualImport = () => {
+    if (!importText.trim()) {
+      alert('請貼上字幕內容！');
+      return;
+    }
+
+    try {
+      const parsedSubs = parseSubtitlesText(importText);
+      if (parsedSubs.length === 0) {
+        alert('無法從貼上的文字中解析出任何字幕。');
+        return;
+      }
+
+      // Calculate duration from parsed subtitles
+      let duration = 0;
+      if (parsedSubs.length > 0) {
+        const lastSub = parsedSubs[parsedSubs.length - 1];
+        duration = Math.ceil(lastSub.start + lastSub.duration);
+      }
+
+      const manualVideoData = {
+        status: 'success',
+        video_id: 'manual_' + Date.now(),
+        title: importTitle.trim() || '手動匯入影片',
+        duration: duration,
+        thumbnail: 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=120&auto=format&fit=crop&q=60',
+        subtitles: resolveSubtitleOverlaps(parsedSubs).map((s: any, idx: number) => ({
+          ...s,
+          globalIndex: idx
+        }))
+      };
+
+      setUserCustomSplits([]);
+      setEditedSegmentTexts({});
+      setChaptersInput('');
+      setAiNotesResult(null);
+      setAiTermsResult(null);
+      setActiveTab('edit');
+      setShowCostEstimation(false);
+
+      setVideoData(manualVideoData);
+      setScreen('app');
+      setShowImportModal(false);
+      setImportTitle('');
+      setImportText('');
+      showToast('✅ 成功手動匯入字幕！');
+    } catch (err: any) {
+      alert('匯入失敗: ' + err.message);
     }
   };
 
@@ -494,7 +606,28 @@ function App() {
     setChaptersInput('');
     setUserCustomSplits([]);
     setEditedSegmentTexts({});
+    setRemovedBoundaryTimes([]);
+    setCollapsedChapters(new Set());
     showToast('已清除章節與自訂切分點。');
+  };
+
+  const toggleChapterCollapse = (key: string) => {
+    setCollapsedChapters(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      localStorage.setItem('gth_collapsedChapters', JSON.stringify([...next]));
+      return next;
+    });
+  };
+
+  const handleMergeWithNext = (nextChapterStartTime: number) => {
+    console.log('[Merge Debug] handleMergeWithNext called with nextChapterStartTime:', nextChapterStartTime, 'type:', typeof nextChapterStartTime);
+    setRemovedBoundaryTimes(prev => {
+      const next = [...prev, nextChapterStartTime];
+      console.log('[Merge Debug] New removedBoundaryTimes will be:', next);
+      return next;
+    });
+    showToast('✅ 已合併相鄰段落！點「清除章節」可全部復原。');
   };
 
   const setPresetInterval = (minutes: number) => {
@@ -734,6 +867,15 @@ function App() {
       return;
     }
 
+    const formatSecondsToTime = (secs: number) => {
+      const h = Math.floor(secs / 3600);
+      const m = Math.floor((secs % 3600) / 60);
+      const s = Math.floor(secs % 60);
+      const pad = (num: number) => String(num).padStart(2, '0');
+      if (h > 0) return `${pad(h)}:${pad(m)}:${pad(s)}`;
+      return `${pad(m)}:${pad(s)}`;
+    };
+
     const flatSegments: { title: string; text: string; start: number; end: number }[] = [];
     currentSegments.forEach((seg) => {
       if (seg.isGroup && seg.subSegments) {
@@ -770,14 +912,6 @@ function App() {
       return;
     }
 
-    // Group for Prompt 1 (every 20 minutes = 1200 seconds)
-    const p1Groups: Record<number, typeof flatSegments> = {};
-    flatSegments.forEach((seg) => {
-      const bIdx = Math.floor(seg.start / 1200);
-      if (!p1Groups[bIdx]) p1Groups[bIdx] = [];
-      p1Groups[bIdx].push(seg);
-    });
-
     // Group for Prompt 2 (every 60 minutes = 3600 seconds)
     const p2Groups: Record<number, typeof flatSegments> = {};
     flatSegments.forEach((seg) => {
@@ -786,33 +920,17 @@ function App() {
       p2Groups[bIdx].push(seg);
     });
 
-    const formatSecondsToTime = (secs: number) => {
-      const h = Math.floor(secs / 3600);
-      const m = Math.floor((secs % 3600) / 60);
-      const s = Math.floor(secs % 60);
-      const pad = (num: number) => String(num).padStart(2, '0');
-      if (h > 0) return `${pad(h)}:${pad(m)}:${pad(s)}`;
-      return `${pad(m)}:${pad(s)}`;
-    };
-
-    // Construct initial states for blocks
-    const totalP1 = Object.keys(p1Groups).length;
-    const initialNotes: AIBlock[] = Object.keys(p1Groups)
-      .map(Number)
-      .sort((a, b) => a - b)
-      .map((bIdx, idx) => {
-        const groupSegs = p1Groups[bIdx];
-        const combinedText = groupSegs.map((s) => `### ${s.title}\n${s.text}`).join('\n\n');
-        const minStart = Math.min(...groupSegs.map((s) => s.start));
-        const maxEnd = Math.max(...groupSegs.map((s) => s.end));
-        const title = `影片時間 ${formatSecondsToTime(minStart)} ~ ${formatSecondsToTime(maxEnd)} 重點整理 (第 ${idx + 1} / ${totalP1} 次)`;
-        return {
-          title,
-          content: '⏳ 正在呼叫 AI 整理中...',
-          status: 'loading' as const,
-          text: combinedText
-        };
-      });
+    // Construct initial states for blocks (Prompt 1 is 1-to-1 with segments)
+    const totalP1 = flatSegments.length;
+    const initialNotes: AIBlock[] = flatSegments.map((seg, idx) => {
+      const title = `影片時間 ${formatSecondsToTime(seg.start)} ~ ${formatSecondsToTime(seg.end)} 重點整理 (第 ${idx + 1} / ${totalP1} 次)`;
+      return {
+        title,
+        content: '⏳ 正在呼叫 AI 整理中...',
+        status: 'loading' as const,
+        text: `### ${seg.title}\n${seg.text}`
+      };
+    });
 
     const totalP2 = Object.keys(p2Groups).length;
     const initialTerms: AIBlock[] = Object.keys(p2Groups)
@@ -1062,6 +1180,16 @@ function App() {
               </button>
             </div>
 
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '-10px', marginBottom: '25px', width: '100%' }}>
+              <button
+                className="btn-global btn-back"
+                style={{ width: 'auto', padding: '10px 24px', borderRadius: 'var(--radius-md)' }}
+                onClick={() => setShowImportModal(true)}
+              >
+                📁 手動匯入字幕 (VTT / SRT / JSON / 純文字)
+              </button>
+            </div>
+
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
               <span style={{ color: 'var(--text-muted)', fontSize: '13px', alignSelf: 'center' }}>常用測試範例：</span>
               <span
@@ -1179,29 +1307,79 @@ function App() {
                     ) : (
                       currentSegments.map((item, index) => {
                         if (item.isGroup) {
+                          const groupKey = `group_ch_${index}_${item.chapterTitle}`;
+                          const isCollapsed = collapsedChapters.has(groupKey);
+                          const nextItem = index + 1 < currentSegments.length ? currentSegments[index + 1] : null;
                           return (
-                            <div className="chapter-group" key={`group_${index}`}>
-                              <div className="chapter-group-header">
-                                <div className="chapter-group-title">
-                                  📁 <span># {item.chapterTitle}</span>
+                            <React.Fragment key={groupKey}>
+                              <div className="chapter-group">
+                                <div
+                                  className="chapter-group-header"
+                                  onClick={() => toggleChapterCollapse(groupKey)}
+                                  style={{ cursor: 'pointer' }}
+                                >
+                                  <div className="chapter-group-title">
+                                    <span className="collapse-arrow">{isCollapsed ? '▶' : '▼'}</span>
+                                    📁 <span># {item.chapterTitle}</span>
+                                  </div>
+                                  <div
+                                    style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
+                                    onClick={e => e.stopPropagation()}
+                                  >
+                                    <span className="chapter-group-time">
+                                      {formatTime(item.start)} ~ {formatTime(item.end)}
+                                    </span>
+                                    {!isCollapsed && (
+                                      <button className="btn-copy-group" onClick={() => copyEntireChapter(item)}>
+                                        複製整章
+                                      </button>
+                                    )}
+                                  </div>
                                 </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                  <span className="chapter-group-time">
-                                    {formatTime(item.start)} ~ {formatTime(item.end)}
-                                  </span>
-                                  <button className="btn-copy-group" onClick={() => copyEntireChapter(item)}>
-                                    複製整章
-                                  </button>
-                                </div>
+                                {!isCollapsed && item.subSegments?.map((subSeg, subIdx) => {
+                                  const subSegs = item.subSegments || [];
+                                  const isLastSub = subIdx === subSegs.length - 1;
+                                  return (
+                                    <React.Fragment key={subSeg.id || `sub_${subIdx}`}>
+                                      {renderSegmentCard(subSeg, true)}
+                                      {!isLastSub && subSegs[subIdx + 1] && (
+                                        <div className="merge-btn-row subsegment-merge">
+                                          <div className="merge-line" />
+                                          <button
+                                            className="btn-merge-next btn-merge-sub"
+                                            onClick={() => handleMergeWithNext(subSegs[subIdx + 1].start)}
+                                            title="合併此子段落與下一段"
+                                          >
+                                            ⊕ 合併子段落
+                                          </button>
+                                          <div className="merge-line" />
+                                        </div>
+                                      )}
+                                    </React.Fragment>
+                                  );
+                                })}
                               </div>
-                              {item.subSegments?.map((subSeg) => renderSegmentCard(subSeg, true))}
-                            </div>
+                              {nextItem && nextItem.isGroup && (
+                                <div className="merge-btn-row">
+                                  <div className="merge-line" />
+                                  <button
+                                    className="btn-merge-next"
+                                    onClick={() => handleMergeWithNext(nextItem.start)}
+                                    title={`合併「${item.chapterTitle}」與「${nextItem.chapterTitle}」`}
+                                  >
+                                    ⊕ 合併此章節與下一章
+                                  </button>
+                                  <div className="merge-line" />
+                                </div>
+                              )}
+                            </React.Fragment>
                           );
                         } else {
                           return renderSegmentCard(item, false);
                         }
                       })
                     )}
+
                   </div>
                 </div>
               )}
@@ -1515,6 +1693,56 @@ function App() {
                         ${estCostInfo.costUSD.toFixed(4)} USD (約台幣 {estCostInfo.costTWD.toFixed(2)} 元)
                       </span>
                     </div>
+
+                    <div className="cost-details-toggle" onClick={() => setShowCostDetails(!showCostDetails)}>
+                      <span>{showCostDetails ? '▲ 收起詳細計算過程' : '▼ 展開詳細計算過程'}</span>
+                    </div>
+
+                    {showCostDetails && (
+                      <div className="cost-details-content">
+                        <div className="cost-details-section-title">輸入計費 (Input):</div>
+                        <div className="cost-details-row">
+                          <span>預估 Token 數 (字數 × 1.2)</span>
+                          <span className="cost-details-highlight">{estCostInfo.estInputTokens?.toLocaleString()} tokens</span>
+                        </div>
+                        <div className="cost-details-row">
+                          <span>費率 ($1.25 / 1M tokens)</span>
+                          <span>${estCostInfo.inputCost?.toFixed(6)} USD</span>
+                        </div>
+
+                        <div className="cost-details-section-title">輸出計費 (Output):</div>
+                        <div className="cost-details-row">
+                          <span>影片長度 / 段落區間</span>
+                          <span>{((estCostInfo.videoDuration || 0) / 60).toFixed(1)} 分鐘</span>
+                        </div>
+                        <div className="cost-details-row">
+                          <span>筆記次數 (每個段落)</span>
+                          <span>{estCostInfo.p1Calls} 次 (約 {estCostInfo.estOutputP1?.toLocaleString()} tokens)</span>
+                        </div>
+                        <div className="cost-details-row">
+                          <span>術語次數 (每 60 分鐘)</span>
+                          <span>{estCostInfo.p2Calls} 次 (約 {estCostInfo.estOutputP2?.toLocaleString()} tokens)</span>
+                        </div>
+                        <div className="cost-details-row">
+                          <span>費率 ($10.00 / 1M tokens)</span>
+                          <span>${estCostInfo.outputCost?.toFixed(6)} USD</span>
+                        </div>
+
+                        <div className="cost-details-row cost-details-divider">
+                          <span>總預估 Token</span>
+                          <span className="cost-details-highlight">{((estCostInfo.estInputTokens || 0) + (estCostInfo.estOutputTokens || 0)).toLocaleString()} tokens</span>
+                        </div>
+                        <div className="cost-details-row">
+                          <span>計算公式 (In + Out)</span>
+                          <span>${estCostInfo.inputCost?.toFixed(4)} + ${estCostInfo.outputCost?.toFixed(4)}</span>
+                        </div>
+                        <div className="cost-details-row">
+                          <span>匯率參考 (TWD/USD)</span>
+                          <span>32.5</span>
+                        </div>
+                      </div>
+                    )}
+
                     <button className="btn-global btn-copy-all" style={{ marginTop: '5px' }} onClick={runAIGeneration}>
                       <span>🚀 確認呼叫 AI 開始整理</span>
                     </button>
@@ -1529,6 +1757,55 @@ function App() {
           </div>
         )}
       </main>
+
+      {/* Manual Import Modal */}
+      {showImportModal && (
+        <div className="modal-overlay" onClick={() => setShowImportModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">📁 手動匯入字幕</h2>
+              <button className="btn-close-modal" onClick={() => setShowImportModal(false)}>&times;</button>
+            </div>
+            <div className="modal-body">
+              <div className="form-group">
+                <label className="form-label">影片標題 (選填)</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="請輸入影片標題，例如：機器學習基礎課程"
+                  value={importTitle}
+                  onChange={(e) => setImportTitle(e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">字幕內容 (支援 VTT, SRT, JSON 或純文字段落/單行)</label>
+                <textarea
+                  className="form-textarea"
+                  placeholder="請在此貼上字幕內容..."
+                  value={importText}
+                  onChange={(e) => setImportText(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button
+                className="btn-global btn-back"
+                style={{ width: 'auto', padding: '10px 20px', borderRadius: 'var(--radius-md)' }}
+                onClick={() => setShowImportModal(false)}
+              >
+                取消
+              </button>
+              <button
+                className="btn-global btn-lock-changes"
+                style={{ width: 'auto', padding: '10px 24px', borderRadius: 'var(--radius-md)' }}
+                onClick={handleManualImport}
+              >
+                確認匯入
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Toast Notification */}
       <div className={`toast ${toast.show ? 'show' : ''}`}>

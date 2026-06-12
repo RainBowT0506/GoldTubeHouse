@@ -115,9 +115,58 @@ def parse_vtt_file(file_path):
                 })
     return subtitles
 
+# 剖析 SRT 格式字幕內容
+def parse_srt_content(content: str):
+    subtitles = []
+    # SRT 格式：序號 -> 時間戳 (HH:MM:SS,mmm --> HH:MM:SS,mmm) -> 文字 -> 空行
+    blocks = re.split(r'\n\s*\n', content.strip())
+    timestamp_re = re.compile(r'(\d{2}):(\d{2}):(\d{2})[,\.](\d{3})\s*-->\s*(\d{2}):(\d{2}):(\d{2})[,\.](\d{3})')
+
+    def srt_time_to_seconds(h, m, s, ms):
+        return int(h) * 3600 + int(m) * 60 + int(s) + int(ms) / 1000.0
+
+    for block in blocks:
+        lines = block.strip().split('\n')
+        if not lines:
+            continue
+        match = None
+        text_lines = []
+        for line in lines:
+            m = timestamp_re.search(line)
+            if m:
+                match = m
+            elif line.strip() and not line.strip().isdigit():
+                text_lines.append(line.strip())
+        if match and text_lines:
+            start = srt_time_to_seconds(match.group(1), match.group(2), match.group(3), match.group(4))
+            end   = srt_time_to_seconds(match.group(5), match.group(6), match.group(7), match.group(8))
+            duration = max(0.0, end - start)
+            text = ' '.join(text_lines)
+            text = re.sub(r'<[^>]+>', '', text)  # 去除 HTML 標籤
+            text = re.sub(r'\s+', ' ', text).strip()
+            if text:
+                subtitles.append({'text': text, 'start': start, 'duration': duration})
+    return subtitles
+
 # 使用 API 取得字幕
 def fetch_subtitles_api(video_id: str):
-    api = YouTubeTranscriptApi()
+    cookie_file = "cookies.txt"
+    if os.path.exists(cookie_file):
+        try:
+            import requests
+            from http.cookiejar import MozillaCookieJar
+            session = requests.Session()
+            cj = MozillaCookieJar(cookie_file)
+            cj.load(ignore_discard=True, ignore_expires=True)
+            session.cookies = cj
+            api = YouTubeTranscriptApi(http_client=session)
+            print(f"[API] 偵測到 {cookie_file}，已成功載入 Cookie 快取進行請求。")
+        except Exception as e:
+            print(f"[API] 載入 {cookie_file} 失敗: {e}")
+            api = YouTubeTranscriptApi()
+    else:
+        api = YouTubeTranscriptApi()
+
     try:
         transcript_list = api.list(video_id)
         
@@ -152,51 +201,190 @@ def fetch_subtitles_api(video_id: str):
         print(f"[API] 取得字幕失敗 (ID: {video_id}): {e}")
         return None
 
-# 使用 yt-dlp 備用下載與解析字幕
+# 使用 yt-dlp 備用下載與解析字幕（透過提取 URL 後直接下載）
 def fetch_subtitles_ytdlp(video_id: str):
     url = f"https://www.youtube.com/watch?v={video_id}"
     
-    with tempfile.TemporaryDirectory() as temp_dir:
-        ydl_opts = {
-            'skip_download': True,
-            'writesubtitles': True,
-            'writeautomaticsub': True,
-            'subtitleslangs': ['zh-TW', 'zh-CN', 'en'],
-            'outtmpl': os.path.join(temp_dir, '%(id)s.%(ext)s'),
-            'quiet': True,
-            'no_warnings': True,
-            'ignoreerrors': True,
-        }
+    ydl_opts = {
+        'skip_download': True,
+        'quiet': True,
+        'no_warnings': True,
+        'ignoreerrors': True,
+    }
+    
+    cookie_file = "cookies.txt"
+    if os.path.exists(cookie_file):
+        ydl_opts['cookiefile'] = cookie_file
+        print(f"[yt-dlp] 偵測到 {cookie_file}，已啟用 Cookie 快取。")
+    else:
+        try:
+            ydl_opts['cookiesfrombrowser'] = ('chrome',)
+            print("[yt-dlp] 未偵測到 cookies.txt，已啟用自動載入 Chrome 瀏覽器 Cookie 模式。")
+        except Exception as e:
+            print(f"[yt-dlp] 自動載入 Chrome Cookie 失敗: {e}")
+    
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+    except Exception as e:
+        print(f"[yt-dlp] 擷取影片資訊失敗: {e}")
+        return None
+    
+    if not info:
+        return None
+
+    # 取得手動字幕與自動字幕
+    manual_subs = info.get('subtitles', {}) or {}
+    auto_subs = info.get('automatic_captions', {}) or {}
+    
+    # 語言優先順序：先找手動字幕，再找自動字幕
+    preferred_langs = ['zh-TW', 'zh-Hant', 'zh-CN', 'zh-Hans', 'zh', 'en']
+    
+    selected_url = None
+    selected_lang = None
+    
+    # 先找手動字幕（最優先）
+    for lang in preferred_langs:
+        if lang in manual_subs:
+            for fmt in manual_subs[lang]:
+                if fmt.get('ext') in ('vtt', 'json3') or fmt.get('ext') is None:
+                    selected_url = fmt.get('url')
+                    selected_lang = lang
+                    break
+            if selected_url:
+                break
+    
+    # 再找自動字幕
+    if not selected_url:
+        for lang in preferred_langs:
+            if lang in auto_subs:
+                for fmt in auto_subs[lang]:
+                    if fmt.get('ext') in ('vtt', 'json3') or fmt.get('ext') is None:
+                        selected_url = fmt.get('url')
+                        selected_lang = lang
+                        break
+                if selected_url:
+                    break
+    
+    # 最後 fallback：任意語言的第一個
+    if not selected_url:
+        for lang, fmts in list(auto_subs.items())[:3]:
+            for fmt in fmts:
+                if fmt.get('url'):
+                    selected_url = fmt.get('url')
+                    selected_lang = lang
+                    break
+            if selected_url:
+                break
+    
+    if not selected_url:
+        print("[yt-dlp] 找不到任何可用的字幕 URL。")
+        return None
+    
+    print(f"[yt-dlp] 找到字幕語言: {selected_lang}，嘗試下載...")
+    
+    # 加上 VTT 格式參數
+    if '?' in selected_url:
+        vtt_url = selected_url + '&fmt=vtt'
+    else:
+        vtt_url = selected_url + '?fmt=vtt'
+    
+    try:
+        session = requests.Session()
+        session.headers.update({
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        })
+        if os.path.exists(cookie_file):
+            from http.cookiejar import MozillaCookieJar
+            cj = MozillaCookieJar(cookie_file)
+            cj.load(ignore_discard=True, ignore_expires=True)
+            session.cookies = cj
+        
+        r = session.get(vtt_url, timeout=20)
+        if r.status_code == 200 and 'WEBVTT' in r.text:
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.vtt', delete=False, encoding='utf-8') as tf:
+                tf.write(r.text)
+                temp_name = tf.name
+            try:
+                subs = parse_vtt_file(temp_name)
+                print(f"[yt-dlp] 成功下載並解析字幕！(共 {len(subs)} 筆)")
+                return subs
+            finally:
+                try:
+                    os.remove(temp_name)
+                except:
+                    pass
+        else:
+            print(f"[yt-dlp] 下載字幕失敗，HTTP {r.status_code}")
+            return None
+    except Exception as e:
+        print(f"[yt-dlp] 下載字幕遭遇例外: {e}")
+        return None
+
+def fetch_subtitles_downsub(video_id: str):
+    url = f"https://www.youtube.com/watch?v={video_id}"
+    import subprocess
+    
+    print(f"[DownSub] 嘗試使用 DownSub 管道下載影片字幕 (ID: {video_id})...")
+    try:
+        project_dir = os.path.dirname(os.path.abspath(__file__))
+        script_path = os.path.join(project_dir, "downsub_fetcher.js")
+        
+        if not os.path.exists(script_path):
+            print("[DownSub] 找不到 downsub_fetcher.js 腳本。")
+            return None
+        
+        # 使用暫存檔案傳輸字幕，避免 stdout pipe 64KB 緩衝限制
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.srt', delete=False, encoding='utf-8') as tf:
+            temp_srt_path = tf.name
         
         try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                ydl.download([url])
-        except Exception as e:
-            print(f"[yt-dlp] 下載字幕遭遇錯誤: {e}")
-            return None
+            res = subprocess.run(
+                ["node", script_path, url, temp_srt_path],
+                capture_output=True,
+                text=True,
+                timeout=60
+            )
             
-        vtt_files = glob.glob(os.path.join(temp_dir, f"{video_id}.*.vtt"))
-        if not vtt_files:
-            print(f"[yt-dlp] 找不到下載的 VTT 檔案。")
-            return None
-            
-        selected_file = None
-        for lang in ['.zh-TW.', '.zh-CN.', '.en.']:
-            for f in vtt_files:
-                if lang in f:
-                    selected_file = f
-                    break
-            if selected_file:
-                break
+            if res.returncode == 0 and os.path.exists(temp_srt_path):
+                with open(temp_srt_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
                 
-        if not selected_file:
-            selected_file = vtt_files[0]
-            
-        try:
-            return parse_vtt_file(selected_file)
-        except Exception as e:
-            print(f"[Parser] 解析 VTT 遭遇錯誤: {e}")
-            return None
+                if not content.strip():
+                    print("[DownSub] 字幕檔案為空。")
+                    return None
+                
+                # 判斷是 SRT 還是 VTT 格式
+                first_line = content.strip().split('\n')[0].strip()
+                if first_line.isdigit():
+                    # SRT 格式
+                    subs = parse_srt_content(content)
+                    print(f"[DownSub] 成功獲取 SRT 字幕！(共 {len(subs)} 筆)")
+                    return subs
+                elif "WEBVTT" in content:
+                    # VTT 格式（備用）
+                    vtt_tmp = temp_srt_path.replace('.srt', '.vtt')
+                    with open(vtt_tmp, 'w', encoding='utf-8') as f:
+                        f.write(content)
+                    try:
+                        subs = parse_vtt_file(vtt_tmp)
+                        print(f"[DownSub] 成功獲取 VTT 字幕！(共 {len(subs)} 筆)")
+                        return subs
+                    finally:
+                        try: os.remove(vtt_tmp)
+                        except: pass
+                else:
+                    print("[DownSub] 回傳內容格式無法識別。")
+            else:
+                err_msg = res.stderr.strip() if res.stderr else '未知錯誤'
+                print(f"[DownSub] 抓取失敗: {err_msg}")
+        finally:
+            try: os.remove(temp_srt_path)
+            except: pass
+                
+    except Exception as e:
+        print(f"[DownSub] 執行 DownSub 抓取時遭遇例外: {e}")
+    return None
 
 # 取得影片資訊 (Title, Duration, Thumbnail)
 def get_video_metadata(video_id: str):
@@ -206,6 +394,14 @@ def get_video_metadata(video_id: str):
         'quiet': True,
         'no_warnings': True,
     }
+    cookie_file = "cookies.txt"
+    if os.path.exists(cookie_file):
+        ydl_opts['cookiefile'] = cookie_file
+    else:
+        try:
+            ydl_opts['cookiesfrombrowser'] = ('chrome',)
+        except Exception as e:
+            print(f"[yt-dlp Metadata] 自動載入 Chrome Cookie 失敗: {e}")
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
@@ -282,6 +478,10 @@ def process_video(request: VideoRequest):
     if not subtitles:
         print("API 讀取失敗，降級使用 yt-dlp 擷取字幕中...")
         subtitles = fetch_subtitles_ytdlp(video_id)
+        
+    if not subtitles:
+        print("yt-dlp 擷取失敗，降級使用 DownSub 擷取字幕中...")
+        subtitles = fetch_subtitles_downsub(video_id)
         
     if not subtitles:
         return JSONResponse(
