@@ -13,6 +13,8 @@ from pydantic import BaseModel
 from youtube_transcript_api import YouTubeTranscriptApi
 import yt_dlp
 
+from typing import Optional
+
 app = FastAPI(title="YouTube Subtitle Segmenter API")
 
 # 請求模型定義
@@ -30,11 +32,15 @@ class BlockNoteRequest(BaseModel):
     model: str
     title: str
     text: str
+    current_title: Optional[str] = None
+    full_chapters: Optional[str] = None
 
 class BlockTermsRequest(BaseModel):
     api_key: str
     model: str
     text: str
+    current_title: Optional[str] = None
+    full_chapters: Optional[str] = None
 
 class SaveSegmentsRequest(BaseModel):
     video_id: str
@@ -597,12 +603,30 @@ def flatten_markdown_lists(text: str) -> str:
             flattened.append(line)
     return '\n'.join(flattened)
 
+def get_prompt_template(file_path: str, default_template: str) -> str:
+    try:
+        if os.path.exists(file_path):
+            with open(file_path, "r", encoding="utf-8") as f:
+                return f.read()
+    except Exception as e:
+        print(f"讀取提示詞檔案 {file_path} 失敗，使用預設值。錯誤: {e}")
+    return default_template
+
+def format_prompt(template: str, text: str, current_title: str, full_chapters: str) -> str:
+    res = template
+    res = res.replace("{text}", text)
+    res = res.replace("{current_title}", current_title)
+    res = res.replace("{full_chapters}", full_chapters)
+    return res
+
 @app.post("/api/generate-block-note")
 def generate_block_note(request: BlockNoteRequest):
     api_key = request.api_key.strip()
     model = request.model
     title = request.title
     text = request.text
+    current_title = request.current_title or title or ""
+    full_chapters = request.full_chapters or ""
 
     if not api_key:
         raise HTTPException(status_code=400, detail="請提供有效的 OpenAI API Key")
@@ -611,8 +635,8 @@ def generate_block_note(request: BlockNoteRequest):
 
     print(f"正在為 block '{title}' 生成 AI 筆記...")
 
-    # Prompt 1 範本
-    prompt_1_template = """幫我分多個段落作重點整理
+    # Default Prompt 1
+    default_prompt_1 = """幫我分多個段落作重點整理
 段落用標題(#)
 每個段落下的內容重點整理用無序清單，
 注意：重點只需要一層，不要有第二層無序清單，清單不要標籤文字。
@@ -623,10 +647,18 @@ def generate_block_note(request: BlockNoteRequest):
 Ex.中文專業術語（英文）
 繁體中文回答
 
+【整體影片章節結構（上下文參考）】：
+{full_chapters}
+
+【目前正在整理的章節】：
+{current_title}
+
 以下是字幕內容：
 {text}"""
 
-    prompt = prompt_1_template.format(text=text)
+    prompt_path = os.path.join("prompts", "prompt_note.txt")
+    prompt_template = get_prompt_template(prompt_path, default_prompt_1)
+    prompt = format_prompt(prompt_template, text, current_title, full_chapters)
     raw_response = call_openai_api(api_key, model, prompt)
     
     # 進行清單扁平化處理，確保僅有一層無序清單
@@ -652,6 +684,8 @@ def generate_block_terms(request: BlockTermsRequest):
     api_key = request.api_key.strip()
     model = request.model
     text = request.text
+    current_title = request.current_title or ""
+    full_chapters = request.full_chapters or ""
 
     if not api_key:
         raise HTTPException(status_code=400, detail="請提供有效的 OpenAI API Key")
@@ -660,18 +694,26 @@ def generate_block_terms(request: BlockTermsRequest):
 
     print("正在為區間生成 AI 專業術語...")
 
-    # Prompt 2 範本
-    prompt_2_template = """針對以下字幕內容，
+    # Default Prompt 2
+    default_prompt_2 = """針對以下字幕內容，
 給 50 個專業術語，用無序清單
 格式：* 中文專業術語（英文）：解釋
 不用額外的話，只給專業術語與解釋 
 不需要空行 
 繁體中文回答
 
+【整體影片章節結構（上下文參考）】：
+{full_chapters}
+
+【目前正在整理的區間】：
+{current_title}
+
 字幕內容：
 {text}"""
 
-    prompt = prompt_2_template.format(text=text)
+    prompt_path = os.path.join("prompts", "prompt_terms.txt")
+    prompt_template = get_prompt_template(prompt_path, default_prompt_2)
+    prompt = format_prompt(prompt_template, text, current_title, full_chapters)
     raw_response = call_openai_api(api_key, model, prompt)
     
     # 清單扁平化

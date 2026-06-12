@@ -552,6 +552,25 @@ main {
     box-shadow: 0 0 6px rgba(223, 177, 91, 0.1) !important;
 }
 
+/* Merged AI Group styling */
+.merge-btn-row.merged-ai .merge-line {
+    background: var(--primary) !important;
+    height: 2px;
+    box-shadow: 0 0 10px rgba(223, 177, 91, 0.4);
+}
+
+.btn-merge-next.merged {
+    background: var(--primary) !important;
+    border: 1px solid var(--primary) !important;
+    color: #121214 !important;
+    font-weight: 600 !important;
+}
+
+.btn-merge-next.merged:hover {
+    background: rgba(223, 177, 91, 0.85) !important;
+    box-shadow: 0 0 12px var(--primary) !important;
+}
+
 /* 字幕卡片 (區塊) */
 .segment-card {
     background: var(--card-bg);

@@ -58,6 +58,8 @@ interface AIBlock {
   content: string;
   status: 'loading' | 'done' | 'error';
   text: string;
+  currentTitle?: string;
+  fullChapters?: string;
 }
 
 function App() {
@@ -112,6 +114,8 @@ function App() {
     const data = localStorage.getItem('gth_editedSegmentTexts');
     return data ? JSON.parse(data) : {};
   });
+  const [batchStartIdx, setBatchStartIdx] = useState<number>(0);
+  const [batchEndIdx, setBatchEndIdx] = useState<number>(0);
   const [aiNotesResult, setAiNotesResult] = useState<AIBlock[] | null>(() => {
     try {
       const data = localStorage.getItem('gth_aiNotesResult');
@@ -346,24 +350,11 @@ function App() {
     return list;
   }, [chaptersInput]);
 
-  // 過濾掉被「合併」移除的 Chapter 分界點
-  const filteredChapterSplits = useMemo<ChapterSplit[]>(() => {
-    console.log('[Merge Debug] parsedChapters:', parsedChapters);
-    console.log('[Merge Debug] removedBoundaryTimes:', removedBoundaryTimes);
-    const result = parsedChapters.filter(ch => {
-      const isRemoved = removedBoundaryTimes.includes(ch.time);
-      if (isRemoved) {
-        console.log('[Merge Debug] Filtering out chapter split:', ch.title, 'at time:', ch.time);
-      }
-      return !isRemoved;
-    });
-    return result;
-  }, [parsedChapters, removedBoundaryTimes]);
+  // 不再在此處過濾，保留所有 Chapter 分界點以利 UI 獨立卡片呈現
+  const filteredChapterSplits = parsedChapters;
 
-  // 過濾掉被移除的自訂切分點
-  const filteredCustomSplits = useMemo<ChapterSplit[]>(() => {
-    return userCustomSplits.filter(cs => !removedBoundaryTimes.includes(cs.time));
-  }, [userCustomSplits, removedBoundaryTimes]);
+  // 不再過濾已被合併的自訂切分點
+  const filteredCustomSplits = userCustomSplits;
 
   const currentSegments = useMemo<Segment[]>(() => {
     if (!videoData || !videoData.subtitles) return [];
@@ -375,9 +366,114 @@ function App() {
       settingsInterval * 60,
       settingsNoSegment * 60,
       settingsSubSegment * 60,
-      removedBoundaryTimes
+      [] // 傳入空陣列，避免實體摺疊合併卡片
     );
-  }, [videoData, filteredChapterSplits, filteredCustomSplits, settingsInterval, settingsNoSegment, settingsSubSegment, removedBoundaryTimes]);
+  }, [videoData, filteredChapterSplits, filteredCustomSplits, settingsInterval, settingsNoSegment, settingsSubSegment]);
+
+  // 取得實際上在 UI 呈現的扁平卡片清單
+  const flatActiveSegments = useMemo<Segment[]>(() => {
+    const list: Segment[] = [];
+    currentSegments.forEach((seg) => {
+      if (seg.isGroup && seg.subSegments) {
+        list.push(...seg.subSegments);
+      } else {
+        list.push(seg);
+      }
+    });
+    return list;
+  }, [currentSegments]);
+
+  // 範圍合併的下拉選單選項
+  const rangeOptions = useMemo(() => {
+    const formatSecondsToTime = (secs: number) => {
+      const h = Math.floor(secs / 3600);
+      const m = Math.floor((secs % 3600) / 60);
+      const s = Math.floor(secs % 60);
+      const pad = (num: number) => String(num).padStart(2, '0');
+      if (h > 0) return `${pad(h)}:${pad(m)}:${pad(s)}`;
+      return `${pad(m)}:${pad(s)}`;
+    };
+    return flatActiveSegments.map((seg, index) => {
+      const timeStr = formatSecondsToTime(seg.start);
+      return {
+        index,
+        time: seg.start,
+        label: `${timeStr} - ${seg.chapterTitle}${seg.isSubSegment ? ' (細分區間)' : ''}`
+      };
+    });
+  }, [flatActiveSegments]);
+
+  // 當扁平卡片變動時，重設範圍合併的選擇 index 避免溢界
+  useEffect(() => {
+    if (flatActiveSegments.length > 0) {
+      setBatchStartIdx(0);
+      setBatchEndIdx(flatActiveSegments.length - 1);
+    } else {
+      setBatchStartIdx(0);
+      setBatchEndIdx(0);
+    }
+  }, [flatActiveSegments]);
+
+  // AI 整合群組介面 (根據 removedBoundaryTimes 將相鄰 segments 文字串連，對齊發送與計費)
+  interface AIGroup {
+    id: string;
+    title: string;
+    text: string;
+    start: number;
+    end: number;
+    segments: Segment[];
+  }
+
+  const aiGroups = useMemo<AIGroup[]>(() => {
+    const groups: AIGroup[] = [];
+    let currentGroup: AIGroup | null = null;
+
+    flatActiveSegments.forEach((seg, index) => {
+      // 若非首元素，且該 segment 起始時間在 removedBoundaryTimes 中，則代表此為「被合併（整合）」的邊界
+      const isMergedWithPrev = index > 0 && removedBoundaryTimes.includes(seg.start);
+
+      const segText = editedSegmentTexts[seg.id || ''] !== undefined
+        ? editedSegmentTexts[seg.id || '']
+        : cleanAndJoinSubtitles(seg.subtitles);
+
+      if (isMergedWithPrev && currentGroup) {
+        currentGroup.segments.push(seg);
+        currentGroup.end = seg.end;
+        currentGroup.text += '\n' + segText;
+      } else {
+        currentGroup = {
+          id: `ai_group_${index}`,
+          title: '',
+          text: segText,
+          start: seg.start,
+          end: seg.end,
+          segments: [seg]
+        };
+        groups.push(currentGroup);
+      }
+    });
+
+    // 格式化每個 AI 群組所屬的 Chapter 目錄
+    const formatSecondsToTime = (secs: number) => {
+      const h = Math.floor(secs / 3600);
+      const m = Math.floor((secs % 3600) / 60);
+      const s = Math.floor(secs % 60);
+      const pad = (num: number) => String(num).padStart(2, '0');
+      if (h > 0) return `${pad(h)}:${pad(m)}:${pad(s)}`;
+      return `${pad(m)}:${pad(s)}`;
+    };
+
+    groups.forEach((g) => {
+      const lines = g.segments.map((s) => {
+        const timeStr = formatSecondsToTime(s.start);
+        const rangeStr = s.subTitle ? ` (${s.subTitle})` : '';
+        return `* [${timeStr}] ${s.chapterTitle}${rangeStr}`;
+      });
+      g.title = lines.join('\n');
+    });
+
+    return groups;
+  }, [flatActiveSegments, removedBoundaryTimes, editedSegmentTexts]);
 
   const segmentsCount = useMemo(() => {
     let count = 0;
@@ -394,52 +490,13 @@ function App() {
   // --- API Cost Estimation Memo ---
   const estCostInfo = useMemo(() => {
     let totalChars = 0;
-    let totalSegmentsCount = 0;
-    const flatSegmentsList: { start: number; end: number; chars: number }[] = [];
-
-    currentSegments.forEach((seg) => {
-      if (seg.isGroup && seg.subSegments) {
-        seg.subSegments.forEach((sub) => {
-          totalSegmentsCount++;
-          const segId = sub.id || '';
-          const text =
-            editedSegmentTexts[segId] !== undefined
-              ? editedSegmentTexts[segId]
-              : cleanAndJoinSubtitles(sub.subtitles);
-          totalChars += text.length;
-          flatSegmentsList.push({
-            start: sub.start,
-            end: sub.end,
-            chars: text.length
-          });
-        });
-      } else {
-        totalSegmentsCount++;
-        const segId = seg.id || '';
-        const text =
-          editedSegmentTexts[segId] !== undefined
-            ? editedSegmentTexts[segId]
-            : cleanAndJoinSubtitles(seg.subtitles);
-        totalChars += text.length;
-        flatSegmentsList.push({
-          start: seg.start,
-          end: seg.end,
-          chars: text.length
-        });
-      }
-    });
-
-    // Group for Prompt 2 (every 60 minutes = 3600 seconds)
-    const p2Groups: Record<number, any[]> = {};
-    flatSegmentsList.forEach((seg) => {
-      const bIdx = Math.floor(seg.start / 3600);
-      if (!p2Groups[bIdx]) p2Groups[bIdx] = [];
-      p2Groups[bIdx].push(seg);
+    aiGroups.forEach((group) => {
+      totalChars += group.text.length;
     });
 
     const videoDuration = videoData?.duration || 0;
-    const p1Calls = totalSegmentsCount;
-    const p2Calls = Object.keys(p2Groups).length;
+    const p1Calls = aiGroups.length;
+    const p2Calls = aiGroups.length;
 
     const estInputTokens = Math.ceil(totalChars * 1.2);
     const estOutputP1 = p1Calls * 500;
@@ -451,7 +508,7 @@ function App() {
     const totalCost = inputCost + outputCost;
 
     return {
-      segments: totalSegmentsCount,
+      segments: flatActiveSegments.length,
       chars: totalChars,
       costUSD: totalCost,
       costTWD: totalCost * 32.5,
@@ -465,7 +522,7 @@ function App() {
       inputCost,
       outputCost
     };
-  }, [currentSegments, editedSegmentTexts, videoData]);
+  }, [aiGroups, flatActiveSegments.length, videoData]);
 
   // --- Handlers ---
   const handleUrlSubmit = async () => {
@@ -656,11 +713,49 @@ function App() {
   const handleMergeWithNext = (nextChapterStartTime: number) => {
     console.log('[Merge Debug] handleMergeWithNext called with nextChapterStartTime:', nextChapterStartTime, 'type:', typeof nextChapterStartTime);
     setRemovedBoundaryTimes(prev => {
-      const next = [...prev, nextChapterStartTime];
+      const isAlreadyMerged = prev.includes(nextChapterStartTime);
+      const next = isAlreadyMerged
+        ? prev.filter(t => t !== nextChapterStartTime)
+        : [...prev, nextChapterStartTime];
       console.log('[Merge Debug] New removedBoundaryTimes will be:', next);
       return next;
     });
-    showToast('✅ 已合併相鄰段落！點「清除章節」可全部復原。');
+    showToast('✅ 已更新 AI 整合設定！');
+  };
+
+  const handleBatchMerge = () => {
+    const start = Math.min(batchStartIdx, batchEndIdx);
+    const end = Math.max(batchStartIdx, batchEndIdx);
+    if (start === end) {
+      showToast('⚠️ 請選擇不同的開始與結束區塊進行合併！');
+      return;
+    }
+
+    setRemovedBoundaryTimes(prev => {
+      const next = [...prev];
+      for (let i = start + 1; i <= end; i++) {
+        const time = flatActiveSegments[i].start;
+        if (!next.includes(time)) {
+          next.push(time);
+        }
+      }
+      return next;
+    });
+    showToast('✅ 已成功將所選範圍內的所有區塊進行 AI 整合！');
+  };
+
+  const handleBatchSplit = () => {
+    const start = Math.min(batchStartIdx, batchEndIdx);
+    const end = Math.max(batchStartIdx, batchEndIdx);
+
+    setRemovedBoundaryTimes(prev => {
+      const timesToRemove: number[] = [];
+      for (let i = start + 1; i <= end; i++) {
+        timesToRemove.push(flatActiveSegments[i].start);
+      }
+      return prev.filter(t => !timesToRemove.includes(t));
+    });
+    showToast('🔓 已成功拆分所選範圍內的所有區塊！');
   };
 
   const setPresetInterval = (minutes: number) => {
@@ -849,34 +944,18 @@ function App() {
     // Send segments data to backend for inspection/verification
     if (videoData && videoData.video_id) {
       const flatSegments: { title: string; text: string; start: number; end: number }[] = [];
-      currentSegments.forEach((seg) => {
-        if (seg.isGroup && seg.subSegments) {
-          seg.subSegments.forEach((sub) => {
-            const segId = sub.id || '';
-            const text =
-              editedSegmentTexts[segId] !== undefined
-                ? editedSegmentTexts[segId]
-                : cleanAndJoinSubtitles(sub.subtitles);
-            flatSegments.push({
-              title: `${sub.chapterTitle} (${sub.subTitle})`,
-              text: text,
-              start: sub.start,
-              end: sub.end
-            });
-          });
-        } else {
-          const segId = seg.id || '';
-          const text =
-            editedSegmentTexts[segId] !== undefined
-              ? editedSegmentTexts[segId]
-              : cleanAndJoinSubtitles(seg.subtitles);
-          flatSegments.push({
-            title: `${seg.chapterTitle} (${seg.subTitle})`,
-            text: text,
-            start: seg.start,
-            end: seg.end
-          });
-        }
+      flatActiveSegments.forEach((seg) => {
+        const segId = seg.id || '';
+        const text =
+          editedSegmentTexts[segId] !== undefined
+            ? editedSegmentTexts[segId]
+            : cleanAndJoinSubtitles(seg.subtitles);
+        flatSegments.push({
+          title: `${seg.chapterTitle}${seg.subTitle ? ` (${seg.subTitle})` : ''}`,
+          text: text,
+          start: seg.start,
+          end: seg.end
+        });
       });
 
       try {
@@ -909,79 +988,42 @@ function App() {
       return `${pad(m)}:${pad(s)}`;
     };
 
-    const flatSegments: { title: string; text: string; start: number; end: number }[] = [];
-    currentSegments.forEach((seg) => {
-      if (seg.isGroup && seg.subSegments) {
-        seg.subSegments.forEach((sub) => {
-          const segId = sub.id || '';
-          const text =
-            editedSegmentTexts[segId] !== undefined
-              ? editedSegmentTexts[segId]
-              : cleanAndJoinSubtitles(sub.subtitles);
-          flatSegments.push({
-            title: `${sub.chapterTitle} (${sub.subTitle})`,
-            text: text,
-            start: sub.start,
-            end: sub.end
-          });
-        });
-      } else {
-        const segId = seg.id || '';
-        const text =
-          editedSegmentTexts[segId] !== undefined
-            ? editedSegmentTexts[segId]
-            : cleanAndJoinSubtitles(seg.subtitles);
-        flatSegments.push({
-          title: `${seg.chapterTitle} (${seg.subTitle})`,
-          text: text,
-          start: seg.start,
-          end: seg.end
-        });
-      }
-    });
-
-    if (flatSegments.length === 0) {
+    if (flatActiveSegments.length === 0) {
       alert('無字幕內容可供整理！');
       return;
     }
 
-    // Group for Prompt 2 (every 60 minutes = 3600 seconds)
-    const p2Groups: Record<number, typeof flatSegments> = {};
-    flatSegments.forEach((seg) => {
-      const bIdx = Math.floor(seg.start / 3600);
-      if (!p2Groups[bIdx]) p2Groups[bIdx] = [];
-      p2Groups[bIdx].push(seg);
-    });
+    // 建立完整的章節上下文
+    const fullChaptersText = flatActiveSegments
+      .map((s) => `* [${formatSecondsToTime(s.start)}] ${s.chapterTitle}${s.subTitle ? ` (${s.subTitle})` : ''}`)
+      .join('\n');
 
-    // Construct initial states for blocks (Prompt 1 is 1-to-1 with segments)
-    const totalP1 = flatSegments.length;
-    const initialNotes: AIBlock[] = flatSegments.map((seg, idx) => {
-      const title = `影片時間 ${formatSecondsToTime(seg.start)} ~ ${formatSecondsToTime(seg.end)} 重點整理 (第 ${idx + 1} / ${totalP1} 次)`;
+    // 對應 AI 整合群組進行呼叫
+    const totalP1 = aiGroups.length;
+    const initialNotes: AIBlock[] = aiGroups.map((group, idx) => {
+      const title = `影片時間 ${formatSecondsToTime(group.start)} ~ ${formatSecondsToTime(group.end)} 重點整理 (第 ${idx + 1} / ${totalP1} 次)`;
       return {
         title,
         content: '⏳ 正在呼叫 AI 整理中...',
         status: 'loading' as const,
-        text: `### ${seg.title}\n${seg.text}`
+        text: group.text,
+        currentTitle: group.title,
+        fullChapters: fullChaptersText
       };
     });
 
-    const totalP2 = Object.keys(p2Groups).length;
-    const initialTerms: AIBlock[] = Object.keys(p2Groups)
-      .map(Number)
-      .sort((a, b) => a - b)
-      .map((bIdx, idx) => {
-        const groupSegs = p2Groups[bIdx];
-        const combinedText = groupSegs.map((s) => s.text).join('\n');
-        const minStart = Math.min(...groupSegs.map((s) => s.start));
-        const maxEnd = Math.max(...groupSegs.map((s) => s.end));
-        const title = `影片時間 ${formatSecondsToTime(minStart)} ~ ${formatSecondsToTime(maxEnd)} 專業術語對照 (第 ${idx + 1} / ${totalP2} 次)`;
-        return {
-          title,
-          content: '⏳ 正在呼叫 AI 整理中...',
-          status: 'loading' as const,
-          text: combinedText
-        };
-      });
+    const totalP2 = aiGroups.length;
+    const initialTerms: AIBlock[] = aiGroups.map((group, idx) => {
+      const title = `影片時間 ${formatSecondsToTime(group.start)} ~ ${formatSecondsToTime(group.end)} 專業術語對照 (第 ${idx + 1} / ${totalP2} 次)`;
+      return {
+        title,
+        content: '⏳ 正在呼叫 AI 整理中...',
+        status: 'loading' as const,
+        text: group.text,
+        currentTitle: group.title,
+        fullChapters: fullChaptersText
+      };
+    });
 
     setAiNotesResult(initialNotes);
     setAiTermsResult(initialTerms);
@@ -990,15 +1032,15 @@ function App() {
 
     // Trigger fetch calls concurrently
     initialNotes.forEach((block) => {
-      fetchBlockNote(block.title, block.text);
+      fetchBlockNote(block.title, block.text, block.currentTitle || '', block.fullChapters || '');
     });
 
     initialTerms.forEach((block) => {
-      fetchBlockTerms(block.title, block.text);
+      fetchBlockTerms(block.title, block.text, block.currentTitle || '', block.fullChapters || '');
     });
   };
 
-  const fetchBlockNote = async (title: string, text: string) => {
+  const fetchBlockNote = async (title: string, text: string, currentTitle: string, fullChapters: string) => {
     try {
       const res = await fetch('/api/generate-block-note', {
         method: 'POST',
@@ -1007,7 +1049,9 @@ function App() {
           api_key: openaiKey,
           model: 'gpt-5.1',
           title: title,
-          text: text
+          text: text,
+          current_title: currentTitle,
+          full_chapters: fullChapters
         })
       });
       const data = await res.json();
@@ -1021,7 +1065,7 @@ function App() {
     }
   };
 
-  const fetchBlockTerms = async (title: string, text: string) => {
+  const fetchBlockTerms = async (title: string, text: string, currentTitle: string, fullChapters: string) => {
     try {
       const res = await fetch('/api/generate-block-terms', {
         method: 'POST',
@@ -1029,7 +1073,9 @@ function App() {
         body: JSON.stringify({
           api_key: openaiKey,
           model: 'gpt-5.1',
-          text: text
+          text: text,
+          current_title: currentTitle,
+          full_chapters: fullChapters
         })
       });
       const data = await res.json();
@@ -1069,12 +1115,12 @@ function App() {
 
   const retryNoteBlock = (block: AIBlock) => {
     updateNoteBlock(block.title, '⏳ 正在重新呼叫 AI 整理中...', 'loading');
-    fetchBlockNote(block.title, block.text);
+    fetchBlockNote(block.title, block.text, block.currentTitle || '', block.fullChapters || '');
   };
 
   const retryTermsBlock = (block: AIBlock) => {
     updateTermsBlock(block.title, '⏳ 正在重新呼叫 AI 整理中...', 'loading');
-    fetchBlockTerms(block.title, block.text);
+    fetchBlockTerms(block.title, block.text, block.currentTitle || '', block.fullChapters || '');
   };
 
   const copyAllAINotes = () => {
@@ -1375,36 +1421,42 @@ function App() {
                                   return (
                                     <React.Fragment key={subSeg.id || `sub_${subIdx}`}>
                                       {renderSegmentCard(subSeg, true)}
-                                      {!isLastSub && subSegs[subIdx + 1] && (
-                                        <div className="merge-btn-row subsegment-merge">
-                                          <div className="merge-line" />
-                                          <button
-                                            className="btn-merge-next btn-merge-sub"
-                                            onClick={() => handleMergeWithNext(subSegs[subIdx + 1].start)}
-                                            title="合併此子段落與下一段"
-                                          >
-                                            ⊕ 合併子段落
-                                          </button>
-                                          <div className="merge-line" />
-                                        </div>
-                                      )}
+                                      {!isLastSub && subSegs[subIdx + 1] && (() => {
+                                        const isMerged = removedBoundaryTimes.includes(subSegs[subIdx + 1].start);
+                                        return (
+                                          <div className={`merge-btn-row subsegment-merge ${isMerged ? 'merged-ai' : ''}`}>
+                                            <div className="merge-line" />
+                                            <button
+                                              className={`btn-merge-next btn-merge-sub ${isMerged ? 'merged' : ''}`}
+                                              onClick={() => handleMergeWithNext(subSegs[subIdx + 1].start)}
+                                              title={isMerged ? "取消合併此子段落" : "合併此子段落與下一段 (AI 整合)"}
+                                            >
+                                              {isMerged ? '⊖ 取消 AI 整合' : '⊕ 合併子段落'}
+                                            </button>
+                                            <div className="merge-line" />
+                                          </div>
+                                        );
+                                      })()}
                                     </React.Fragment>
                                   );
                                 })}
                               </div>
-                              {nextItem && nextItem.isGroup && (
-                                <div className="merge-btn-row">
-                                  <div className="merge-line" />
-                                  <button
-                                    className="btn-merge-next"
-                                    onClick={() => handleMergeWithNext(nextItem.start)}
-                                    title={`合併「${item.chapterTitle}」與「${nextItem.chapterTitle}」`}
-                                  >
-                                    ⊕ 合併此章節與下一章
-                                  </button>
-                                  <div className="merge-line" />
-                                </div>
-                              )}
+                              {nextItem && nextItem.isGroup && (() => {
+                                const isMerged = removedBoundaryTimes.includes(nextItem.start);
+                                return (
+                                  <div className={`merge-btn-row ${isMerged ? 'merged-ai' : ''}`}>
+                                    <div className="merge-line" />
+                                    <button
+                                      className={`btn-merge-next ${isMerged ? 'merged' : ''}`}
+                                      onClick={() => handleMergeWithNext(nextItem.start)}
+                                      title={isMerged ? `取消合併「${item.chapterTitle}」與「${nextItem.chapterTitle}」` : `合併「${item.chapterTitle}」與「${nextItem.chapterTitle}」 (AI 整合)`}
+                                    >
+                                      {isMerged ? '⊖ 取消 AI 整合' : '⊕ 合併此章節 (AI 整合)'}
+                                    </button>
+                                    <div className="merge-line" />
+                                  </div>
+                                );
+                              })()}
                             </React.Fragment>
                           );
                         } else {
@@ -1699,6 +1751,75 @@ function App() {
                     </button>
                   </div>
                 </div>
+
+                {/* Range Merging Card */}
+                {flatActiveSegments.length > 0 && (
+                  <div className="sidebar-card">
+                    <h4
+                      style={{
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        marginBottom: '12px',
+                        borderBottom: '1px solid rgba(255,255,255,0.05)',
+                        paddingBottom: '8px'
+                      }}
+                    >
+                      🔗 AI 整合範圍合併
+                    </h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div>
+                        <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                          起始區塊
+                        </label>
+                        <select
+                          className="settings-input"
+                          style={{ width: '100%', height: '32px', background: 'rgba(255,255,255,0.02)', color: 'var(--text)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '0 8px' }}
+                          value={batchStartIdx}
+                          onChange={(e) => setBatchStartIdx(Number(e.target.value))}
+                        >
+                          {rangeOptions.map((opt) => (
+                            <option key={opt.index} value={opt.index} style={{ background: '#1c1c1e', color: '#fff' }}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
+                          結束區塊
+                        </label>
+                        <select
+                          className="settings-input"
+                          style={{ width: '100%', height: '32px', background: 'rgba(255,255,255,0.02)', color: 'var(--text)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '0 8px' }}
+                          value={batchEndIdx}
+                          onChange={(e) => setBatchEndIdx(Number(e.target.value))}
+                        >
+                          {rangeOptions.map((opt) => (
+                            <option key={opt.index} value={opt.index} style={{ background: '#1c1c1e', color: '#fff' }}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
+                        <button
+                          className="btn-action btn-apply"
+                          style={{ flex: 1, height: '32px', padding: '0 8px' }}
+                          onClick={handleBatchMerge}
+                        >
+                          🔗 範圍合併
+                        </button>
+                        <button
+                          className="btn-action btn-clear"
+                          style={{ flex: 1, height: '32px', padding: '0 8px', borderColor: 'var(--accent)', color: 'var(--accent)' }}
+                          onClick={handleBatchSplit}
+                        >
+                          🔓 範圍拆分
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Settings Parameter Card */}
                 <div className="sidebar-card">
