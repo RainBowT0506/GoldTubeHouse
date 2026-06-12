@@ -1,4 +1,5 @@
-import { generateSegments, resolveSubtitleOverlaps } from '../frontend/src/utils.ts';
+import { generateSegments, resolveSubtitleOverlaps, groupSegmentsForTerms, Segment } from '../frontend/src/utils.ts';
+
 
 // Mock subtitles for basic tests (realistically distributed)
 const mockSubtitlesBasic = [
@@ -19,7 +20,7 @@ console.log("🧪 Running Frontend Segmentation Logic Tests...\n");
 // ----------------------------------------------------
 // duration = 1500, interval = 1200 (20m), noSegThreshold = 1800 (30m), subSegThreshold = 1800 (30m)
 // Since duration (25m) <= noSegThreshold (30m), it is kept as 1 segment directly.
-const segments25m = generateSegments(mockSubtitlesBasic, 1500, [], 1200, 1800, 1800);
+const segments25m = generateSegments(mockSubtitlesBasic, 1500, [], [], 1200, 1800, 1800);
 console.log(`[Test 1] 25 min video segments count: ${segments25m.length}`);
 if (segments25m.length === 1) {
   console.log("✅ PASS: 25 minutes video is kept as a single segment (only 1 API request will be sent).");
@@ -33,7 +34,7 @@ if (segments25m.length === 1) {
 // ----------------------------------------------------
 // duration = 2400, interval = 1200 (20m), noSegThreshold = 1800 (30m)
 // Splitting at 1200 leaves 1200s (20m) >= 360s, so it splits into two segments.
-const segments40m = generateSegments(mockSubtitlesBasic, 2400, [], 1200, 1800, 1800);
+const segments40m = generateSegments(mockSubtitlesBasic, 2400, [], [], 1200, 1800, 1800);
 console.log(`[Test 2] 40 min video segments count: ${segments40m.length}`);
 if (segments40m.length === 2) {
   console.log("✅ PASS: 40 minutes video is split into two segments.");
@@ -50,7 +51,7 @@ for (let s = 0; s < 3546; s += 30) {
   mockSubtitlesLong.push({ start: s, duration: 10, text: `Subtitle at ${s}s.` });
 }
 const splits = [{ time: 810, title: "Custom Split" }];
-const segmentsLong = generateSegments(mockSubtitlesLong, 3546, splits, 1200, 1800, 1800);
+const segmentsLong = generateSegments(mockSubtitlesLong, 3546, splits, [], 1200, 1800, 1800);
 
 console.log(`[Test 3] Segments for 3546s video with split at 810s:`);
 console.log(`- Total top-level segments: ${segmentsLong.length}`);
@@ -139,18 +140,22 @@ if (targetCharOffset > 0 && targetCharOffset < cleanText.length) {
 
 // Now generate segments with the split list
 const testSplits = [{ time: splitTime, title: "Custom Split" }];
-const generatedSegments = generateSegments(updatedSubtitles, 3546, testSplits, 1200, 1800, 1800);
+const generatedSegments = generateSegments(updatedSubtitles, 3546, testSplits, [], 1200, 1800, 1800);
 
 console.log(`- Generated segments count: ${generatedSegments.length}`);
 const seg1 = generatedSegments[0];
 const seg2 = generatedSegments[1];
 
-const seg1CleanText = seg1.subtitles.map(s => s.text).join(' ');
+let seg1CleanText = "";
+if (seg1.isGroup && seg1.subSegments) {
+  seg1CleanText = seg1.subSegments.flatMap(sub => sub.subtitles.map(s => s.text)).join(' ');
+} else {
+  seg1CleanText = seg1.subtitles.map(s => s.text).join(' ');
+}
 
-// If Segment 2 is a Group, collect subtitles from its sub-segments
 let seg2CleanText = "";
 if (seg2.isGroup && seg2.subSegments) {
-  seg2CleanText = seg2.subSegments[0].subtitles.map(s => s.text).join(' ');
+  seg2CleanText = seg2.subSegments.flatMap(sub => sub.subtitles.map(s => s.text)).join(' ');
 } else {
   seg2CleanText = seg2.subtitles.map(s => s.text).join(' ');
 }
@@ -176,7 +181,7 @@ const mockSubtitles35m = [];
 for (let s = 0; s < 2100; s += 30) {
   mockSubtitles35m.push({ start: s, duration: 10, text: `Subtitle at ${s}s.` });
 }
-const segments35m = generateSegments(mockSubtitles35m, 2100, [], 1200, 1800, 1800);
+const segments35m = generateSegments(mockSubtitles35m, 2100, [], [], 1200, 1800, 1800);
 console.log(`- Generated segments count: ${segments35m.length}`);
 if (segments35m.length === 2) {
   console.log("✅ PASS: 35 minutes video splits initially into two segments (20m + 15m).");
@@ -212,11 +217,22 @@ const entry2P6 = { start: start2P6, duration: duration2P6, text: cleanTextP6.sub
 
 const updatedSubtitlesP6 = [entry1P6, entry2P6, resolvedSubtitles[1]];
 const testSplitsP6 = [{ time: start2P6, title: "Custom Split" }];
-const segmentsP6 = generateSegments(updatedSubtitlesP6, 2149, testSplitsP6, 1200, 1800, 1800);
+const segmentsP6 = generateSegments(updatedSubtitlesP6, 2149, testSplitsP6, [], 1200, 1800, 1800);
 
 console.log(`- Generated segments count: ${segmentsP6.length}`);
-const finalSeg1 = segmentsP6[0].subtitles.map(s => s.text).join(' ');
-const finalSeg2 = segmentsP6[1].subtitles.map(s => s.text).join(' ');
+let finalSeg1 = "";
+if (segmentsP6[0].isGroup && segmentsP6[0].subSegments) {
+  finalSeg1 = segmentsP6[0].subSegments.flatMap(sub => sub.subtitles.map(s => s.text)).join(' ');
+} else {
+  finalSeg1 = segmentsP6[0].subtitles.map(s => s.text).join(' ');
+}
+
+let finalSeg2 = "";
+if (segmentsP6[1].isGroup && segmentsP6[1].subSegments) {
+  finalSeg2 = segmentsP6[1].subSegments.flatMap(sub => sub.subtitles.map(s => s.text)).join(' ');
+} else {
+  finalSeg2 = segmentsP6[1].subtitles.map(s => s.text).join(' ');
+}
 
 console.log(`- Segment 1: '${finalSeg1}'`);
 console.log(`- Segment 2: '${finalSeg2}'`);
@@ -228,4 +244,183 @@ if (finalSeg1.endsWith("the back to clean that up.") && finalSeg2.startsWith("So
   process.exit(1);
 }
 
-console.log("\n🎉 All frontend segmentation, boundary, and entry-split tests passed!");
+// ----------------------------------------------------
+// Test 7: Professional Terms Partitioning (Cases 1 to 9)
+// ----------------------------------------------------
+console.log("\n🧪 Running Professional Terms Partitioning Tests (Cases 1 to 9)...");
+
+const createMockSegment = (start: number, end: number, chapterTitle: string): Segment => ({
+  start,
+  end,
+  chapterTitle,
+  subtitles: [{ text: `Mock content for ${chapterTitle}`, start, duration: end - start }]
+});
+
+// Case 1: Video length 3:30. Chapters: 0~1:10 (4200s), 1:10~2:20 (4200s), 2:20~3:30 (4200s)
+// Expected: 3 batches, individual (no merge/redistribute).
+const case1Segs = [
+  createMockSegment(0, 4200, "Ch1"),
+  createMockSegment(4200, 8400, "Ch2"),
+  createMockSegment(8400, 12600, "Ch3")
+];
+const case1Batches = groupSegmentsForTerms(case1Segs, 12600);
+console.log(`[Case 1] Batches count: ${case1Batches.length}`);
+if (case1Batches.length === 3 &&
+    case1Batches[0].end === 4200 &&
+    case1Batches[1].end === 8400 &&
+    case1Batches[2].end === 12600) {
+  console.log("✅ PASS: Case 1 correctly generated 3 individual batches.");
+} else {
+  console.error("❌ FAIL: Case 1 grouping failed!");
+  process.exit(1);
+}
+
+// Case 2: Video length 3:30. Chapters: 0~45m (2700s), 45m~1:10 (1500s), 1:10~2:20 (4200s), 2:20~3:30 (4200s)
+// Expected: Ch1+Ch2 merged into Batch 1 (0~70m), Ch3 and Ch4 individual. Total 3 batches.
+const case2Segs = [
+  createMockSegment(0, 2700, "Ch1"),
+  createMockSegment(2700, 4200, "Ch2"),
+  createMockSegment(4200, 8400, "Ch3"),
+  createMockSegment(8400, 12600, "Ch4")
+];
+const case2Batches = groupSegmentsForTerms(case2Segs, 12600);
+console.log(`[Case 2] Batches count: ${case2Batches.length}`);
+if (case2Batches.length === 3 &&
+    case2Batches[0].end === 4200 &&
+    case2Batches[1].end === 8400 &&
+    case2Batches[2].end === 12600) {
+  console.log("✅ PASS: Case 2 correctly merged Ch1 and Ch2, leaving Ch3 and Ch4 individual.");
+} else {
+  console.error("❌ FAIL: Case 2 grouping failed!");
+  process.exit(1);
+}
+
+// Case 3: Video length 3:30. Chapters: 0~45m (2700s), 45m~1:45 (3600s), 1:45~3:00 (4500s), 3:00~3:30 (1800s)
+// Expected: Ch1+Ch2 merged into Batch 1 (0~105m), Ch3 (1h15m) and Ch4 (30m) individual. Total 3 batches.
+const case3Segs = [
+  createMockSegment(0, 2700, "Ch1"),
+  createMockSegment(2700, 6300, "Ch2"),
+  createMockSegment(6300, 10800, "Ch3"),
+  createMockSegment(10800, 12600, "Ch4")
+];
+const case3Batches = groupSegmentsForTerms(case3Segs, 12600);
+console.log(`[Case 3] Batches count: ${case3Batches.length}`);
+if (case3Batches.length === 3 &&
+    case3Batches[0].end === 6300 &&
+    case3Batches[1].end === 10800 &&
+    case3Batches[2].end === 12600) {
+  console.log("✅ PASS: Case 3 correctly merged Ch1 and Ch2, and left Ch3 and Ch4 individual.");
+} else {
+  console.error("❌ FAIL: Case 3 grouping failed!");
+  process.exit(1);
+}
+
+// Case 4: Video length 3:45. Chapters: 0~45m (2700s), 45m~1:45 (3600s), 1:45~3:30 (6300s), 3:30~3:45 (900s)
+// Expected: Ch1+Ch2 merged into Batch 1 (0~105m). Ch3+Ch4 merged into Batch 2 (1h45m~3h45m) because Ch4 is only 15m. Total 2 batches.
+const case4Segs = [
+  createMockSegment(0, 2700, "Ch1"),
+  createMockSegment(2700, 6300, "Ch2"),
+  createMockSegment(6300, 12600, "Ch3"),
+  createMockSegment(12600, 13500, "Ch4")
+];
+const case4Batches = groupSegmentsForTerms(case4Segs, 13500);
+console.log(`[Case 4] Batches count: ${case4Batches.length}`);
+if (case4Batches.length === 2 &&
+    case4Batches[0].end === 6300 &&
+    case4Batches[1].end === 13500) {
+  console.log("✅ PASS: Case 4 correctly merged Ch3 and Ch4 to prevent the last batch from falling below 30 minutes.");
+} else {
+  console.error("❌ FAIL: Case 4 grouping failed!");
+  process.exit(1);
+}
+
+// Case 5: Video length 3:30. Chapters: 0~50m (3000s), 50m~1:40 (3000s), 1:40~3:30 (6600s)
+// Expected: Ch1+Ch2 merged into Batch 1 (0~100m), Ch3 individual (1h40m~3h30m, 110m). Total 2 batches.
+const case5Segs = [
+  createMockSegment(0, 3000, "Ch1"),
+  createMockSegment(3000, 6000, "Ch2"),
+  createMockSegment(6000, 12600, "Ch3")
+];
+const case5Batches = groupSegmentsForTerms(case5Segs, 12600);
+console.log(`[Case 5] Batches count: ${case5Batches.length}`);
+if (case5Batches.length === 2 &&
+    case5Batches[0].end === 6000 &&
+    case5Batches[1].end === 12600) {
+  console.log("✅ PASS: Case 5 correctly generated 2 batches.");
+} else {
+  console.error("❌ FAIL: Case 5 grouping failed!");
+  process.exit(1);
+}
+
+// Case 6: Video length 1:20 (4800s). Chapters: 0~45m (2700s), 45m~1:20 (2100s)
+// Expected: 1 batch containing both (0~80m) since splitting would violate either >=1h for Batch 1 or >=30m for Batch 2.
+const case6Segs = [
+  createMockSegment(0, 2700, "Ch1"),
+  createMockSegment(2700, 4800, "Ch2")
+];
+const case6Batches = groupSegmentsForTerms(case6Segs, 4800);
+console.log(`[Case 6] Batches count: ${case6Batches.length}`);
+if (case6Batches.length === 1 &&
+    case6Batches[0].end === 4800) {
+  console.log("✅ PASS: Case 6 correctly generated a single batch for 1h20m video with 45m/35m chapters.");
+} else {
+  console.error("❌ FAIL: Case 6 grouping failed!");
+  process.exit(1);
+}
+
+// Case 7: Video length 2:05 (7500s). Chapters: 0~40m (2400s), 40m~1h15m (2100s, end=4500s), 1h15m~2:05 (3000s, end=7500s)
+// Expected: Ch1+Ch2 merged into Batch 1 (0~1h15m = 75m), Ch3 is Batch 2 (1h15m~2h05m = 50m >= 30m). Total 2 batches.
+const case7Segs = [
+  createMockSegment(0, 2400, "Ch1"),
+  createMockSegment(2400, 4500, "Ch2"),
+  createMockSegment(4500, 7500, "Ch3")
+];
+const case7Batches = groupSegmentsForTerms(case7Segs, 7500);
+console.log(`[Case 7] Batches count: ${case7Batches.length}`);
+if (case7Batches.length === 2 &&
+    case7Batches[0].end === 4500 &&
+    case7Batches[1].end === 7500) {
+  console.log("✅ PASS: Case 7 correctly generated 2 batches (75m and 50m).");
+} else {
+  console.error("❌ FAIL: Case 7 grouping failed!");
+  process.exit(1);
+}
+
+// Case 8: Video length 2:20 (8400s). Chapters: 0~1:10 (4200s), 1:10~2:05 (3300s, end=7500s), 2:05~2:20 (900s, end=8400s)
+// Expected: Ch1 is Batch 1 (0~1h10m). Ch2+Ch3 merged into Batch 2 (1h10m~2h20m) because Ch3 is only 15m. Total 2 batches.
+const case8Segs = [
+  createMockSegment(0, 4200, "Ch1"),
+  createMockSegment(4200, 7500, "Ch2"),
+  createMockSegment(7500, 8400, "Ch3")
+];
+const case8Batches = groupSegmentsForTerms(case8Segs, 8400);
+console.log(`[Case 8] Batches count: ${case8Batches.length}`);
+if (case8Batches.length === 2 &&
+    case8Batches[0].end === 4200 &&
+    case8Batches[1].end === 8400) {
+  console.log("✅ PASS: Case 8 correctly merged Ch2 and Ch3 into a single 70m batch.");
+} else {
+  console.error("❌ FAIL: Case 8 grouping failed!");
+  process.exit(1);
+}
+
+// Case 9: Video length 2:05 (7500s). Chapters: 0~1:10 (4200s), 1:10~1:50 (2400s, end=6600s), 1:50~2:05 (900s, end=7500s)
+// Expected: Ch1 is Batch 1 (0~1h10m). Ch2+Ch3 merged into Batch 2 (1h10m~2h05m) because Ch3 is only 15m. Total 2 batches.
+const case9Segs = [
+  createMockSegment(0, 4200, "Ch1"),
+  createMockSegment(4200, 6600, "Ch2"),
+  createMockSegment(6600, 7500, "Ch3")
+];
+const case9Batches = groupSegmentsForTerms(case9Segs, 7500);
+console.log(`[Case 9] Batches count: ${case9Batches.length}`);
+if (case9Batches.length === 2 &&
+    case9Batches[0].end === 4200 &&
+    case9Batches[1].end === 7500) {
+  console.log("✅ PASS: Case 9 correctly merged Ch2 and Ch3 into a single 55m batch.");
+} else {
+  console.error("❌ FAIL: Case 9 grouping failed!");
+  process.exit(1);
+}
+
+console.log("\n🎉 All frontend segmentation, boundary, entry-split, and professional terms batching tests passed!");
+

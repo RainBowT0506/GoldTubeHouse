@@ -356,6 +356,119 @@ export function generateSegments(
 
 
 
+export interface TermsBatch {
+  id: string;
+  title: string;
+  text: string;
+  start: number;
+  end: number;
+  segments: Segment[];
+}
+
+export function groupSegmentsForTerms(
+  segments: Segment[],
+  totalDuration: number
+): TermsBatch[] {
+  if (segments.length === 0) return [];
+
+  // If total duration is less than 1 hour (3600 seconds), return all in one batch
+  if (totalDuration < 3600) {
+    const text = segments.map(s => cleanAndJoinSubtitles(s.subtitles)).join('\n');
+    const start = segments[0].start;
+    const end = segments[segments.length - 1].end;
+    
+    // Format title
+    const lines = segments.map((s) => {
+      const timeStr = formatTime(s.start);
+      const rangeStr = s.subTitle ? ` (${s.subTitle})` : '';
+      return `* [${timeStr}] ${s.chapterTitle}${rangeStr}`;
+    });
+    const title = lines.join('\n');
+
+    return [{
+      id: 'terms_batch_all',
+      title,
+      text,
+      start,
+      end,
+      segments: [...segments]
+    }];
+  }
+
+  const batches: TermsBatch[] = [];
+  let startIdx = 0;
+
+  while (startIdx < segments.length) {
+    const startSeg = segments[startIdx];
+    const startVal = startSeg.start;
+    
+    // Find the first segment boundary that is >= 3600 seconds from startVal
+    // AND leaves at least 1800 seconds to the end of the video.
+    let foundSplitIdx = -1;
+    for (let i = startIdx; i < segments.length; i++) {
+      const currentEnd = segments[i].end;
+      const duration = currentEnd - startVal;
+      const remaining = totalDuration - currentEnd;
+
+      if (duration >= 3600) {
+        if (remaining >= 1800 || remaining === 0) {
+          foundSplitIdx = i;
+          break;
+        }
+      }
+    }
+
+    if (foundSplitIdx !== -1) {
+      const batchSegs = segments.slice(startIdx, foundSplitIdx + 1);
+      const endVal = segments[foundSplitIdx].end;
+      const text = batchSegs.map(s => cleanAndJoinSubtitles(s.subtitles)).join('\n');
+      
+      const lines = batchSegs.map((s) => {
+        const timeStr = formatTime(s.start);
+        const rangeStr = s.subTitle ? ` (${s.subTitle})` : '';
+        return `* [${timeStr}] ${s.chapterTitle}${rangeStr}`;
+      });
+      const title = lines.join('\n');
+
+      batches.push({
+        id: `terms_batch_${batches.length}`,
+        title,
+        text,
+        start: startVal,
+        end: endVal,
+        segments: batchSegs
+      });
+      
+      startIdx = foundSplitIdx + 1;
+    } else {
+      // If no valid split point is found, we must merge all remaining segments into the current batch.
+      const batchSegs = segments.slice(startIdx);
+      const endVal = segments[segments.length - 1].end;
+      const text = batchSegs.map(s => cleanAndJoinSubtitles(s.subtitles)).join('\n');
+
+      const lines = batchSegs.map((s) => {
+        const timeStr = formatTime(s.start);
+        const rangeStr = s.subTitle ? ` (${s.subTitle})` : '';
+        return `* [${timeStr}] ${s.chapterTitle}${rangeStr}`;
+      });
+      const title = lines.join('\n');
+
+      batches.push({
+        id: `terms_batch_${batches.length}`,
+        title,
+        text,
+        start: startVal,
+        end: endVal,
+        segments: batchSegs
+      });
+
+      break;
+    }
+  }
+
+  return batches;
+}
+
 export function resolveSubtitleOverlaps(entries: SubtitleEntry[]): SubtitleEntry[] {
   if (!entries || entries.length === 0) return [];
   // Sort by start time just to be sure

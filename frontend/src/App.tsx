@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import type { ChapterSplit, Segment } from './utils';
+import type { ChapterSplit, Segment, TermsBatch } from './utils';
 import {
   parseTimeToSeconds,
   formatTime,
@@ -7,8 +7,10 @@ import {
   generateSegments,
   getCleanedSubtitlesAndMappings,
   resolveSubtitleOverlaps,
-  parseSubtitlesText
+  parseSubtitlesText,
+  groupSegmentsForTerms
 } from './utils';
+
 
 // Helper to determine caret offset inside contentEditable
 function getCaretCharacterOffsetWithin(element: HTMLElement): number {
@@ -485,6 +487,24 @@ function App() {
     return groups;
   }, [flatActiveSegments, removedBoundaryTimes, editedSegmentTexts]);
 
+  const activeSegmentsWithEdits = useMemo<Segment[]>(() => {
+    return flatActiveSegments.map(seg => {
+      const segId = seg.id || '';
+      if (editedSegmentTexts[segId] !== undefined) {
+        return {
+          ...seg,
+          subtitles: [{ text: editedSegmentTexts[segId], start: seg.start, duration: seg.end - seg.start }]
+        };
+      }
+      return seg;
+    });
+  }, [flatActiveSegments, editedSegmentTexts]);
+
+  const aiTermsGroups = useMemo<TermsBatch[]>(() => {
+    const totalDur = videoData ? videoData.duration : 0;
+    return groupSegmentsForTerms(activeSegmentsWithEdits, totalDur);
+  }, [activeSegmentsWithEdits, videoData]);
+
   interface RenderingAIGroup {
     id: string;
     start: number;
@@ -537,16 +557,22 @@ function App() {
 
   // --- API Cost Estimation Memo ---
   const estCostInfo = useMemo(() => {
-    let totalChars = 0;
+    let totalCharsNotes = 0;
     aiGroups.forEach((group) => {
-      totalChars += group.text.length;
+      totalCharsNotes += group.text.length;
+    });
+
+    let totalCharsTerms = 0;
+    aiTermsGroups.forEach((group) => {
+      totalCharsTerms += group.text.length;
     });
 
     const videoDuration = videoData?.duration || 0;
     const p1Calls = aiGroups.length;
-    const p2Calls = aiGroups.length;
+    const p2Calls = aiTermsGroups.length;
 
-    const estInputTokens = Math.ceil(totalChars * 1.2);
+    // Both notes and terms processes send their respective group texts
+    const estInputTokens = Math.ceil((totalCharsNotes + totalCharsTerms) * 1.2);
     const estOutputP1 = p1Calls * 500;
     const estOutputP2 = p2Calls * 800;
     const estOutputTokens = estOutputP1 + estOutputP2;
@@ -557,7 +583,7 @@ function App() {
 
     return {
       segments: flatActiveSegments.length,
-      chars: totalChars,
+      chars: totalCharsNotes,
       costUSD: totalCost,
       costTWD: totalCost * 32.5,
       videoDuration,
@@ -570,7 +596,7 @@ function App() {
       inputCost,
       outputCost
     };
-  }, [aiGroups, flatActiveSegments.length, videoData]);
+  }, [aiGroups, aiTermsGroups, flatActiveSegments.length, videoData]);
 
   // --- Handlers ---
   const handleUrlSubmit = async () => {
@@ -1069,8 +1095,8 @@ function App() {
       };
     });
 
-    const totalP2 = aiGroups.length;
-    const initialTerms: AIBlock[] = aiGroups.map((group, idx) => {
+    const totalP2 = aiTermsGroups.length;
+    const initialTerms: AIBlock[] = aiTermsGroups.map((group, idx) => {
       const title = `影片時間 ${formatSecondsToTime(group.start)} ~ ${formatSecondsToTime(group.end)} 專業術語對照 (第 ${idx + 1} / ${totalP2} 次)`;
       return {
         title,
