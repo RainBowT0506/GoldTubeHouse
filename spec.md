@@ -62,3 +62,161 @@ GoldTubeHouse 是一個專為 YouTube 字幕自動化下載、分段整理及 AI
 *   使用者可在前台任意字幕卡片（Subtitle Card）點選編輯文字，在任意句點後按下 **Enter 鍵**。
 *   **安全邊界**：為避免分割出極短的無意義段落，手動分割出的前半段長度必須大於 5 分鐘（300 秒），否則系統將彈出警告（`分割出的前半段需大於 5 分鐘，已自動合併`）並不予分割。
 *   **句內單字邊界精準切分 (Subtitle Entry Splitting)**：優化了時間戳記與字幕內容的切割邏輯。若使用者按下 Enter 的游標位置正好落在單一字幕條目（Subtitle Entry）的文字內部（而非條目交界處），系統會自動將該條目拆分為兩個子條目，並按游標前/後字數長度比例重新分配時間長度與時間起點（`start2`），將拆分點定在後半段字句的起點。這能保證不論字幕條目的物理邊界如何，切分處前方的內容必定留在前一卡片，後方內容（如 `So the next`）必定開始於新卡片，徹底解決了原先句內交界文字被錯誤帶入下一卡片的問題。
+
+---
+
+## 6. 系統架構 (System Architecture)
+
+系統採用前後端分離架構，提供流暢的單頁應用程式（SPA）互動體驗：
+- **前端 (Frontend)**: 基於 React 18, TypeScript, Vite 及 Vanilla CSS 建構。前端負責時間軸運算、使用者編輯卡片、章節比對、費用預估，並透過 `localStorage` 實現頁面重新載入後的設定與狀態持久化（Persistence）。
+- **後端 (Backend)**: 使用 Python + FastAPI 提供高效能 API，負責調用 `youtube-transcript-api` 與 `yt-dlp` 下載字幕，並代理與安全處理對 OpenAI API 的呼叫，同時負責將用戶的分段結果持久化存檔。
+
+---
+
+## 7. 後端 API 端點規格說明 (API Endpoints Specification)
+
+### 7.1 `POST /api/process-video`
+- **功能**: 解析 YouTube 網址，優先透過 `youtube-transcript-api` 下載字幕。若下載失敗（如限制區域或無官方字幕），則自動容錯降級使用 `yt-dlp` 下載自動生成字幕，解析成統一的時間戳記格式回傳給前端。
+- **請求參數**:
+  ```json
+  { "url": "string" }
+  ```
+- **回應格式**:
+  ```json
+  {
+    "status": "success",
+    "video_id": "string",
+    "title": "string",
+    "duration": 1234,
+    "thumbnail": "string",
+    "subtitles": [
+      { "text": "string", "start": 0.0, "duration": 0.0 }
+    ]
+  }
+  ```
+
+### 7.2 `GET /api/check-env`
+- **功能**: 檢查後端伺服器的環境變數中是否設定了 `OPENAI_API_KEY`，用以決定前端是否顯示「偵測到本地環境中有 API Key」的快速引入按鈕。
+- **回應格式**:
+  ```json
+  { "status": "success", "has_key": true }
+  ```
+
+### 7.3 `POST /api/get-env-key`
+- **功能**: 獲取本地伺服器環境中的 `OPENAI_API_KEY` 以供前端網頁引入。
+- **回應格式**:
+  ```json
+  { "status": "success", "api_key": "string" }
+  ```
+
+### 7.4 `POST /api/generate-block-note`
+- **功能**: 呼叫 OpenAI 針對特定分段內容生成 Markdown 重點整理筆記。
+- **特殊處理**:
+  - **清單扁平化處理 (`flatten_markdown_lists`)**: 後端會解析 OpenAI 回傳內容中的 Markdown 清單，自動將多層級（Nested）縮排列表扁平化為單一層級無序清單，確保最終筆記呈現格式精準無雜亂。
+- **請求參數**:
+  ```json
+  {
+    "api_key": "string",
+    "model": "string",
+    "title": "string",
+    "text": "string"
+  }
+  ```
+- **回應格式**:
+  ```json
+  {
+    "status": "success",
+    "title": "string",
+    "content": "string"
+  }
+  ```
+
+### 7.5 `POST /api/generate-block-terms`
+- **功能**: 呼叫 OpenAI 針對特定內容提取 50 個專業學術術語與對應的中英文解釋。
+- **請求參數**:
+  ```json
+  {
+    "api_key": "string",
+    "model": "string",
+    "text": "string"
+  }
+  ```
+- **回應格式**:
+  ```json
+  {
+    "status": "success",
+    "content": "string"
+  }
+  ```
+
+### 7.6 `POST /api/save-segments`
+- **功能**: 用戶鎖定分段或點選費用預估時，前端會自動同步當前所有的分段狀態，持久化寫入伺服器本地檔案。
+- **儲存路徑**: 專案根目錄下 `scratch/user_segments.json`。
+- **請求參數**:
+  ```json
+  {
+    "video_id": "string",
+    "segments": [
+      {
+        "title": "string",
+        "text": "string",
+        "start": 0.0,
+        "end": 0.0
+      }
+    ]
+  }
+  ```
+- **回應格式**:
+  ```json
+  { "status": "success" }
+  ```
+
+---
+
+## 8. 後端多執行緒併發設計 (Backend Concurrency Design)
+
+為了讓使用者能同時處理多個字幕區塊的 AI 筆記與術語生成，後端在端點設計上進行了效能優化：
+- **同步端點定義 (`def` 而非 `async def`)**:
+  - 由於 AI 筆記與術語的生成需要呼叫外部 OpenAI HTTP API，其內部使用了同步的 `requests.post`，屬於阻塞型（Blocking）I/O。
+  - 若使用 `async def` 定義，由於 Python 的單執行緒事件循環（Event Loop）特性，這些阻塞呼叫會徹底卡死事件循環，導致多個 AI 請求必須排隊串行執行。
+  - 將端點改為 `def` 定義後，FastAPI 會自動將這些請求指派給外部的 **執行緒池 (Thread Pool)** 來併發處理。如此一來，多個區塊的 AI 生成請求可以並行、並發發送給 OpenAI，大幅縮短了整體等待時間。
+
+---
+
+## 9. AI 請求日誌紀錄機制 (AI Request Logging Mechanism)
+
+為方便追蹤 API 費用、分析 Prompts 效果及調試模型行為，系統提供了自動化請求紀錄日誌：
+- **觸發時機**: 每次點擊調用 AI 生成 Block Note 或 Block Terms 時觸發。
+- **日誌儲存路徑**: 儲存在根目錄下的 `ai_logs/ai_call_<timestamp>.json`。該資料夾已在 `.gitignore` 中設定忽略，避免敏感 API 金鑰或大型字幕數據被提交至 Git。
+- **日誌結構**:
+  ```json
+  {
+    "timestamp": "ISO-8601格式時間戳記",
+    "model": "gpt-5.1",
+    "segments": [],
+    "prompt_1_calls": [
+      {
+        "title": "區塊標題",
+        "prompt": "完整發送的 Prompt 內容",
+        "response": "OpenAI 原始回傳 Markdown",
+        "processed": "經過扁平化後的 Markdown"
+      }
+    ],
+    "prompt_2_calls": [],
+    "final_output": {
+      "title": "區塊標題",
+      "content": "最終結果"
+    }
+  }
+  ```
+
+---
+
+## 10. 測試與 Mock 資料 (Testing & Mock Data)
+
+專案內建了完整的單元測試與模擬數據，以驗證分段邏輯與 API 正常運行：
+- **後端 API 測試 (`tests/test_backend.py`)**: 測試 FastAPI 各 API 的請求與回應狀態，包括模擬影片處理與 API 金鑰校驗。
+- **前端分段測試 (`tests/test_frontend_segmentation.ts`)**: 針對前端的字幕邊界切分、句尾對齊、尾部自動合併等智慧演算法進行全方位單元測試。
+- **Mock 數據目錄 (`tests/mock_data/`)**:
+  - `UIf-SlmMays_subtitles.json`: 提供一部 3 小時長影片的原始字幕模擬數據。
+  - `UIf-SlmMays_user_segments.json`: 提供對應長影片的用戶自訂分段 Mock 數據，供前端測試演算法之邊界條件。
