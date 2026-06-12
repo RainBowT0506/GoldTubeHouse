@@ -170,6 +170,39 @@ function App() {
     return localStorage.getItem('gth_showCostEstimation') === 'true';
   });
   const [showCostDetails, setShowCostDetails] = useState<boolean>(false);
+  const [collapsedNotes, setCollapsedNotes] = useState<Set<string>>(new Set());
+  const [collapsedTerms, setCollapsedTerms] = useState<Set<string>>(new Set());
+
+  const toggleCollapseNote = (title: string) => {
+    setCollapsedNotes((prev) => {
+      const next = new Set(prev);
+      if (next.has(title)) next.delete(title); else next.add(title);
+      return next;
+    });
+  };
+
+  const toggleCollapseTerm = (title: string) => {
+    setCollapsedTerms((prev) => {
+      const next = new Set(prev);
+      if (next.has(title)) next.delete(title); else next.add(title);
+      return next;
+    });
+  };
+
+  const expandAllNotes = () => setCollapsedNotes(new Set());
+  const collapseAllNotes = () => {
+    if (aiNotesResult) {
+      setCollapsedNotes(new Set(aiNotesResult.map((item) => item.title)));
+    }
+  };
+
+  const expandAllTerms = () => setCollapsedTerms(new Set());
+  const collapseAllTerms = () => {
+    if (aiTermsResult) {
+      setCollapsedTerms(new Set(aiTermsResult.map((item) => item.title)));
+    }
+  };
+
   const [hasEnvKey, setHasEnvKey] = useState<boolean>(false);
   const [toast, setToast] = useState<{ show: boolean; message: string }>({ show: false, message: '' });
 
@@ -1389,41 +1422,78 @@ function App() {
                 <div className="tab-content active">
                   <div className="panel-header">
                     <h2 className="panel-title">重點整理筆記</h2>
-                    <button className="btn-copy btn-copy-highlight" onClick={copyAllAINotes}>
-                      複製全部筆記
-                    </button>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button className="btn-copy" onClick={expandAllNotes}>
+                        展開全部
+                      </button>
+                      <button className="btn-copy" onClick={collapseAllNotes}>
+                        收合全部
+                      </button>
+                      <button className="btn-copy btn-copy-highlight" onClick={copyAllAINotes}>
+                        複製全部筆記
+                      </button>
+                    </div>
                   </div>
-                  <div className="ai-result-area" style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-                    {aiNotesResult.map((item, idx) => (
-                      <div key={idx} style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '20px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '10px' }}>
-                          <h3 style={{ color: 'var(--primary)', fontSize: '16px', fontWeight: 600 }}>{item.title}</h3>
-                          <div style={{ display: 'flex', gap: '8px' }}>
-                            {item.status === 'error' && (
-                              <button className="btn-copy" style={{ borderColor: 'var(--error)', color: 'var(--error)' }} onClick={() => retryNoteBlock(item)}>
-                                🔄 重新整理此區塊
-                              </button>
-                            )}
-                            {item.status === 'done' && (
-                              <button className="btn-copy" onClick={() => { copyTextToClipboard(`# ${item.title}\n\n${item.content}`); showToast('已複製該段筆記！'); }}>
-                                📋 複製此段
-                              </button>
-                            )}
+                  <div className="ai-result-area" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    {aiNotesResult.map((item, idx) => {
+                      const isCollapsed = collapsedNotes.has(item.title);
+                      return (
+                        <div key={idx} style={{ 
+                          background: 'rgba(255,255,255,0.01)', 
+                          border: '1px solid var(--border-color)', 
+                          borderRadius: '12px', 
+                          padding: isCollapsed ? '12px 20px' : '20px',
+                          transition: 'all 0.2s ease'
+                        }}>
+                          <div 
+                            style={{ 
+                              display: 'flex', 
+                              justifyContent: 'space-between', 
+                              alignItems: 'center', 
+                              cursor: 'pointer',
+                              userSelect: 'none',
+                              borderBottom: isCollapsed ? 'none' : '1px solid rgba(255,255,255,0.05)', 
+                              paddingBottom: isCollapsed ? '0' : '10px'
+                            }}
+                            onClick={() => toggleCollapseNote(item.title)}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span style={{ color: 'var(--primary)', fontSize: '11px', transition: 'transform 0.2s', transform: isCollapsed ? 'rotate(0deg)' : 'rotate(90deg)' }}>
+                                ▶
+                              </span>
+                              <h3 style={{ color: 'var(--primary)', fontSize: '15px', fontWeight: 600, margin: 0 }}>{item.title}</h3>
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px' }} onClick={(e) => e.stopPropagation()}>
+                              {item.status === 'error' && (
+                                <button className="btn-copy" style={{ borderColor: 'var(--error)', color: 'var(--error)' }} onClick={() => retryNoteBlock(item)}>
+                                  🔄 重新整理此區塊
+                                </button>
+                              )}
+                              {item.status === 'done' && (
+                                <button className="btn-copy" onClick={() => { copyTextToClipboard(`# ${item.title}\n\n${item.content}`); showToast('已複製該段筆記！'); }}>
+                                  📋 複製此段
+                                </button>
+                              )}
+                            </div>
                           </div>
+                          {!isCollapsed && (
+                            <div style={{ marginTop: '15px' }}>
+                              {item.status === 'loading' ? (
+                                <div style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
+                                  <span>⏳</span><span>正在整理此時間段的重點整理...</span>
+                                </div>
+                              ) : item.status === 'error' ? (
+                                <div style={{ color: 'var(--error)', fontSize: '14px' }}>
+                                  ⚠️ 錯誤：{item.content}
+                                </div>
+                              ) : (
+                                <div style={{ fontSize: '14px', lineHeight: '1.7', whiteSpace: 'pre-wrap', color: '#e2e8f0' }}>{item.content}</div>
+                              )}
+                            </div>
+                          )}
                         </div>
-                        {item.status === 'loading' ? (
-                          <div style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
-                            <span>⏳</span><span>正在整理此時間段的重點整理...</span>
-                          </div>
-                        ) : item.status === 'error' ? (
-                          <div style={{ color: 'var(--error)', fontSize: '14px' }}>
-                            ⚠️ 錯誤：{item.content}
-                          </div>
-                        ) : (
-                          <div style={{ fontSize: '14px', lineHeight: '1.7', whiteSpace: 'pre-wrap', color: '#e2e8f0' }}>{item.content}</div>
-                        )}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -1433,41 +1503,78 @@ function App() {
                 <div className="tab-content active">
                   <div className="panel-header">
                     <h2 className="panel-title">專業術語對照表</h2>
-                    <button className="btn-copy btn-copy-highlight" onClick={copyAllAITerms}>
-                      複製全部術語
-                    </button>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button className="btn-copy" onClick={expandAllTerms}>
+                        展開全部
+                      </button>
+                      <button className="btn-copy" onClick={collapseAllTerms}>
+                        收合全部
+                      </button>
+                      <button className="btn-copy btn-copy-highlight" onClick={copyAllAITerms}>
+                        複製全部術語
+                      </button>
+                    </div>
                   </div>
-                  <div className="ai-result-area" style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-                    {aiTermsResult.map((item, idx) => (
-                      <div key={idx} style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '20px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '10px' }}>
-                          <h3 style={{ color: '#10b981', fontSize: '16px', fontWeight: 600 }}>{item.title}</h3>
-                          <div style={{ display: 'flex', gap: '8px' }}>
-                            {item.status === 'error' && (
-                              <button className="btn-copy" style={{ borderColor: 'var(--error)', color: 'var(--error)' }} onClick={() => retryTermsBlock(item)}>
-                                🔄 重新整理此區塊
-                              </button>
-                            )}
-                            {item.status === 'done' && (
-                              <button className="btn-copy" onClick={() => { copyTextToClipboard(`# ${item.title}\n\n${item.content}`); showToast('已複製該段術語！'); }}>
-                                📋 複製此段
-                              </button>
-                            )}
+                  <div className="ai-result-area" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    {aiTermsResult.map((item, idx) => {
+                      const isCollapsed = collapsedTerms.has(item.title);
+                      return (
+                        <div key={idx} style={{ 
+                          background: 'rgba(255,255,255,0.01)', 
+                          border: '1px solid var(--border-color)', 
+                          borderRadius: '12px', 
+                          padding: isCollapsed ? '12px 20px' : '20px',
+                          transition: 'all 0.2s ease'
+                        }}>
+                          <div 
+                            style={{ 
+                              display: 'flex', 
+                              justifyContent: 'space-between', 
+                              alignItems: 'center', 
+                              cursor: 'pointer',
+                              userSelect: 'none',
+                              borderBottom: isCollapsed ? 'none' : '1px solid rgba(255,255,255,0.05)', 
+                              paddingBottom: isCollapsed ? '0' : '10px'
+                            }}
+                            onClick={() => toggleCollapseTerm(item.title)}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span style={{ color: '#10b981', fontSize: '11px', transition: 'transform 0.2s', transform: isCollapsed ? 'rotate(0deg)' : 'rotate(90deg)' }}>
+                                ▶
+                              </span>
+                              <h3 style={{ color: '#10b981', fontSize: '15px', fontWeight: 600, margin: 0 }}>{item.title}</h3>
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px' }} onClick={(e) => e.stopPropagation()}>
+                              {item.status === 'error' && (
+                                <button className="btn-copy" style={{ borderColor: 'var(--error)', color: 'var(--error)' }} onClick={() => retryTermsBlock(item)}>
+                                  🔄 重新整理此區塊
+                                </button>
+                              )}
+                              {item.status === 'done' && (
+                                <button className="btn-copy" onClick={() => { copyTextToClipboard(`# ${item.title}\n\n${item.content}`); showToast('已複製該段術語！'); }}>
+                                  📋 複製此段
+                                </button>
+                              )}
+                            </div>
                           </div>
+                          {!isCollapsed && (
+                            <div style={{ marginTop: '15px' }}>
+                              {item.status === 'loading' ? (
+                                <div style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
+                                  <span>⏳</span><span>正在整理此時間段的專業術語...</span>
+                                </div>
+                              ) : item.status === 'error' ? (
+                                <div style={{ color: 'var(--error)', fontSize: '14px' }}>
+                                  ⚠️ 錯誤：{item.content}
+                                </div>
+                              ) : (
+                                <div style={{ fontSize: '14px', lineHeight: '1.7', whiteSpace: 'pre-wrap', color: '#e2e8f0' }}>{item.content}</div>
+                              )}
+                            </div>
+                          )}
                         </div>
-                        {item.status === 'loading' ? (
-                          <div style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
-                            <span>⏳</span><span>正在整理此時間段的專業術語...</span>
-                          </div>
-                        ) : item.status === 'error' ? (
-                          <div style={{ color: 'var(--error)', fontSize: '14px' }}>
-                            ⚠️ 錯誤：{item.content}
-                          </div>
-                        ) : (
-                          <div style={{ fontSize: '14px', lineHeight: '1.7', whiteSpace: 'pre-wrap', color: '#e2e8f0' }}>{item.content}</div>
-                        )}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
