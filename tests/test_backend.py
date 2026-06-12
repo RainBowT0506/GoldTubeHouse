@@ -7,12 +7,12 @@ import tempfile
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from server import (
-    get_video_id,
     format_seconds_to_time,
     group_segments_by_duration,
-    parse_vtt_file,
     flatten_markdown_lists
 )
+from subtitle_extractor import get_video_id
+from subtitle_utils import parse_vtt_file
 
 class SegmentMock:
     def __init__(self, start, end, title, text):

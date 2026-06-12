@@ -1,28 +1,7 @@
 import os
 import re
+from subtitle_utils import clean_vtt_content
 
-def clean_vtt_content(vtt_text):
-    """
-    清理 VTT 內容，移除時間軸、標籤，並處理重複累加行
-    """
-    lines = vtt_text.splitlines()
-    cleaned_lines = []
-    timestamp_pattern = re.compile(r'\d{2}:\d{2}:\d{2}.\d{3} --> \d{2}:\d{2}:\d{2}.\d{3}')
-    
-    for line in lines:
-        line = line.strip()
-        if not line or 'WEBVTT' in line or 'Kind:' in line or 'Language:' in line or timestamp_pattern.match(line):
-            continue
-        
-        line = re.sub(r'<[^>]+>', '', line)
-        
-        if not cleaned_lines or line not in cleaned_lines[-1]:
-            if cleaned_lines and cleaned_lines[-1] in line:
-                cleaned_lines[-1] = line
-            else:
-                cleaned_lines.append(line)
-            
-    return cleaned_lines
 
 def format_directory_to_markdown(input_dir, indent_size=4):
     """

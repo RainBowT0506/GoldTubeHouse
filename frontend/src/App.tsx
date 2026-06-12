@@ -8,52 +8,18 @@ import {
   getCleanedSubtitlesAndMappings,
   resolveSubtitleOverlaps,
   parseSubtitlesText,
-  groupSegmentsForTerms
+  groupSegmentsForTerms,
+  getCaretCharacterOffsetWithin
 } from './utils';
 
+import { HomeScreen } from './components/HomeScreen';
+import { LoadingScreen } from './components/LoadingScreen';
+import { ManualImportModal } from './components/ManualImportModal';
+import { Sidebar } from './components/Sidebar';
+import { AINotesTab } from './components/AINotesTab';
+import { AITermsTab } from './components/AITermsTab';
+import { EditSegmentsTab } from './components/EditSegmentsTab';
 
-// Helper to determine caret offset inside contentEditable
-function getCaretCharacterOffsetWithin(element: HTMLElement): number {
-  let caretOffset = 0;
-  const doc = element.ownerDocument;
-  const win = doc?.defaultView;
-  if (win && win.getSelection) {
-    const sel = win.getSelection();
-    if (sel && sel.rangeCount > 0) {
-      const range = sel.getRangeAt(0);
-      const preCaretRange = range.cloneRange();
-      preCaretRange.selectNodeContents(element);
-      preCaretRange.setEnd(range.endContainer, range.endOffset);
-      caretOffset = preCaretRange.toString().length;
-    }
-  }
-  return caretOffset;
-}
-
-// Editable Segment Component to prevent cursor jumping
-const EditableSegmentText = ({
-  initialText,
-  onBlur,
-  onKeydown
-}: {
-  segId: string;
-  initialText: string;
-  onBlur: (text: string) => void;
-  onKeydown: (event: React.KeyboardEvent<HTMLDivElement>) => void;
-}) => {
-  return (
-    <div
-      className="segment-content"
-      contentEditable
-      suppressContentEditableWarning
-      spellCheck="false"
-      onBlur={(e) => onBlur(e.currentTarget.innerText)}
-      onKeyDown={onKeydown}
-    >
-      {initialText}
-    </div>
-  );
-};
 
 interface AIBlock {
   title: string;
@@ -1252,47 +1218,7 @@ function App() {
     setActiveTab('edit');
   };
 
-  // --- Rendering Helpers ---
-  const renderSegmentCard = (seg: Segment, isSub: boolean) => {
-    const segId = seg.id || '';
-    const initialText = cleanAndJoinSubtitles(seg.subtitles);
-    const textToShow = editedSegmentTexts[segId] !== undefined ? editedSegmentTexts[segId] : initialText;
 
-    return (
-      <div className={`segment-card ${isSub ? 'subsegment' : ''}`} key={segId} id={segId}>
-        <div className="segment-header">
-          <div className="segment-meta">
-            <span className="segment-title">
-              {isSub ? (
-                <>
-                  ↳ <span>細分區間</span>
-                </>
-              ) : (
-                <>
-                  # <span>{seg.chapterTitle}</span>
-                </>
-              )}
-            </span>
-            {seg.subTitle && <span className="segment-time-range">{seg.subTitle}</span>}
-          </div>
-          <div className="segment-actions">
-            <button className="btn-copy btn-copy-highlight" onClick={() => copySegmentText(segId, seg, false)}>
-              <span>僅複製字幕</span>
-            </button>
-            <button className="btn-copy" onClick={() => copySegmentText(segId, seg, true)}>
-              <span>複製標題與字幕</span>
-            </button>
-          </div>
-        </div>
-        <EditableSegmentText
-          segId={segId}
-          initialText={textToShow}
-          onBlur={(newVal) => handleSegmentTextChange(segId, newVal)}
-          onKeydown={(e) => handleSegmentKeydown(e, seg)}
-        />
-      </div>
-    );
-  };
 
   // --- JSX Rendering ---
   return (
@@ -1309,102 +1235,18 @@ function App() {
       <main>
         {/* Screen 1: Home screen */}
         {screen === 'home' && (
-          <div id="home-screen">
-            <h1 className="hero-title">YouTube 字幕分段整理工具</h1>
-            <p className="hero-subtitle">
-              貼上 YouTube 影片網址，即可極速取得字幕，並根據章節進行智慧分段。支援手動鍵盤 Enter
-              調整切分點，並可呼叫 OpenAI API 一鍵生成結構化重點整理與專業術語對照。
-            </p>
-
-            <div className="input-group">
-              <input
-                type="text"
-                className="url-input"
-                placeholder="請貼上 YouTube 影片網址 (例如 https://www.youtube.com/watch?v=2GZ2SNXWK-c)"
-                value={ytUrl}
-                onChange={(e) => setYtUrl(e.target.value)}
-              />
-              <button className="btn-submit" onClick={handleUrlSubmit}>
-                <span>開始處理</span>
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                  <polyline points="12 5 19 12 12 19"></polyline>
-                </svg>
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '-10px', marginBottom: '25px', width: '100%' }}>
-              <button
-                className="btn-global btn-back"
-                style={{ width: 'auto', padding: '10px 24px', borderRadius: 'var(--radius-md)' }}
-                onClick={() => setShowImportModal(true)}
-              >
-                📁 手動匯入字幕 (VTT / SRT / JSON / 純文字)
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <span style={{ color: 'var(--text-muted)', fontSize: '13px', alignSelf: 'center' }}>常用測試範例：</span>
-              <span
-                className="example-tag"
-                onClick={() => useExample('https://www.youtube.com/watch?v=2GZ2SNXWK-c')}
-              >
-                n8n 自動化大師課 (長達 6 小時)
-              </span>
-              <span
-                className="example-tag"
-                onClick={() => useExample('https://www.youtube.com/watch?v=EH5jx5qPabU')}
-              >
-                n8n AI Agent 教學 (約 25 分)
-              </span>
-            </div>
-
-            <div className="features-grid">
-              <div className="feature-card">
-                <div className="feature-icon">⌨️</div>
-                <div className="feature-title">手動 Enter 快速切分</div>
-                <div className="feature-desc">
-                  直接點擊文字卡片，在任意句點後按下 Enter 鍵，系統即會精準在該時間點進行段落分割，其後區段自動後移。
-                </div>
-              </div>
-              <div className="feature-card">
-                <div className="feature-icon">🎯</div>
-                <div className="feature-title">句點對齊智慧分段</div>
-                <div className="feature-desc">
-                  無章節或大間隔自動分割時，自動抓取最接近 20 分鐘的句尾（句號），保持語意段落完整性。
-                </div>
-              </div>
-              <div className="feature-card">
-                <div className="feature-icon">🧠</div>
-                <div className="feature-title">OpenAI 自動筆記術語</div>
-                <div className="feature-desc">
-                  串接 API 金鑰，一鍵為每個分段生成重點筆記，並每小時（3個分段）生成 50
-                  個專業詞彙的中英文對照與釋義。固定使用 gpt-5.1 引擎。
-                </div>
-              </div>
-            </div>
-          </div>
+          <HomeScreen
+            ytUrl={ytUrl}
+            setYtUrl={setYtUrl}
+            handleUrlSubmit={handleUrlSubmit}
+            setShowImportModal={setShowImportModal}
+            useExample={useExample}
+          />
         )}
 
         {/* Screen 2: Loading screen */}
         {screen === 'loading' && (
-          <div id="loading-screen">
-            <div className="spinner-container">
-              <div className="spinner-glow"></div>
-              <div className="spinner-core">📺</div>
-            </div>
-            <h2 className="loading-title">正在處理中</h2>
-            <p className="loading-subtitle">{loadingText}</p>
-          </div>
+          <LoadingScreen loadingText={loadingText} />
         )}
 
         {/* Screen 3: Main App screen */}
@@ -1439,743 +1281,101 @@ function App() {
 
               {/* Tab 1: Edit & Split */}
               {activeTab === 'edit' && (
-                <div className="tab-content active">
-                  <div className="panel-header">
-                    <h2 className="panel-title">
-                      <span>字幕分段區塊</span>
-                      <span
-                        style={{
-                          fontSize: '13px',
-                          fontWeight: 'normal',
-                          color: 'var(--text-muted)',
-                          background: 'rgba(255,255,255,0.04)',
-                          padding: '4px 10px',
-                          borderRadius: '20px'
-                        }}
-                      >
-                        {segmentsCount} 個區塊
-                      </span>
-                    </h2>
-                    <span style={{ fontSize: '12px', color: 'var(--accent)', fontWeight: '500' }}>
-                      💡 您可點選任意卡片內容，在句號後按 Enter 鍵進行手動段落切分
-                    </span>
-                  </div>
-
-                  <div className="subtitle-scroll-area">
-                    {renderingAIGroups.length === 0 ? (
-                      <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-                        無分段資料，請確認字幕下載正確。
-                      </div>
-                    ) : (
-                      renderingAIGroups.map((group, groupIdx) => {
-                        const nextGroup = groupIdx + 1 < renderingAIGroups.length ? renderingAIGroups[groupIdx + 1] : null;
-
-                        const renderGroupItem = (item: Segment, idxInGroup: number, groupItems: Segment[]) => {
-                          const nextItemInGroup = idxInGroup + 1 < groupItems.length ? groupItems[idxInGroup + 1] : null;
-
-                          if (item.isGroup) {
-                            const groupKey = `group_ch_${item.start}_${item.chapterTitle}`;
-                            const isCollapsed = collapsedChapters.has(groupKey);
-                            return (
-                              <React.Fragment key={groupKey}>
-                                <div className="chapter-group">
-                                  <div
-                                    className="chapter-group-header"
-                                    onClick={() => toggleChapterCollapse(groupKey)}
-                                    style={{ cursor: 'pointer' }}
-                                  >
-                                    <div className="chapter-group-title">
-                                      <span className="collapse-arrow">{isCollapsed ? '▶' : '▼'}</span>
-                                      📁 <span># {item.chapterTitle}</span>
-                                    </div>
-                                    <div
-                                      style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
-                                      onClick={e => e.stopPropagation()}
-                                    >
-                                      <span className="chapter-group-time">
-                                        {formatTime(item.start)} ~ {formatTime(item.end)}
-                                      </span>
-                                      {!isCollapsed && (
-                                        <button className="btn-copy-group" onClick={() => copyEntireChapter(item)}>
-                                          複製整章
-                                        </button>
-                                      )}
-                                    </div>
-                                  </div>
-                                  {!isCollapsed && item.subSegments?.map((subSeg, subIdx) => {
-                                    const subSegs = item.subSegments || [];
-                                    const isLastSub = subIdx === subSegs.length - 1;
-                                    return (
-                                      <React.Fragment key={subSeg.id || `sub_${subIdx}`}>
-                                        {renderSegmentCard(subSeg, true)}
-                                        {!isLastSub && subSegs[subIdx + 1] && (() => {
-                                          const isMerged = removedBoundaryTimes.includes(subSegs[subIdx + 1].start);
-                                          return (
-                                            <div className={`merge-btn-row subsegment-merge ${isMerged ? 'merged-ai' : ''}`}>
-                                              <div className="merge-line" />
-                                              <button
-                                                className={`btn-merge-next btn-merge-sub ${isMerged ? 'merged' : ''}`}
-                                                onClick={() => handleMergeWithNext(subSegs[subIdx + 1].start)}
-                                                title={isMerged ? "取消合併此子段落" : "合併此子段落與下一段 (AI 整合)"}
-                                              >
-                                                {isMerged ? '⊖ 取消 AI 整合' : '⊕ 合併子段落'}
-                                              </button>
-                                              <div className="merge-line" />
-                                            </div>
-                                          );
-                                        })()}
-                                      </React.Fragment>
-                                    );
-                                  })}
-                                </div>
-                                {nextItemInGroup && nextItemInGroup.isGroup && (() => {
-                                  const isMerged = removedBoundaryTimes.includes(nextItemInGroup.start);
-                                  return (
-                                    <div className={`merge-btn-row ${isMerged ? 'merged-ai' : ''}`}>
-                                      <div className="merge-line" />
-                                      <button
-                                        className={`btn-merge-next ${isMerged ? 'merged' : ''}`}
-                                        onClick={() => handleMergeWithNext(nextItemInGroup.start)}
-                                        title={isMerged ? `取消合併「${item.chapterTitle}」與「${nextItemInGroup.chapterTitle}」` : `合併「${item.chapterTitle}」與「${nextItemInGroup.chapterTitle}」 (AI 整合)`}
-                                      >
-                                        {isMerged ? '⊖ 取消 AI 整合' : '⊕ 合併此章節 (AI 整合)'}
-                                      </button>
-                                      <div className="merge-line" />
-                                    </div>
-                                  );
-                                })()}
-                              </React.Fragment>
-                            );
-                          } else {
-                            return renderSegmentCard(item, false);
-                          }
-                        };
-
-                        const isMergedGroup = group.items.length > 1;
-                        const isGroupCollapsed = collapsedAIGroups.has(group.id);
-
-                        return (
-                          <React.Fragment key={group.id}>
-                            {isMergedGroup ? (
-                              <div className="ai-merged-group-container">
-                                <div
-                                  className="ai-merged-group-header"
-                                  onClick={() => toggleAIGroupCollapse(group.id)}
-                                  style={{ cursor: 'pointer' }}
-                                >
-                                  <div className="ai-merged-group-title">
-                                    <span className="collapse-arrow">{isGroupCollapsed ? '▶' : '▼'}</span>
-                                    <span>🧠 AI 整合區間 ({group.items.length} 個章節)</span>
-                                  </div>
-                                  <span className="ai-merged-group-time">
-                                    {formatTime(group.start)} ~ {formatTime(group.end)}
-                                  </span>
-                                </div>
-                                {!isGroupCollapsed && (
-                                  <div className="ai-merged-group-content">
-                                    {group.items.map((item, idx) => renderGroupItem(item, idx, group.items))}
-                                  </div>
-                                )}
-                              </div>
-                            ) : (
-                              renderGroupItem(group.items[0], 0, group.items)
-                            )}
-
-                            {/* 渲染此 AI 群組與下一個 AI 群組之間的合併邊界按鈕 */}
-                            {nextGroup && (() => {
-                              const lastItemOfCurrent = group.items[group.items.length - 1];
-                              const firstItemOfNext = nextGroup.items[0];
-                              if (lastItemOfCurrent.isGroup && firstItemOfNext.isGroup) {
-                                const isMerged = removedBoundaryTimes.includes(firstItemOfNext.start);
-                                return (
-                                  <div className={`merge-btn-row ${isMerged ? 'merged-ai' : ''}`}>
-                                    <div className="merge-line" />
-                                    <button
-                                      className={`btn-merge-next ${isMerged ? 'merged' : ''}`}
-                                      onClick={() => handleMergeWithNext(firstItemOfNext.start)}
-                                      title={isMerged ? `取消合併「${lastItemOfCurrent.chapterTitle}」與「${firstItemOfNext.chapterTitle}」` : `合併「${lastItemOfCurrent.chapterTitle}」與「${firstItemOfNext.chapterTitle}」 (AI 整合)`}
-                                    >
-                                      {isMerged ? '⊖ 取消 AI 整合' : '⊕ 合併此章節 (AI 整合)'}
-                                    </button>
-                                    <div className="merge-line" />
-                                  </div>
-                                );
-                              }
-                              return null;
-                            })()}
-                          </React.Fragment>
-                        );
-                      })
-                    )}
-                  </div>
-                </div>
+                <EditSegmentsTab
+                  segmentsCount={segmentsCount}
+                  renderingAIGroups={renderingAIGroups}
+                  collapsedChapters={collapsedChapters}
+                  toggleChapterCollapse={toggleChapterCollapse}
+                  copyEntireChapter={copyEntireChapter}
+                  removedBoundaryTimes={removedBoundaryTimes}
+                  handleMergeWithNext={handleMergeWithNext}
+                  editedSegmentTexts={editedSegmentTexts}
+                  copySegmentText={copySegmentText}
+                  handleSegmentTextChange={handleSegmentTextChange}
+                  handleSegmentKeydown={handleSegmentKeydown}
+                  collapsedAIGroups={collapsedAIGroups}
+                  toggleAIGroupCollapse={toggleAIGroupCollapse}
+                />
               )}
 
               {/* Tab 2: AI Notes */}
               {activeTab === 'notes' && aiNotesResult && (
-                <div className="tab-content active">
-                  <div className="panel-header">
-                    <h2 className="panel-title">重點整理筆記</h2>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button className="btn-copy" onClick={expandAllNotes}>
-                        展開全部
-                      </button>
-                      <button className="btn-copy" onClick={collapseAllNotes}>
-                        收合全部
-                      </button>
-                      <button className="btn-copy btn-copy-highlight" onClick={copyAllAINotes}>
-                        複製全部筆記
-                      </button>
-                    </div>
-                  </div>
-                  <div className="ai-result-area" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    {aiNotesResult.map((item, idx) => {
-                      const isCollapsed = collapsedNotes.has(item.title);
-                      return (
-                        <div key={idx} style={{ 
-                          background: 'rgba(255,255,255,0.01)', 
-                          border: '1px solid var(--border-color)', 
-                          borderRadius: '12px', 
-                          padding: isCollapsed ? '12px 20px' : '20px',
-                          transition: 'all 0.2s ease'
-                        }}>
-                          <div 
-                            style={{ 
-                              display: 'flex', 
-                              justifyContent: 'space-between', 
-                              alignItems: 'center', 
-                              cursor: 'pointer',
-                              userSelect: 'none',
-                              borderBottom: isCollapsed ? 'none' : '1px solid rgba(255,255,255,0.05)', 
-                              paddingBottom: isCollapsed ? '0' : '10px'
-                            }}
-                            onClick={() => toggleCollapseNote(item.title)}
-                          >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <span style={{ color: 'var(--primary)', fontSize: '11px', transition: 'transform 0.2s', transform: isCollapsed ? 'rotate(0deg)' : 'rotate(90deg)' }}>
-                                ▶
-                              </span>
-                              <h3 style={{ color: 'var(--primary)', fontSize: '15px', fontWeight: 600, margin: 0 }}>{item.title}</h3>
-                            </div>
-                            <div style={{ display: 'flex', gap: '8px' }} onClick={(e) => e.stopPropagation()}>
-                              {item.status === 'error' && (
-                                <button className="btn-copy" style={{ borderColor: 'var(--error)', color: 'var(--error)' }} onClick={() => retryNoteBlock(item)}>
-                                  🔄 重新整理此區塊
-                                </button>
-                              )}
-                              {item.status === 'done' && (
-                                <button className="btn-copy" onClick={() => { copyTextToClipboard(`# ${item.title}\n\n${item.content}`); showToast('已複製該段筆記！'); }}>
-                                  📋 複製此段
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                          {!isCollapsed && (
-                            <div style={{ marginTop: '15px' }}>
-                              {item.status === 'loading' ? (
-                                <div style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
-                                  <span>⏳</span><span>正在整理此時間段的重點整理...</span>
-                                </div>
-                              ) : item.status === 'error' ? (
-                                <div style={{ color: 'var(--error)', fontSize: '14px' }}>
-                                  ⚠️ 錯誤：{item.content}
-                                </div>
-                              ) : (
-                                <div style={{ fontSize: '14px', lineHeight: '1.7', whiteSpace: 'pre-wrap', color: '#e2e8f0' }}>{item.content}</div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                <AINotesTab
+                  aiNotesResult={aiNotesResult}
+                  collapsedNotes={collapsedNotes}
+                  toggleCollapseNote={toggleCollapseNote}
+                  retryNoteBlock={retryNoteBlock}
+                  copyTextToClipboard={copyTextToClipboard}
+                  showToast={showToast}
+                  expandAllNotes={expandAllNotes}
+                  collapseAllNotes={collapseAllNotes}
+                  copyAllAINotes={copyAllAINotes}
+                />
               )}
 
               {/* Tab 3: AI Terms */}
               {activeTab === 'term' && aiTermsResult && (
-                <div className="tab-content active">
-                  <div className="panel-header">
-                    <h2 className="panel-title">專業術語對照表</h2>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button className="btn-copy" onClick={expandAllTerms}>
-                        展開全部
-                      </button>
-                      <button className="btn-copy" onClick={collapseAllTerms}>
-                        收合全部
-                      </button>
-                      <button className="btn-copy btn-copy-highlight" onClick={copyAllAITerms}>
-                        複製全部術語
-                      </button>
-                    </div>
-                  </div>
-                  <div className="ai-result-area" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    {aiTermsResult.map((item, idx) => {
-                      const isCollapsed = collapsedTerms.has(item.title);
-                      return (
-                        <div key={idx} style={{ 
-                          background: 'rgba(255,255,255,0.01)', 
-                          border: '1px solid var(--border-color)', 
-                          borderRadius: '12px', 
-                          padding: isCollapsed ? '12px 20px' : '20px',
-                          transition: 'all 0.2s ease'
-                        }}>
-                          <div 
-                            style={{ 
-                              display: 'flex', 
-                              justifyContent: 'space-between', 
-                              alignItems: 'center', 
-                              cursor: 'pointer',
-                              userSelect: 'none',
-                              borderBottom: isCollapsed ? 'none' : '1px solid rgba(255,255,255,0.05)', 
-                              paddingBottom: isCollapsed ? '0' : '10px'
-                            }}
-                            onClick={() => toggleCollapseTerm(item.title)}
-                          >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <span style={{ color: '#10b981', fontSize: '11px', transition: 'transform 0.2s', transform: isCollapsed ? 'rotate(0deg)' : 'rotate(90deg)' }}>
-                                ▶
-                              </span>
-                              <h3 style={{ color: '#10b981', fontSize: '15px', fontWeight: 600, margin: 0 }}>{item.title}</h3>
-                            </div>
-                            <div style={{ display: 'flex', gap: '8px' }} onClick={(e) => e.stopPropagation()}>
-                              {item.status === 'error' && (
-                                <button className="btn-copy" style={{ borderColor: 'var(--error)', color: 'var(--error)' }} onClick={() => retryTermsBlock(item)}>
-                                  🔄 重新整理此區塊
-                                </button>
-                              )}
-                              {item.status === 'done' && (
-                                <button className="btn-copy" onClick={() => { copyTextToClipboard(`# ${item.title}\n\n${item.content}`); showToast('已複製該段術語！'); }}>
-                                  📋 複製此段
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                          {!isCollapsed && (
-                            <div style={{ marginTop: '15px' }}>
-                              {item.status === 'loading' ? (
-                                <div style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
-                                  <span>⏳</span><span>正在整理此時間段的專業術語...</span>
-                                </div>
-                              ) : item.status === 'error' ? (
-                                <div style={{ color: 'var(--error)', fontSize: '14px' }}>
-                                  ⚠️ 錯誤：{item.content}
-                                </div>
-                              ) : (
-                                <div style={{ fontSize: '14px', lineHeight: '1.7', whiteSpace: 'pre-wrap', color: '#e2e8f0' }}>{item.content}</div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                <AITermsTab
+                  aiTermsResult={aiTermsResult}
+                  collapsedTerms={collapsedTerms}
+                  toggleCollapseTerm={toggleCollapseTerm}
+                  retryTermsBlock={retryTermsBlock}
+                  copyTextToClipboard={copyTextToClipboard}
+                  showToast={showToast}
+                  expandAllTerms={expandAllTerms}
+                  collapseAllTerms={collapseAllTerms}
+                  copyAllAITerms={copyAllAITerms}
+                />
               )}
             </div>
 
             {/* Right panel: Sidebar controls */}
-            <div className="sidebar">
-              <div className="sidebar-scroll-area">
-                {/* Video Info Card */}
-                <div className="sidebar-card video-card">
-                  <div className="video-thumb">
-                    <a
-                      href={`https://www.youtube.com/watch?v=${videoData.video_id}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      title="在新分頁開啟影片"
-                    >
-                      <img src={videoData.thumbnail || 'https://via.placeholder.com/120x90'} alt="影片縮圖" />
-                    </a>
-                  </div>
-                  <div className="video-detail">
-                    <h3 className="video-title" title={videoData.title}>
-                      {videoData.title}
-                    </h3>
-                    <div className="video-meta">
-                      <span>長度：{formatTime(videoData.duration)}</span>
-                      <span>Video ID: {videoData.video_id}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* OpenAI API Settings Card */}
-                <div className="sidebar-card">
-                  <h4
-                    style={{
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      marginBottom: '12px',
-                      borderBottom: '1px solid rgba(255,255,255,0.05)',
-                      paddingBottom: '8px'
-                    }}
-                  >
-                    OpenAI API 設定
-                  </h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <div>
-                      <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
-                        API Key
-                      </label>
-                      <input
-                        type="password"
-                        className="settings-input"
-                        style={{ width: '100%', textAlign: 'left', height: '32px' }}
-                        placeholder="貼上 sk-...金鑰"
-                        value={openaiKey}
-                        onChange={(e) => setOpenaiKey(e.target.value)}
-                      />
-                      {hasEnvKey && (
-                        <div
-                          style={{
-                            fontSize: '11px',
-                            marginTop: '5px',
-                            color: 'var(--primary)',
-                            cursor: 'pointer',
-                            lineHeight: '1.4'
-                          }}
-                          onClick={loadEnvKey}
-                        >
-                          💡 偵測到本地環境中有 API Key [點此引入]
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
-                        使用模型
-                      </label>
-                      <div
-                        style={{
-                          fontSize: '14px',
-                          fontWeight: 600,
-                          color: 'var(--primary)',
-                          background: 'rgba(255, 255, 255, 0.03)',
-                          border: '1px solid var(--border-color)',
-                          borderRadius: '6px',
-                          padding: '8px 12px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px'
-                        }}
-                      >
-                        <span>🧠</span>
-                        <span>gpt-5.1 (已固定為此模型)</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Chapters Input Card */}
-                <div className="sidebar-card">
-                  <div className="chapters-label">
-                    <span>貼上影片章節 (Chapters)</span>
-                    <span style={{ fontSize: '11px', fontWeight: 'normal', color: 'var(--text-muted)' }}>
-                      可留空以使用時間間隔
-                    </span>
-                  </div>
-                  <textarea
-                    className="chapters-textarea"
-                    placeholder={`格式範例：
-00:00:00 Introduction
-00:01:25 The n8n basics
-01:11:41 Foundational concepts
-03:11:09 Javascript functions`}
-                    value={chaptersInput}
-                    onChange={(e) => setChaptersInput(e.target.value)}
-                  />
-                  <div className="chapters-actions">
-                    <button className="btn-action btn-apply" onClick={applyChapters}>
-                      <span>套用章節</span>
-                    </button>
-                    <button className="btn-action btn-clear" onClick={clearChapters}>
-                      <span>清除</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Range Merging Card */}
-                {flatActiveSegments.length > 0 && (
-                  <div className="sidebar-card">
-                    <h4
-                      style={{
-                        fontSize: '14px',
-                        fontWeight: 600,
-                        marginBottom: '12px',
-                        borderBottom: '1px solid rgba(255,255,255,0.05)',
-                        paddingBottom: '8px'
-                      }}
-                    >
-                      🔗 AI 整合範圍合併
-                    </h4>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      <div>
-                        <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
-                          起始區塊
-                        </label>
-                        <select
-                          className="settings-input"
-                          style={{ width: '100%', height: '32px', background: 'rgba(255,255,255,0.02)', color: 'var(--text)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '0 8px' }}
-                          value={batchStartIdx}
-                          onChange={(e) => setBatchStartIdx(Number(e.target.value))}
-                        >
-                          {rangeOptions.map((opt) => (
-                            <option key={opt.index} value={opt.index} style={{ background: '#1c1c1e', color: '#fff' }}>
-                              {opt.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>
-                          結束區塊
-                        </label>
-                        <select
-                          className="settings-input"
-                          style={{ width: '100%', height: '32px', background: 'rgba(255,255,255,0.02)', color: 'var(--text)', border: '1px solid var(--border-color)', borderRadius: '6px', padding: '0 8px' }}
-                          value={batchEndIdx}
-                          onChange={(e) => setBatchEndIdx(Number(e.target.value))}
-                        >
-                          {rangeOptions.map((opt) => (
-                            <option key={opt.index} value={opt.index} style={{ background: '#1c1c1e', color: '#fff' }}>
-                              {opt.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div style={{ display: 'flex', gap: '10px', marginTop: '5px' }}>
-                        <button
-                          className="btn-action btn-apply"
-                          style={{ flex: 1, height: '32px', padding: '0 8px' }}
-                          onClick={handleBatchMerge}
-                        >
-                          🔗 範圍合併
-                        </button>
-                        <button
-                          className="btn-action btn-clear"
-                          style={{ flex: 1, height: '32px', padding: '0 8px', borderColor: 'var(--accent)', color: 'var(--accent)' }}
-                          onClick={handleBatchSplit}
-                        >
-                          🔓 範圍拆分
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Settings Parameter Card */}
-                <div className="sidebar-card">
-                  <h4
-                    style={{
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      marginBottom: '12px',
-                      borderBottom: '1px solid rgba(255,255,255,0.05)',
-                      paddingBottom: '8px'
-                    }}
-                  >
-                    分段參數微調
-                  </h4>
-                  <div className="settings-grid">
-                    <div>
-                      <div className="settings-item">
-                        <span className="settings-name">自訂分段區間 (預設 20分)</span>
-                        <div className="settings-control">
-                          <input
-                            type="number"
-                            className="settings-input"
-                            value={settingsInterval}
-                            min={1}
-                            max={180}
-                            onChange={(e) => setSettingsInterval(Math.max(1, Number(e.target.value)))}
-                          />
-                          <span className="settings-unit">分</span>
-                        </div>
-                      </div>
-                      <div className="presets">
-                        {[5, 10, 15, 20, 30].map((m) => (
-                          <button
-                            key={m}
-                            className={`btn-preset ${settingsInterval === m ? 'active' : ''}`}
-                            onClick={() => setPresetInterval(m)}
-                          >
-                            {m}分
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="settings-item">
-                      <span className="settings-name">直接顯示門檻</span>
-                      <div className="settings-control">
-                        <input
-                          type="number"
-                          className="settings-input"
-                          value={settingsNoSegment}
-                          min={5}
-                          max={120}
-                          onChange={(e) => setSettingsNoSegment(Math.max(5, Number(e.target.value)))}
-                        />
-                        <span className="settings-unit">分</span>
-                      </div>
-                    </div>
-
-                    <div className="settings-item">
-                      <span className="settings-name">超長章節細分門檻</span>
-                      <div className="settings-control">
-                        <input
-                          type="number"
-                          className="settings-input"
-                          value={settingsSubSegment}
-                          min={5}
-                          max={120}
-                          onChange={(e) => setSettingsSubSegment(Math.max(5, Number(e.target.value)))}
-                        />
-                        <span className="settings-unit">分</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Sidebar Footer Operations */}
-              <div className="sidebar-footer">
-                <button className="btn-global btn-lock-changes" onClick={lockAndEstimateCost}>
-                  <span>🔒 鎖定分段並預估 API 費用</span>
-                </button>
-
-                {showCostEstimation && (
-                  <div className="cost-box">
-                    <div className="cost-title">
-                      <span>📊 API 費用估算 (gpt-5.1)</span>
-                    </div>
-                    <div className="cost-row">
-                      <span>總段落數</span>
-                      <span>{estCostInfo.segments} 個</span>
-                    </div>
-                    <div className="cost-row">
-                      <span>總文字長度</span>
-                      <span>{estCostInfo.chars.toLocaleString()} 字</span>
-                    </div>
-                    <div className="cost-row">
-                      <span>預估費用 (USD)</span>
-                      <span style={{ color: 'var(--accent)', fontWeight: 600 }}>
-                        ${estCostInfo.costUSD.toFixed(4)} USD (約台幣 {estCostInfo.costTWD.toFixed(2)} 元)
-                      </span>
-                    </div>
-
-                    <div className="cost-details-toggle" onClick={() => setShowCostDetails(!showCostDetails)}>
-                      <span>{showCostDetails ? '▲ 收起詳細計算過程' : '▼ 展開詳細計算過程'}</span>
-                    </div>
-
-                    {showCostDetails && (
-                      <div className="cost-details-content">
-                        <div className="cost-details-section-title">輸入計費 (Input):</div>
-                        <div className="cost-details-row">
-                          <span>預估 Token 數 (字數 × 1.2)</span>
-                          <span className="cost-details-highlight">{estCostInfo.estInputTokens?.toLocaleString()} tokens</span>
-                        </div>
-                        <div className="cost-details-row">
-                          <span>費率 ($1.25 / 1M tokens)</span>
-                          <span>${estCostInfo.inputCost?.toFixed(6)} USD</span>
-                        </div>
-
-                        <div className="cost-details-section-title">輸出計費 (Output):</div>
-                        <div className="cost-details-row">
-                          <span>影片長度 / 段落區間</span>
-                          <span>{((estCostInfo.videoDuration || 0) / 60).toFixed(1)} 分鐘</span>
-                        </div>
-                        <div className="cost-details-row">
-                          <span>筆記次數 (每個段落)</span>
-                          <span>{estCostInfo.p1Calls} 次 (約 {estCostInfo.estOutputP1?.toLocaleString()} tokens)</span>
-                        </div>
-                        <div className="cost-details-row">
-                          <span>術語次數 (每 60 分鐘)</span>
-                          <span>{estCostInfo.p2Calls} 次 (約 {estCostInfo.estOutputP2?.toLocaleString()} tokens)</span>
-                        </div>
-                        <div className="cost-details-row">
-                          <span>費率 ($10.00 / 1M tokens)</span>
-                          <span>${estCostInfo.outputCost?.toFixed(6)} USD</span>
-                        </div>
-
-                        <div className="cost-details-row cost-details-divider">
-                          <span>總預估 Token</span>
-                          <span className="cost-details-highlight">{((estCostInfo.estInputTokens || 0) + (estCostInfo.estOutputTokens || 0)).toLocaleString()} tokens</span>
-                        </div>
-                        <div className="cost-details-row">
-                          <span>計算公式 (In + Out)</span>
-                          <span>${estCostInfo.inputCost?.toFixed(4)} + ${estCostInfo.outputCost?.toFixed(4)}</span>
-                        </div>
-                        <div className="cost-details-row">
-                          <span>匯率參考 (TWD/USD)</span>
-                          <span>32.5</span>
-                        </div>
-                      </div>
-                    )}
-
-                    <button className="btn-global btn-copy-all" style={{ marginTop: '5px' }} onClick={runAIGeneration}>
-                      <span>🚀 確認呼叫 AI 開始整理</span>
-                    </button>
-                  </div>
-                )}
-
-                <button className="btn-global btn-back" onClick={goBackToHome}>
-                  <span>← 返回輸入其他網址</span>
-                </button>
-              </div>
-            </div>
+            <Sidebar
+              videoData={videoData}
+              openaiKey={openaiKey}
+              setOpenaiKey={setOpenaiKey}
+              hasEnvKey={hasEnvKey}
+              loadEnvKey={loadEnvKey}
+              chaptersInput={chaptersInput}
+              setChaptersInput={setChaptersInput}
+              applyChapters={applyChapters}
+              clearChapters={clearChapters}
+              flatActiveSegments={flatActiveSegments}
+              batchStartIdx={batchStartIdx}
+              setBatchStartIdx={setBatchStartIdx}
+              batchEndIdx={batchEndIdx}
+              setBatchEndIdx={setBatchEndIdx}
+              rangeOptions={rangeOptions}
+              handleBatchMerge={handleBatchMerge}
+              handleBatchSplit={handleBatchSplit}
+              settingsInterval={settingsInterval}
+              setSettingsInterval={setSettingsInterval}
+              setPresetInterval={setPresetInterval}
+              settingsNoSegment={settingsNoSegment}
+              setSettingsNoSegment={setSettingsNoSegment}
+              settingsSubSegment={settingsSubSegment}
+              setSettingsSubSegment={setSettingsSubSegment}
+              lockAndEstimateCost={lockAndEstimateCost}
+              showCostEstimation={showCostEstimation}
+              estCostInfo={estCostInfo}
+              showCostDetails={showCostDetails}
+              setShowCostDetails={setShowCostDetails}
+              runAIGeneration={runAIGeneration}
+              goBackToHome={goBackToHome}
+            />
           </div>
         )}
       </main>
 
-      {/* Manual Import Modal */}
-      {showImportModal && (
-        <div className="modal-overlay" onClick={() => setShowImportModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2 className="modal-title">📁 手動匯入字幕</h2>
-              <button className="btn-close-modal" onClick={() => setShowImportModal(false)}>&times;</button>
-            </div>
-            <div className="modal-body">
-              <div className="form-group">
-                <label className="form-label">影片標題 (選填)</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="請輸入影片標題，例如：機器學習基礎課程"
-                  value={importTitle}
-                  onChange={(e) => setImportTitle(e.target.value)}
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">字幕內容 (支援 VTT, SRT, JSON 或純文字段落/單行)</label>
-                <textarea
-                  className="form-textarea"
-                  placeholder="請在此貼上字幕內容..."
-                  value={importText}
-                  onChange={(e) => setImportText(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button
-                className="btn-global btn-back"
-                style={{ width: 'auto', padding: '10px 20px', borderRadius: 'var(--radius-md)' }}
-                onClick={() => setShowImportModal(false)}
-              >
-                取消
-              </button>
-              <button
-                className="btn-global btn-lock-changes"
-                style={{ width: 'auto', padding: '10px 24px', borderRadius: 'var(--radius-md)' }}
-                onClick={handleManualImport}
-              >
-                確認匯入
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ManualImportModal
+        show={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        importTitle={importTitle}
+        setImportTitle={setImportTitle}
+        importText={importText}
+        setImportText={setImportText}
+        handleManualImport={handleManualImport}
+      />
 
       {/* Toast Notification */}
       <div className={`toast ${toast.show ? 'show' : ''}`}>

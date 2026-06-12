@@ -609,3 +609,21 @@ export function parseTimestampToSeconds(ts: string): number {
   }
   return 0;
 }
+
+// Helper to determine caret offset inside contentEditable
+export function getCaretCharacterOffsetWithin(element: HTMLElement): number {
+  let caretOffset = 0;
+  const doc = element.ownerDocument;
+  const win = doc?.defaultView;
+  if (win && win.getSelection) {
+    const sel = win.getSelection();
+    if (sel && sel.rangeCount > 0) {
+      const range = sel.getRangeAt(0);
+      const preCaretRange = range.cloneRange();
+      preCaretRange.selectNodeContents(element);
+      preCaretRange.setEnd(range.endContainer, range.endOffset);
+      caretOffset = preCaretRange.toString().length;
+    }
+  }
+  return caretOffset;
+}

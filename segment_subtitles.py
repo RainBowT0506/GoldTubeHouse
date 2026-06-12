@@ -3,35 +3,11 @@ import re
 import yt_dlp
 from datetime import datetime, timedelta
 
-def time_to_seconds(time_str):
-    """將 HH:MM:SS 或 MM:SS 轉換為秒數"""
-    parts = time_str.split(':')
-    if len(parts) == 2:
-        return int(parts[0]) * 60 + int(parts[1])
-    elif len(parts) == 3:
-        return int(parts[0]) * 3600 + int(parts[1]) * 60 + int(parts[2])
-    return 0
-
-def vtt_time_to_seconds(vtt_time):
-    """將 VTT 的時間格式 (HH:MM:SS.mmm) 轉換為秒數"""
-    # 格式可能為 00:00:00.000 或 00:00.000
-    parts = re.split('[:.]', vtt_time)
-    if len(parts) == 4: # HH:MM:SS.mmm
-        return int(parts[0]) * 3600 + int(parts[1]) * 60 + int(parts[2]) + int(parts[3]) / 1000.0
-    elif len(parts) == 3: # MM:SS.mmm
-        return int(parts[0]) * 60 + int(parts[1]) + int(parts[2]) / 1000.0
-    return 0
-
-def clean_vtt_text(text):
-    """清理 VTT 中的標籤與重複內容"""
-    # 移除 HTML 標籤
-    text = re.sub(r'<[^>]+>', '', text)
-    # 移除多餘空格
-    text = re.sub(r'\s+', ' ', text).strip()
-    return text
+from subtitle_utils import time_to_seconds, parse_vtt_file as parse_vtt
 
 def download_subtitles(url, lang='zh-TW'):
     """下載指定語言的字幕"""
+    import yt_dlp
     ydl_opts = {
         'skip_download': True,
         'writesubtitles': True,
@@ -46,32 +22,6 @@ def download_subtitles(url, lang='zh-TW'):
     if os.path.exists(filename):
         return filename
     return None
-
-def parse_vtt(filename):
-    """解析 VTT 檔案，回傳 (start_time, text) 的列表"""
-    with open(filename, 'r', encoding='utf-8') as f:
-        content = f.read()
-    
-    # 簡單的正則表達式來抓取時間軸與後續文字
-    # 格式: 00:00:00.000 --> 00:00:00.000
-    blocks = re.split(r'\n\s*\n', content)
-    entries = []
-    
-    timestamp_re = re.compile(r'(\d{2}:\d{2}:\d{2}\.\d{3}) --> (\d{2}:\d{2}:\d{2}\.\d{3})')
-    
-    for block in blocks:
-        lines = block.strip().split('\n')
-        if not lines: continue
-        
-        match = timestamp_re.search(lines[0])
-        if match:
-            start_time = vtt_time_to_seconds(match.group(1))
-            text = " ".join(lines[1:])
-            text = clean_vtt_text(text)
-            if text:
-                entries.append({'start': start_time, 'text': text})
-    
-    return entries
 
 def segment_and_save(entries, chapters, output_file):
     """根據章節時間分段並存檔"""
