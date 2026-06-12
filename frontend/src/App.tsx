@@ -392,6 +392,32 @@ function App() {
     }
   }, [flatActiveSegments]);
 
+  // 當已合併時間或扁平卡片變動時，確保選擇的起始/結束索引不會落在已被合併的區間內部（避免選取已合併區塊內部）
+  useEffect(() => {
+    if (flatActiveSegments.length === 0) return;
+
+    const getValidIndex = (idx: number): number => {
+      if (idx < 0) return 0;
+      if (idx >= flatActiveSegments.length) return flatActiveSegments.length - 1;
+
+      // If it is not interior, it's valid
+      if (idx === 0 || !removedBoundaryTimes.includes(flatActiveSegments[idx].start)) {
+        return idx;
+      }
+
+      // Find the nearest valid index going backwards
+      for (let i = idx - 1; i >= 0; i--) {
+        if (i === 0 || !removedBoundaryTimes.includes(flatActiveSegments[i].start)) {
+          return i;
+        }
+      }
+      return 0;
+    };
+
+    setBatchStartIdx(prev => getValidIndex(prev));
+    setBatchEndIdx(prev => getValidIndex(prev));
+  }, [removedBoundaryTimes, flatActiveSegments]);
+
   // AI 整合群組介面 (根據 removedBoundaryTimes 將相鄰 segments 文字串連，對齊發送與計費)
   interface AIGroup {
     id: string;
@@ -805,6 +831,19 @@ function App() {
       return prev.filter(t => !timesToRemove.includes(t));
     });
     showToast('🔓 已成功拆分所選範圍內的所有區塊！');
+  };
+
+  const handleSplitSpecificRange = (startIdx: number, endIdx: number) => {
+    const start = Math.min(startIdx, endIdx);
+    const end = Math.max(startIdx, endIdx);
+    setRemovedBoundaryTimes(prev => {
+      const timesToRemove: number[] = [];
+      for (let i = start + 1; i <= end; i++) {
+        timesToRemove.push(flatActiveSegments[i].start);
+      }
+      return prev.filter(t => !timesToRemove.includes(t));
+    });
+    showToast('🔓 已成功拆分該整合區間！');
   };
 
   const setPresetInterval = (minutes: number) => {
@@ -1341,6 +1380,8 @@ function App() {
               applyChapters={applyChapters}
               clearChapters={clearChapters}
               flatActiveSegments={flatActiveSegments}
+              removedBoundaryTimes={removedBoundaryTimes}
+              handleSplitSpecificRange={handleSplitSpecificRange}
               batchStartIdx={batchStartIdx}
               setBatchStartIdx={setBatchStartIdx}
               batchEndIdx={batchEndIdx}

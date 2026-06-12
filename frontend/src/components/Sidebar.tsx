@@ -40,6 +40,8 @@ interface SidebarProps {
   setShowCostDetails: (val: boolean) => void;
   runAIGeneration: () => void;
   goBackToHome: () => void;
+  removedBoundaryTimes: number[];
+  handleSplitSpecificRange: (startIdx: number, endIdx: number) => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -73,7 +75,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   showCostDetails,
   setShowCostDetails,
   runAIGeneration,
-  goBackToHome
+  goBackToHome,
+  removedBoundaryTimes,
+  handleSplitSpecificRange
 }) => {
   return (
     <div className="sidebar">
@@ -107,6 +111,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           rangeOptions={rangeOptions}
           handleBatchMerge={handleBatchMerge}
           handleBatchSplit={handleBatchSplit}
+          removedBoundaryTimes={removedBoundaryTimes}
+          flatActiveSegments={flatActiveSegments}
+          handleSplitSpecificRange={handleSplitSpecificRange}
         />
 
         {/* Settings Parameter Card */}
