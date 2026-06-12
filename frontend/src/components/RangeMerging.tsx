@@ -148,21 +148,16 @@ export const RangeMerging: React.FC<RangeMergingProps> = ({
                 >
                   <span
                     style={{
-                      cursor: 'pointer',
-                      color: 'var(--text)',
-                      textDecoration: 'underline',
+                      color: 'var(--text-muted)',
                       fontWeight: 500,
-                      maxWidth: '130px',
+                      maxWidth: '180px',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap'
                     }}
-                    onClick={() => {
-                      setBatchStartIdx(range.startIdx);
-                      setBatchEndIdx(range.endIdx);
-                    }}
-                    title="點擊以在下方選取此區間"
+                    title={`${Math.round((range.end - range.start) / 60)} 分 · ${range.label} (${range.count} 區塊)`}
                   >
+                    <span style={{ color: 'var(--accent)', fontWeight: 700, marginRight: '4px' }}>{Math.round((range.end - range.start) / 60)}分</span>
                     ⏱️ {range.label} ({range.count} 區塊)
                   </span>
                   <button
@@ -196,18 +191,21 @@ export const RangeMerging: React.FC<RangeMergingProps> = ({
             onChange={(e) => setBatchStartIdx(Number(e.target.value))}
           >
             {rangeOptions.map((opt) => {
-              const isInterior = opt.index > 0 && removedBoundaryTimes.includes(opt.time);
+              const isMerged = opt.index >= 0 && (
+                (opt.index > 0 && removedBoundaryTimes.includes(opt.time)) ||
+                (opt.index + 1 < flatActiveSegments.length && removedBoundaryTimes.includes(flatActiveSegments[opt.index + 1].start))
+              );
+              if (isMerged) return null; // 已經選取就直接不要顯示了
               return (
                 <option
                   key={opt.index}
                   value={opt.index}
-                  disabled={isInterior}
                   style={{
                     background: '#1c1c1e',
-                    color: isInterior ? '#666' : '#fff'
+                    color: '#fff'
                   }}
                 >
-                  {isInterior ? `[已合併] ${opt.label}` : opt.label}
+                  {opt.label}
                 </option>
               );
             })}
@@ -224,18 +222,21 @@ export const RangeMerging: React.FC<RangeMergingProps> = ({
             onChange={(e) => setBatchEndIdx(Number(e.target.value))}
           >
             {rangeOptions.map((opt) => {
-              const isInterior = opt.index > 0 && removedBoundaryTimes.includes(opt.time);
+              const isMerged = opt.index >= 0 && (
+                (opt.index > 0 && removedBoundaryTimes.includes(opt.time)) ||
+                (opt.index + 1 < flatActiveSegments.length && removedBoundaryTimes.includes(flatActiveSegments[opt.index + 1].start))
+              );
+              if (isMerged) return null; // 已經選取就直接不要顯示了
               return (
                 <option
                   key={opt.index}
                   value={opt.index}
-                  disabled={isInterior}
                   style={{
                     background: '#1c1c1e',
-                    color: isInterior ? '#666' : '#fff'
+                    color: '#fff'
                   }}
                 >
-                  {isInterior ? `[已合併] ${opt.label}` : opt.label}
+                  {opt.label}
                 </option>
               );
             })}

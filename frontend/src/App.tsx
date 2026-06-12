@@ -363,16 +363,8 @@ function App() {
 
   // 範圍合併的下拉選單選項
   const rangeOptions = useMemo(() => {
-    const formatSecondsToTime = (secs: number) => {
-      const h = Math.floor(secs / 3600);
-      const m = Math.floor((secs % 3600) / 60);
-      const s = Math.floor(secs % 60);
-      const pad = (num: number) => String(num).padStart(2, '0');
-      if (h > 0) return `${pad(h)}:${pad(m)}:${pad(s)}`;
-      return `${pad(m)}:${pad(s)}`;
-    };
     return flatActiveSegments.map((seg, index) => {
-      const timeStr = formatSecondsToTime(seg.start);
+      const timeStr = formatTime(seg.start);
       return {
         index,
         time: seg.start,
@@ -392,7 +384,7 @@ function App() {
     }
   }, [flatActiveSegments]);
 
-  // 當已合併時間或扁平卡片變動時，確保選擇的起始/結束索引不會落在已被合併的區間內部（避免選取已合併區塊內部）
+  // 當已合併時間或扁平卡片變動時，確保選擇的起始/結束索引不會落在已被合併的區間（避免選取已合併區塊）
   useEffect(() => {
     if (flatActiveSegments.length === 0) return;
 
@@ -400,17 +392,32 @@ function App() {
       if (idx < 0) return 0;
       if (idx >= flatActiveSegments.length) return flatActiveSegments.length - 1;
 
-      // If it is not interior, it's valid
-      if (idx === 0 || !removedBoundaryTimes.includes(flatActiveSegments[idx].start)) {
+      const isMerged = (i: number): boolean => {
+        if (i < 0 || i >= flatActiveSegments.length) return false;
+        return (
+          (i > 0 && removedBoundaryTimes.includes(flatActiveSegments[i].start)) ||
+          (i + 1 < flatActiveSegments.length && removedBoundaryTimes.includes(flatActiveSegments[i + 1].start))
+        );
+      };
+
+      if (!isMerged(idx)) {
         return idx;
       }
 
-      // Find the nearest valid index going backwards
+      // 優先往回尋找未合併的區塊
       for (let i = idx - 1; i >= 0; i--) {
-        if (i === 0 || !removedBoundaryTimes.includes(flatActiveSegments[i].start)) {
+        if (!isMerged(i)) {
           return i;
         }
       }
+
+      // 往後尋找未合併的區塊
+      for (let i = idx + 1; i < flatActiveSegments.length; i++) {
+        if (!isMerged(i)) {
+          return i;
+        }
+      }
+
       return 0;
     };
 
