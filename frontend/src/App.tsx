@@ -72,6 +72,7 @@ function App() {
       return data ? new Set<string>(JSON.parse(data)) : new Set<string>();
     } catch { return new Set<string>(); }
   });
+  const [autoCollapsedChapters, setAutoCollapsedChapters] = useState<Set<string>>(() => new Set<string>());
   const [collapsedAIGroups, setCollapsedAIGroups] = useState<Set<string>>(() => {
     try {
       const data = localStorage.getItem('gth_collapsedAIGroups');
@@ -621,7 +622,10 @@ function App() {
 
   // 當 AI 整合區間變動時，自動將最後一個合併組之前的所有章節與合併組設為隱藏/折疊
   useEffect(() => {
-    if (renderingAIGroups.length === 0) return;
+    if (renderingAIGroups.length === 0) {
+      setAutoCollapsedChapters(new Set());
+      return;
+    }
 
     // 找到最後一個合併組（即 items.length > 1 的 group）在 renderingAIGroups 中的 index
     let lastMergedIdx = -1;
@@ -632,7 +636,10 @@ function App() {
       }
     }
 
-    if (lastMergedIdx === -1) return;
+    if (lastMergedIdx === -1) {
+      setAutoCollapsedChapters(new Set());
+      return;
+    }
 
     const toCollapseChapters: string[] = [];
     const toCollapseAIGroups: string[] = [];
@@ -643,26 +650,46 @@ function App() {
         toCollapseAIGroups.push(group.id);
       } else {
         const item = group.items[0];
-        toCollapseChapters.push(`group_ch_${item.start}_${item.chapterTitle}`);
+        const key = `group_ch_${item.start}_${item.chapterTitle}`;
+        // 只有在未被手動折疊的情況下，才加入自動折疊，避免同時存在兩者中
+        if (!collapsedChapters.has(key)) {
+          toCollapseChapters.push(key);
+        }
       }
     }
 
-    setCollapsedChapters((prev) => {
-      const next = new Set(prev);
-      let changed = false;
-      toCollapseChapters.forEach((key) => {
-        if (!next.has(key)) {
-          next.add(key);
-          changed = true;
-        }
-      });
-      if (changed) {
-        localStorage.setItem('gth_collapsedChapters', JSON.stringify([...next]));
-        return next;
+    // 自動折疊 preceding 單一章節（僅視覺折疊，不排除 AI 送出）
+    setAutoCollapsedChapters(new Set(toCollapseChapters));
+
+    // 收集所有已被合併的章節 key，自動從 collapsedChapters 清理（避免舊/過期折疊導致 AI 排除）
+    const mergedChapterKeys: string[] = [];
+    renderingAIGroups.forEach((group) => {
+      if (group.items.length > 1) {
+        group.items.forEach((item) => {
+          mergedChapterKeys.push(`group_ch_${item.start}_${item.chapterTitle}`);
+        });
       }
-      return prev;
     });
 
+    if (mergedChapterKeys.length > 0) {
+      setCollapsedChapters((prev) => {
+        const next = new Set(prev);
+        let changed = false;
+        mergedChapterKeys.forEach((key) => {
+          if (next.has(key)) {
+            next.delete(key);
+            changed = true;
+          }
+        });
+        if (changed) {
+          localStorage.setItem('gth_collapsedChapters', JSON.stringify([...next]));
+          return next;
+        }
+        return prev;
+      });
+    }
+
+    // 自動折疊 preceding 已合併組
     setCollapsedAIGroups((prev) => {
       const next = new Set(prev);
       let changed = false;
@@ -678,7 +705,11 @@ function App() {
       }
       return prev;
     });
-  }, [renderingAIGroups]);
+  }, [renderingAIGroups, collapsedChapters]);
+
+  const allCollapsedChapters = useMemo(() => {
+    return new Set([...collapsedChapters, ...autoCollapsedChapters]);
+  }, [collapsedChapters, autoCollapsedChapters]);
 
   const segmentsCount = useMemo(() => {
     let count = 0;
@@ -909,17 +940,27 @@ function App() {
     setEditedSegmentTexts({});
     setRemovedBoundaryTimes([]);
     setCollapsedChapters(new Set());
+    setAutoCollapsedChapters(new Set());
     setCollapsedAIGroups(new Set());
     showToast('已清除章節與自訂切分點。');
   };
 
   const toggleChapterCollapse = (key: string) => {
-    setCollapsedChapters(prev => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key); else next.add(key);
-      localStorage.setItem('gth_collapsedChapters', JSON.stringify([...next]));
-      return next;
-    });
+    const isAuto = autoCollapsedChapters.has(key);
+    if (isAuto) {
+      setAutoCollapsedChapters(prev => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
+    } else {
+      setCollapsedChapters(prev => {
+        const next = new Set(prev);
+        if (next.has(key)) next.delete(key); else next.add(key);
+        localStorage.setItem('gth_collapsedChapters', JSON.stringify([...next]));
+        return next;
+      });
+    }
   };
 
   const toggleAIGroupCollapse = (key: string) => {
@@ -1470,7 +1511,7 @@ function App() {
                 <EditSegmentsTab
                   segmentsCount={segmentsCount}
                   renderingAIGroups={renderingAIGroups}
-                  collapsedChapters={collapsedChapters}
+                  collapsedChapters={allCollapsedChapters}
                   toggleChapterCollapse={toggleChapterCollapse}
                   copyEntireChapter={copyEntireChapter}
                   removedBoundaryTimes={removedBoundaryTimes}
