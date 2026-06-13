@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import type { ChapterSplit, Segment, TermsBatch } from './utils';
+import type { ChapterSplit, Segment } from './utils';
 import {
   parseTimeToSeconds,
   formatTime,
@@ -8,7 +8,6 @@ import {
   getCleanedSubtitlesAndMappings,
   resolveSubtitleOverlaps,
   parseSubtitlesText,
-  groupSegmentsForTerms,
   getCaretCharacterOffsetWithin,
   getVideoId
 } from './utils';
@@ -29,6 +28,7 @@ interface AIBlock {
   text: string;
   currentTitle?: string;
   fullChapters?: string;
+  groupIndex?: number;
 }
 
 const isDuplicateVideo = (videoId: string): boolean => {
@@ -610,23 +610,7 @@ function App() {
     return groups;
   }, [flatActiveSegments, removedBoundaryTimes, editedSegmentTexts, videoData, settingsNoSegment, userCustomSplits]);
 
-  const activeSegmentsWithEdits = useMemo<Segment[]>(() => {
-    return flatActiveSegments.map(seg => {
-      const segId = seg.id || '';
-      if (editedSegmentTexts[segId] !== undefined) {
-        return {
-          ...seg,
-          subtitles: [{ text: editedSegmentTexts[segId], start: seg.start, duration: seg.end - seg.start }]
-        };
-      }
-      return seg;
-    });
-  }, [flatActiveSegments, editedSegmentTexts]);
 
-  const aiTermsGroups = useMemo<TermsBatch[]>(() => {
-    const totalDur = videoData ? videoData.duration : 0;
-    return groupSegmentsForTerms(activeSegmentsWithEdits, totalDur);
-  }, [activeSegmentsWithEdits, videoData]);
 
   interface RenderingAIGroup {
     id: string;
@@ -763,20 +747,12 @@ function App() {
       totalCharsNotes += group.text.length;
     });
 
-    let totalCharsTerms = 0;
-    aiTermsGroups.forEach((group) => {
-      totalCharsTerms += group.text.length;
-    });
-
     const videoDuration = videoData?.duration || 0;
     const p1Calls = aiGroups.length;
-    const p2Calls = aiTermsGroups.length;
 
-    // Both notes and terms processes send their respective group texts
-    const estInputTokens = Math.ceil((totalCharsNotes + totalCharsTerms) * 1.2);
-    const estOutputP1 = p1Calls * 500;
-    const estOutputP2 = p2Calls * 800;
-    const estOutputTokens = estOutputP1 + estOutputP2;
+    // Combined notes and terms process sends the group text once
+    const estInputTokens = Math.ceil(totalCharsNotes * 1.2);
+    const estOutputTokens = p1Calls * 1300; // ~500 for notes + ~800 for terms
 
     const inputCost = (estInputTokens / 1000000) * 1.25; // fixed gpt-5.1 rates
     const outputCost = (estOutputTokens / 1000000) * 10.0;
@@ -789,15 +765,15 @@ function App() {
       costTWD: totalCost * 32.5,
       videoDuration,
       p1Calls,
-      p2Calls,
+      p2Calls: 0,
       estInputTokens,
-      estOutputP1,
-      estOutputP2,
+      estOutputP1: p1Calls * 500,
+      estOutputP2: p1Calls * 800,
       estOutputTokens,
       inputCost,
       outputCost
     };
-  }, [aiGroups, aiTermsGroups, flatActiveSegments.length, videoData]);
+  }, [aiGroups, flatActiveSegments.length, videoData]);
 
   // --- Handlers ---
   const handleUrlSubmit = async () => {
@@ -1337,20 +1313,21 @@ function App() {
         status: 'loading' as const,
         text: group.text,
         currentTitle: group.title,
-        fullChapters: fullChaptersText
+        fullChapters: fullChaptersText,
+        groupIndex: idx
       };
     });
 
-    const totalP2 = aiTermsGroups.length;
-    const initialTerms: AIBlock[] = aiTermsGroups.map((group, idx) => {
-      const title = `影片時間 ${formatSecondsToTime(group.start)} ~ ${formatSecondsToTime(group.end)} 專業術語對照 (第 ${idx + 1} / ${totalP2} 次)`;
+    const initialTerms: AIBlock[] = aiGroups.map((group, idx) => {
+      const title = `影片時間 ${formatSecondsToTime(group.start)} ~ ${formatSecondsToTime(group.end)} 專業術語對照 (第 ${idx + 1} / ${totalP1} 次)`;
       return {
         title,
         content: '⏳ 正在呼叫 AI 整理中...',
         status: 'loading' as const,
         text: group.text,
         currentTitle: group.title,
-        fullChapters: fullChaptersText
+        fullChapters: fullChaptersText,
+        groupIndex: idx
       };
     });
 
@@ -1360,24 +1337,32 @@ function App() {
     showToast('🚀 已啟動批次併行整理，請在左側查看即時進度！');
 
     // Trigger fetch calls concurrently
-    initialNotes.forEach((block) => {
-      fetchBlockNote(block.title, block.text, block.currentTitle || '', block.fullChapters || '');
-    });
-
-    initialTerms.forEach((block) => {
-      fetchBlockTerms(block.title, block.text, block.currentTitle || '', block.fullChapters || '');
+    aiGroups.forEach((group, idx) => {
+      fetchBlockAnalysis(
+        initialNotes[idx].title,
+        initialTerms[idx].title,
+        group.text,
+        group.title || '',
+        fullChaptersText
+      );
     });
   };
 
-  const fetchBlockNote = async (title: string, text: string, currentTitle: string, fullChapters: string) => {
+  const fetchBlockAnalysis = async (
+    noteTitle: string,
+    termsTitle: string,
+    text: string,
+    currentTitle: string,
+    fullChapters: string
+  ) => {
     try {
-      const res = await fetch('/api/generate-block-note', {
+      const res = await fetch('/api/generate-block-analysis', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           api_key: openaiKey,
           model: 'gpt-5.1',
-          title: title,
+          title: noteTitle,
           text: text,
           current_title: currentTitle,
           full_chapters: fullChapters
@@ -1385,36 +1370,15 @@ function App() {
       });
       const data = await res.json();
       if (res.ok && data.status === 'success') {
-        updateNoteBlock(title, data.content, 'done');
+        updateNoteBlock(noteTitle, data.notes, 'done');
+        updateTermsBlock(termsTitle, data.terms, 'done');
       } else {
-        updateNoteBlock(title, data.detail || '呼叫 AI 整理失敗。', 'error');
+        updateNoteBlock(noteTitle, data.detail || '呼叫 AI 整理失敗。', 'error');
+        updateTermsBlock(termsTitle, data.detail || '呼叫 AI 整理失敗。', 'error');
       }
     } catch (e: any) {
-      updateNoteBlock(title, e.message || '網路連線異常。', 'error');
-    }
-  };
-
-  const fetchBlockTerms = async (title: string, text: string, currentTitle: string, fullChapters: string) => {
-    try {
-      const res = await fetch('/api/generate-block-terms', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          api_key: openaiKey,
-          model: 'gpt-5.1',
-          text: text,
-          current_title: currentTitle,
-          full_chapters: fullChapters
-        })
-      });
-      const data = await res.json();
-      if (res.ok && data.status === 'success') {
-        updateTermsBlock(title, data.content, 'done');
-      } else {
-        updateTermsBlock(title, data.detail || '呼叫 AI 整理失敗。', 'error');
-      }
-    } catch (e: any) {
-      updateTermsBlock(title, e.message || '網路連線異常。', 'error');
+      updateNoteBlock(noteTitle, e.message || '網路連線異常。', 'error');
+      updateTermsBlock(termsTitle, e.message || '網路連線異常。', 'error');
     }
   };
 
@@ -1443,13 +1407,43 @@ function App() {
   };
 
   const retryNoteBlock = (block: AIBlock) => {
+    const groupIdx = block.groupIndex ?? 0;
     updateNoteBlock(block.title, '⏳ 正在重新呼叫 AI 整理中...', 'loading');
-    fetchBlockNote(block.title, block.text, block.currentTitle || '', block.fullChapters || '');
+    
+    // Find matching terms block
+    const matchingTermsBlock = aiTermsResult?.find((t) => t.groupIndex === groupIdx);
+    const termsTitle = matchingTermsBlock ? matchingTermsBlock.title : '';
+    if (matchingTermsBlock) {
+      updateTermsBlock(termsTitle, '⏳ 正在重新呼叫 AI 整理中...', 'loading');
+    }
+
+    fetchBlockAnalysis(
+      block.title,
+      termsTitle,
+      block.text,
+      block.currentTitle || '',
+      block.fullChapters || ''
+    );
   };
 
   const retryTermsBlock = (block: AIBlock) => {
+    const groupIdx = block.groupIndex ?? 0;
     updateTermsBlock(block.title, '⏳ 正在重新呼叫 AI 整理中...', 'loading');
-    fetchBlockTerms(block.title, block.text, block.currentTitle || '', block.fullChapters || '');
+    
+    // Find matching note block
+    const matchingNoteBlock = aiNotesResult?.find((n) => n.groupIndex === groupIdx);
+    const noteTitle = matchingNoteBlock ? matchingNoteBlock.title : '';
+    if (matchingNoteBlock) {
+      updateNoteBlock(noteTitle, '⏳ 正在重新呼叫 AI 整理中...', 'loading');
+    }
+
+    fetchBlockAnalysis(
+      noteTitle,
+      block.title,
+      block.text,
+      block.currentTitle || '',
+      block.fullChapters || ''
+    );
   };
 
   const copyAllAINotes = () => {

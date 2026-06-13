@@ -10,6 +10,7 @@ interface AIBlock {
   text: string;         // Raw subtitle text used for this generation
   currentTitle?: string;
   fullChapters?: string;
+  groupIndex?: number;
 }
 
 /**

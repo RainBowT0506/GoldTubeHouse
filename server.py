@@ -42,6 +42,14 @@ class BlockTermsRequest(BaseModel):
     current_title: Optional[str] = None
     full_chapters: Optional[str] = None
 
+class BlockAnalysisRequest(BaseModel):
+    api_key: str
+    model: str
+    title: str
+    text: str
+    current_title: Optional[str] = None
+    full_chapters: Optional[str] = None
+
 class SaveSegmentsRequest(BaseModel):
     video_id: str
     segments: list[SegmentData]
@@ -424,6 +432,102 @@ def generate_block_terms(request: BlockTermsRequest):
     return {
         "status": "success",
         "content": processed_response
+    }
+
+@app.post("/api/generate-block-analysis")
+def generate_block_analysis(request: BlockAnalysisRequest):
+    api_key = request.api_key.strip()
+    model = request.model
+    title = request.title
+    text = request.text
+    current_title = request.current_title or title or ""
+    full_chapters = request.full_chapters or ""
+
+    if not api_key:
+        raise HTTPException(status_code=400, detail="請提供有效的 OpenAI API Key")
+    if not text:
+        raise HTTPException(status_code=400, detail="無內容可供處理")
+
+    print(f"正在為 block '{title}' 同時生成 AI 筆記與專業術語...")
+
+    # Default combined prompt as fallback
+    default_prompt = """幫我分段落作重點整理，並提取出本段字幕中重要且值得記憶的專業術語。請嚴格遵守以下格式規範，並在「重點整理」與「專業術語對照」兩部分之間加入 `===== TERMS_SECTION =====` 行作為區隔：
+
+【重點整理格式規範】：
+1. 筆記標題層級與分隔規範：
+   - 每個影片原始章節請用一級標題表示，格式為 `# [原章節名稱]`。
+     例如：當目前整理的章節為「Intro ➔ Automations vs Agents」時，必須分別建立 `# Intro` 與 `# Automations vs Agents` 這兩個一級標題。
+   - 在每個一級標題底下，根據字幕內容劃分多個具體的內容子主題，並使用二級標題表示，格式為 `## [子主題名稱]` (例如 `## Webhook 觸發器設定`)，絕對不要直接使用章節時間。
+   - 若目前整理的章節包含多個被合併的章節，不同的一級標題章節之間請使用 `---` (水平分隔線) 進行區隔。
+2. 每個二級標題底下的重點整理只允許使用單一層級的無序清單（全部使用 `-` 開頭），絕對不要出現縮排的第二層清單。
+3. 分類標題、組別標題或段落引言標題規範（非常重要，絕對不可違反）：
+   - 任何作為分類、步驟、小組的「引言/分類標題」（例如「核心訊息：」、「問題描述：」、「解法方向：」等，通常以冒號「：」結尾），**絕對不要**在前面加上 `-`、`*` 或 `+` 等任何清單符號。
+   - 必須將這些標題寫成「一般的段落文字（直接以中文文字開頭，不加任何清單符號與縮排）」，然後在下一行直接使用單層的 `-` 清單列出具體子項目。
+   - 正確範例：
+     核心訊息：
+     - 基礎 workflow 能力不會消失...
+     - 及早學會同時運用傳統工具...
+   - 錯誤範例 1（絕對禁止）：
+     - 核心訊息：
+       - 基礎 workflow 能力不會消失...
+   - 錯誤範例 2（絕對禁止）：
+     - 核心訊息：
+     - 基礎 workflow 能力不會消失...
+4. 清單項目與空行規範：
+   - 清單項目（即以 `-` 開頭的行）之間**絕對不要留空行**。
+   - 分類標題與下方的清單項目之間也**絕對不要留空行**。
+   - 二級標題與其下方內容之間也**絕對不要留空行**。
+5. 清單的內容文字中不要有額外的分類標籤或前綴文字。
+6. 不需幫我做總結，不要提供額外協助的建議，不需花俏的圖示，請專注於筆記內容。
+7. 如果有專業術語，請嚴格遵守「中文專業術語（英文）」的順序與格式。
+   例如：必須寫成「網頁應用程式（Web application）」、「用戶端識別碼（Client ID）」，絕對不能寫成「Web application（網頁應用程式）」或只寫英文。所有的專業名詞首要呈現必須是繁體中文。
+
+【專業術語對照格式規範】：
+請在 `===== TERMS_SECTION =====` 分隔線之後，挑選本段最重要且值得記憶的專業術語（最多 50 個，寧多勿少，按照重要性排序）：
+- 格式：* 中文專業術語（英文）：解釋
+- 只輸出術語清單，不要額外說明。
+
+【共通規範】：
+- 請全部以繁體中文回答。
+- 請嚴格在兩部分之間只加入單獨一行的 `===== TERMS_SECTION =====` 作為區隔，不要有任何其他多餘的說明。
+
+【整體影片章節結構（上下文參考）】：
+{full_chapters}
+
+【目前正在整理的章節】：
+{current_title}
+
+以下是字幕內容：
+{text}"""
+
+    prompt_path = os.path.join("prompts", "prompt_analysis.txt")
+    prompt_template = get_prompt_template(prompt_path, default_prompt)
+    prompt = format_prompt(prompt_template, text, current_title, full_chapters)
+    raw_response = call_openai_api(api_key, model, prompt)
+
+    # Split the response by ===== TERMS_SECTION =====
+    parts = raw_response.split("===== TERMS_SECTION =====")
+    raw_notes = parts[0].strip()
+    raw_terms = parts[1].strip() if len(parts) > 1 else ""
+
+    # Process lists flattening on both
+    processed_notes = flatten_markdown_lists(raw_notes)
+    processed_terms = flatten_markdown_lists(raw_terms)
+
+    # Log the AI request and response
+    log_ai_request_response(
+        model=model,
+        segments=[],
+        p1_logs=[{"title": title, "prompt": prompt, "response": raw_response, "processed": f"Notes:\n{processed_notes}\n\nTerms:\n{processed_terms}"}],
+        p2_logs=[],
+        final_output={"title": title, "notes": processed_notes, "terms": processed_terms}
+    )
+
+    return {
+        "status": "success",
+        "title": title,
+        "notes": processed_notes,
+        "terms": processed_terms
     }
 
 @app.get("/api/proxy-image")
