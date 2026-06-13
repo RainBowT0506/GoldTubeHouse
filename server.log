@@ -119,3 +119,73 @@ INFO:     127.0.0.1:54794 - "GET /assets/index-R76sSCS_.js HTTP/1.1" 200 OK
 INFO:     127.0.0.1:54795 - "GET /assets/index-SbGTu6Cx.css HTTP/1.1" 200 OK
 INFO:     127.0.0.1:54794 - "GET /api/check-env HTTP/1.1" 200 OK
 INFO:     127.0.0.1:54794 - "GET /favicon.svg HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57974 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57974 - "GET /assets/index-DuueNaNR.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57975 - "GET /assets/index-KN8-5-YA.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57974 - "GET /api/check-env HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57975 - "GET /logo.jpg HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57975 - "GET /favicon.svg HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58019 - "GET /logo.jpg HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:58019 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+開始處理影片 (ID: UIf-SlmMays)...
+[API] 偵測到 cookies.txt，已成功載入 Cookie 快取進行請求。
+處理完成！影片標題: n8n Tutorial – Zero to Hero Course
+INFO:     127.0.0.1:58020 - "POST /api/process-video HTTP/1.1" 200 OK
+已儲存用戶分段資料 (Video ID: UIf-SlmMays)，合併邊界數量: 99
+INFO:     127.0.0.1:58331 - "POST /api/save-segments HTTP/1.1" 200 OK
+正在為 block '影片時間 00:00 ~ 38:20 重點整理 (第 1 / 8 次)' 生成 AI 筆記...
+正在為 block '影片時間 38:20 ~ 56:15 重點整理 (第 2 / 8 次)' 生成 AI 筆記...
+正在為 block '影片時間 01:16:12 ~ 01:41:48 重點整理 (第 4 / 8 次)' 生成 AI 筆記...
+正在為 block '影片時間 56:15 ~ 01:16:12 重點整理 (第 3 / 8 次)' 生成 AI 筆記...
+正在為 block '影片時間 01:41:48 ~ 02:03:40 重點整理 (第 5 / 8 次)' 生成 AI 筆記...
+正在為 block '影片時間 02:03:40 ~ 02:25:12 重點整理 (第 6 / 8 次)' 生成 AI 筆記...
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_084002.json
+INFO:     127.0.0.1:58402 - "POST /api/generate-block-note HTTP/1.1" 200 OK
+正在為 block '影片時間 02:25:12 ~ 02:56:03 重點整理 (第 7 / 8 次)' 生成 AI 筆記...
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_084021.json
+INFO:     127.0.0.1:58401 - "POST /api/generate-block-note HTTP/1.1" 200 OK
+正在為 block '影片時間 02:56:03 ~ 03:35:07 重點整理 (第 8 / 8 次)' 生成 AI 筆記...
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_084021.json
+INFO:     127.0.0.1:58405 - "POST /api/generate-block-note HTTP/1.1" 200 OK
+正在為區間生成 AI 專業術語...
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_084026.json
+INFO:     127.0.0.1:58404 - "POST /api/generate-block-note HTTP/1.1" 200 OK
+正在為區間生成 AI 專業術語...
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_084034.json
+INFO:     127.0.0.1:58403 - "POST /api/generate-block-note HTTP/1.1" 200 OK
+正在為區間生成 AI 專業術語...
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_084039.json
+INFO:     127.0.0.1:58400 - "POST /api/generate-block-note HTTP/1.1" 200 OK
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_084042.json
+INFO:     127.0.0.1:58401 - "POST /api/generate-block-note HTTP/1.1" 200 OK
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_084049.json
+INFO:     127.0.0.1:58404 - "POST /api/generate-block-terms HTTP/1.1" 200 OK
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_084051.json
+INFO:     127.0.0.1:58403 - "POST /api/generate-block-terms HTTP/1.1" 200 OK
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_084052.json
+INFO:     127.0.0.1:58402 - "POST /api/generate-block-note HTTP/1.1" 200 OK
+[Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_084055.json
+INFO:     127.0.0.1:58405 - "POST /api/generate-block-terms HTTP/1.1" 200 OK
+開始處理影片 (ID: rDf3TfHlGmk)...
+[API] 偵測到 cookies.txt，已成功載入 Cookie 快取進行請求。
+處理完成！影片標題: I Built a Profitable AI Agent Day Trader - Here’s How (n8n)
+INFO:     127.0.0.1:63615 - "POST /api/process-video HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64524 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64525 - "GET /assets/index-DR7mBnfs.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64524 - "GET /assets/index-o1anWY5i.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64524 - "GET /api/check-env HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64525 - "GET /logo.jpg HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64525 - "GET /favicon.svg HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64779 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64779 - "GET /assets/index-Co7lYL3b.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64780 - "GET /assets/index-BxFgavtv.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64779 - "GET /api/check-env HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64780 - "GET /logo.jpg HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64780 - "GET /favicon.svg HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64780 - "GET /api/proxy-image?url=https%3A%2F%2Fi.ytimg.com%2Fvi%2FrDf3TfHlGmk%2Fmaxresdefault.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:64841 - "GET /api/proxy-image?url=https%3A%2F%2Fi.ytimg.com%2Fvi%2FrDf3TfHlGmk%2Fmaxresdefault.jpg HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:65015 - "HEAD /api/proxy-image?url=https://i.ytimg.com/vi/rDf3TfHlGmk/maxresdefault.jpg HTTP/1.1" 404 Not Found
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [52259]

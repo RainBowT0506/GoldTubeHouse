@@ -371,103 +371,82 @@ export function groupSegmentsForTerms(
 ): TermsBatch[] {
   if (segments.length === 0) return [];
 
-  // If total duration is less than 1 hour (3600 seconds), return all in one batch
-  if (totalDuration < 3600) {
-    const text = segments.map(s => cleanAndJoinSubtitles(s.subtitles)).join('\n');
-    const start = segments[0].start;
-    const end = segments[segments.length - 1].end;
+  const totalDurationMins = totalDuration / 60;
+  let N = 1;
+  if (totalDurationMins > 105) {
+    N = Math.ceil((totalDurationMins - 105) / 60) + 1;
+  }
+
+  // 確保 N 不超過可用的 segment 數量
+  if (N > segments.length) {
+    N = segments.length;
+  }
+
+  const targetBatchDuration = totalDuration / N;
+  const batches: TermsBatch[] = [];
+  let startIndex = 0;
+
+  for (let b = 0; b < N - 1; b++) {
+    const idealEnd = (b + 1) * targetBatchDuration;
     
-    // Format title
-    const lines = segments.map((s) => {
+    // 在 [startIndex, segments.length - 2] 範圍內尋找最接近 idealEnd 的 segment 索引
+    let bestIndex = startIndex;
+    let minDiff = Infinity;
+    
+    for (let i = startIndex; i < segments.length - 1; i++) {
+      const diff = Math.abs(segments[i].end - idealEnd);
+      if (diff < minDiff) {
+        minDiff = diff;
+        bestIndex = i;
+      }
+    }
+    
+    const batchSegs = segments.slice(startIndex, bestIndex + 1);
+    const startVal = batchSegs[0].start;
+    const endVal = batchSegs[batchSegs.length - 1].end;
+    const text = batchSegs.map(s => cleanAndJoinSubtitles(s.subtitles)).join('\n');
+    
+    const lines = batchSegs.map((s) => {
       const timeStr = formatTime(s.start);
       const rangeStr = s.subTitle ? ` (${s.subTitle})` : '';
       return `* [${timeStr}] ${s.chapterTitle}${rangeStr}`;
     });
     const title = lines.join('\n');
 
-    return [{
-      id: 'terms_batch_all',
+    batches.push({
+      id: `terms_batch_${b}`,
       title,
       text,
-      start,
-      end,
-      segments: [...segments]
-    }];
+      start: startVal,
+      end: endVal,
+      segments: batchSegs
+    });
+
+    startIndex = bestIndex + 1;
   }
 
-  // Dynamically calculate target duration to ensure total batches do not exceed 7
-  const targetDuration = Math.max(3600, Math.ceil(totalDuration / 7));
-  const minRemaining = Math.max(1800, Math.ceil(targetDuration / 2));
-
-  const batches: TermsBatch[] = [];
-  let startIdx = 0;
-
-  while (startIdx < segments.length) {
-    const startSeg = segments[startIdx];
-    const startVal = startSeg.start;
+  // 剩餘的 segments 組成最後一個批次
+  const batchSegs = segments.slice(startIndex);
+  if (batchSegs.length > 0) {
+    const startVal = batchSegs[0].start;
+    const endVal = batchSegs[batchSegs.length - 1].end;
+    const text = batchSegs.map(s => cleanAndJoinSubtitles(s.subtitles)).join('\n');
     
-    // Find the first segment boundary that is >= targetDuration from startVal
-    // AND leaves at least minRemaining seconds to the end of the video.
-    let foundSplitIdx = -1;
-    for (let i = startIdx; i < segments.length; i++) {
-      const currentEnd = segments[i].end;
-      const duration = currentEnd - startVal;
-      const remaining = totalDuration - currentEnd;
+    const lines = batchSegs.map((s) => {
+      const timeStr = formatTime(s.start);
+      const rangeStr = s.subTitle ? ` (${s.subTitle})` : '';
+      return `* [${timeStr}] ${s.chapterTitle}${rangeStr}`;
+    });
+    const title = lines.join('\n');
 
-      if (duration >= targetDuration) {
-        if (remaining >= minRemaining || remaining === 0) {
-          foundSplitIdx = i;
-          break;
-        }
-      }
-    }
-
-    if (foundSplitIdx !== -1) {
-      const batchSegs = segments.slice(startIdx, foundSplitIdx + 1);
-      const endVal = segments[foundSplitIdx].end;
-      const text = batchSegs.map(s => cleanAndJoinSubtitles(s.subtitles)).join('\n');
-      
-      const lines = batchSegs.map((s) => {
-        const timeStr = formatTime(s.start);
-        const rangeStr = s.subTitle ? ` (${s.subTitle})` : '';
-        return `* [${timeStr}] ${s.chapterTitle}${rangeStr}`;
-      });
-      const title = lines.join('\n');
-
-      batches.push({
-        id: `terms_batch_${batches.length}`,
-        title,
-        text,
-        start: startVal,
-        end: endVal,
-        segments: batchSegs
-      });
-      
-      startIdx = foundSplitIdx + 1;
-    } else {
-      // If no valid split point is found, we must merge all remaining segments into the current batch.
-      const batchSegs = segments.slice(startIdx);
-      const endVal = segments[segments.length - 1].end;
-      const text = batchSegs.map(s => cleanAndJoinSubtitles(s.subtitles)).join('\n');
-
-      const lines = batchSegs.map((s) => {
-        const timeStr = formatTime(s.start);
-        const rangeStr = s.subTitle ? ` (${s.subTitle})` : '';
-        return `* [${timeStr}] ${s.chapterTitle}${rangeStr}`;
-      });
-      const title = lines.join('\n');
-
-      batches.push({
-        id: `terms_batch_${batches.length}`,
-        title,
-        text,
-        start: startVal,
-        end: endVal,
-        segments: batchSegs
-      });
-
-      break;
-    }
+    batches.push({
+      id: `terms_batch_${N - 1}`,
+      title,
+      text,
+      start: startVal,
+      end: endVal,
+      segments: batchSegs
+    });
   }
 
   return batches;

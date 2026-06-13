@@ -555,15 +555,17 @@ function App() {
   }
 
   const aiGroups = useMemo<AIGroup[]>(() => {
-    const isShortVideo = videoData && videoData.duration <= settingsNoSegment * 60 && userCustomSplits.length === 0;
+    // 增加 5 分鐘（300 秒）的彈性緩衝時間，避免 30 分多一點點的影片被迫切分
+    const isShortVideo = videoData && videoData.duration <= (settingsNoSegment * 60 + 300) && userCustomSplits.length === 0;
     const groups: AIGroup[] = [];
     let currentGroup: AIGroup | null = null;
 
     flatActiveSegments.forEach((seg, index) => {
       // 若是短影片且無自訂分割，則一律合併至前一個區塊以進行單次 AI 整理
+      // 否則，若目前群組所含時間未滿 settingsInterval (分)，則自動合併，以減少過多零碎的 AI 呼叫。
       const isMergedWithPrev = isShortVideo
         ? index > 0
-        : (index > 0 && removedBoundaryTimes.includes(seg.start));
+        : (index > 0 && (removedBoundaryTimes.includes(seg.start) || (currentGroup && seg.start - currentGroup.start < settingsInterval * 60)));
 
       const segText = editedSegmentTexts[seg.id || ''] !== undefined
         ? editedSegmentTexts[seg.id || '']
