@@ -225,17 +225,34 @@ def flatten_markdown_lists(text: str) -> str:
     lines = text.split('\n')
     flattened = []
     for line in lines:
-        # 尋找前面有空白/縮排並以無序清單標記（-, *, +）開頭的行
-        match = re.match(r'^(\s+)([-*+])\s*(.*)', line)
-        if match:
-            marker = match.group(2)
-            content = match.group(3)
+        # 1. 檢查是否是以清單標記開頭，且以冒號（中英文）結尾的分類引言標題
+        match_header = re.match(r'^\s*[-*+]\s*(.*[:：]\s*)$', line)
+        if match_header:
+            header_content = match_header.group(1).strip()
+            # 檢查前一行是否為清單項目，如果是且中間沒有空行，則插入空行以形成段落分割
+            if len(flattened) > 0:
+                prev_non_empty = None
+                for item in reversed(flattened):
+                    if item.strip() != "":
+                        prev_non_empty = item.strip()
+                        break
+                if prev_non_empty and prev_non_empty.startswith(('-', '*', '+')):
+                    if flattened[-1].strip() != "":
+                        flattened.append("")
+            flattened.append(header_content)
+            continue
+
+        # 2. 尋找前面有空白/縮排並以無序清單標記（-, *, +）開頭的行
+        match_indented = re.match(r'^(\s+)([-*+])\s*(.*)', line)
+        if match_indented:
+            marker = match_indented.group(2)
+            content = match_indented.group(3)
             # 移除縮排空白，將其拉回第一層無序清單
             flattened.append(f"{marker} {content}")
         else:
             flattened.append(line)
 
-    # 額外處理：移除夾在無序清單項目之間的空行，避免造成清單視覺間隙過大
+    # 3. 額外處理：移除夾在無序清單項目之間的空行，以及分類標題與其下方清單項目之間的空行，避免造成清單視覺間隙過大
     final_lines = []
     for i, line in enumerate(flattened):
         if line.strip() == "":
@@ -251,10 +268,10 @@ def flatten_markdown_lists(text: str) -> str:
                     break
             
             if prev_item and next_item:
-                is_prev_list = prev_item.startswith(('-', '*', '+'))
+                is_prev_list = prev_item.startswith(('-', '*', '+')) or prev_item.endswith((':', '：'))
                 is_next_list = next_item.startswith(('-', '*', '+'))
                 if is_prev_list and is_next_list:
-                    # 這是夾在清單項目之間的空行，將其濾除
+                    # 這是夾在清單項目之間，或分類標題與清單項目之間的空行，將其濾除
                     continue
         final_lines.append(line)
 
@@ -300,8 +317,23 @@ def generate_block_note(request: BlockNoteRequest):
    - 在每個一級標題底下，根據字幕內容劃分多個具體的內容子主題，並使用二級標題表示，格式為 `## [子主題名稱]` (例如 `## Webhook 觸發器設定`)，絕對不要直接使用章節時間。
    - 若【目前正在整理的章節】中列出了多個以 `*` 開頭的原始章節（代表它們已被合併整理），則必須在不同一級標題（`#`）的內容之間，使用 `---`（三個減號組成的水平分隔線）進行明確的區隔。
 2. 每個二級標題底下的重點整理只允許使用單一層級的無序清單（全部使用 `-` 開頭），絕對不要出現縮排的第二層清單。
-3. 若有分類、子項目或步驟，請勿將分類標題單獨做成一個無序清單項目（例如不要寫「- 常見 HTTP 方法：」後面接著子項目清單），請將分類標題直接寫成一般的段落文字（不加 `-` 符號），隨後再以單層清單列出子項目。
-4. 清單項目之間不要留空行。
+3. 分類標題、組別標題或段落引言標題規範（非常重要，絕對不可違反）：
+   - 任何作為分類、步驟、小組的「引言/分類標題」（例如「核心訊息：」、「問題描述：」、「解法方向：」等，通常以冒號「：」結尾），**絕對不要**在前面加上 `-`、`*` 或 `+` 等任何清單符號。
+   - 必須將這些標題寫成「一般的段落文字（直接以中文文字開頭，不加任何清單符號與縮排）」，然後在下一行直接使用單層的 `-` 清單列出具體子項目。
+   - 正確範例：
+     核心訊息：
+     - 基礎 workflow 能力不會消失...
+     - 及早學會同時運用傳統工具...
+   - 錯誤範例 1（絕對禁止）：
+     - 核心訊息：
+       - 基礎 workflow 能力不會消失...
+   - 錯誤範例 2（絕對禁止）：
+     - 核心訊息：
+     - 基礎 workflow 能力不會消失...
+4. 清單項目與空行規範：
+   - 清單項目（即以 `-` 開頭的行）之間**絕對不要留空行**。
+   - 分類標題與下方的清單項目之間也**絕對不要留空行**。
+   - 二級標題與其下方內容之間也**絕對不要留空行**。
 5. 清單的內容文字中不要有額外的分類標籤或前綴文字。
 6. 不需幫我做總結，不要提供額外協助的建議，不需花俏的圖示，請專注於筆記內容。
 7. 如果有專業術語，請嚴格遵守「中文專業術語（英文）」的順序與格式。

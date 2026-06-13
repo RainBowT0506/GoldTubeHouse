@@ -9,7 +9,8 @@ import {
   resolveSubtitleOverlaps,
   parseSubtitlesText,
   groupSegmentsForTerms,
-  getCaretCharacterOffsetWithin
+  getCaretCharacterOffsetWithin,
+  getVideoId
 } from './utils';
 
 import { HomeScreen } from './components/HomeScreen';
@@ -29,6 +30,37 @@ interface AIBlock {
   currentTitle?: string;
   fullChapters?: string;
 }
+
+const isDuplicateVideo = (videoId: string): boolean => {
+  const stored = localStorage.getItem('gth_generated_video_ids');
+  if (!stored) return false;
+  try {
+    const list = JSON.parse(stored);
+    return Array.isArray(list) && list.includes(videoId);
+  } catch (e) {
+    return false;
+  }
+};
+
+const markVideoAsGenerated = (videoId: string) => {
+  if (!videoId) return;
+  const stored = localStorage.getItem('gth_generated_video_ids');
+  let list: string[] = [];
+  if (stored) {
+    try {
+      list = JSON.parse(stored);
+      if (!Array.isArray(list)) {
+        list = [];
+      }
+    } catch (e) {
+      list = [];
+    }
+  }
+  if (!list.includes(videoId)) {
+    list.push(videoId);
+    localStorage.setItem('gth_generated_video_ids', JSON.stringify(list));
+  }
+};
 
 function App() {
   // --- States ---
@@ -376,6 +408,21 @@ function App() {
       };
     });
   }, [flatActiveSegments]);
+
+  // 當扁平卡片變動時，自動檢查並過濾掉不再存在的邊界合併時間點，防止舊影片或舊章節的合併狀態殘留
+  useEffect(() => {
+    if (flatActiveSegments.length === 0) {
+      if (removedBoundaryTimes.length > 0) {
+        setRemovedBoundaryTimes([]);
+      }
+      return;
+    }
+    const validStarts = new Set(flatActiveSegments.map(seg => seg.start));
+    const nextBoundaryTimes = removedBoundaryTimes.filter(t => validStarts.has(t));
+    if (nextBoundaryTimes.length !== removedBoundaryTimes.length) {
+      setRemovedBoundaryTimes(nextBoundaryTimes);
+    }
+  }, [flatActiveSegments, removedBoundaryTimes]);
 
   // 當扁平卡片變動時，重設範圍合併的選擇 index 避免溢界
   useEffect(() => {
@@ -757,6 +804,16 @@ function App() {
       return;
     }
 
+    const videoId = getVideoId(ytUrl);
+    if (videoId && isDuplicateVideo(videoId)) {
+      const confirmLoad = window.confirm(
+        '偵測到此影片之前已整理過重點筆記。\n是否確定要再次載入此影片？'
+      );
+      if (!confirmLoad) {
+        return;
+      }
+    }
+
     setScreen('loading');
     setLoadingText('正在剖析 YouTube 影片資訊與下載字幕，請稍候...');
 
@@ -782,6 +839,7 @@ function App() {
         setChaptersInput('');
         setAiNotesResult(null);
         setAiTermsResult(null);
+        setRemovedBoundaryTimes([]);
         setActiveTab('edit');
         setShowCostEstimation(false);
 
@@ -840,6 +898,7 @@ function App() {
       setChaptersInput('');
       setAiNotesResult(null);
       setAiTermsResult(null);
+      setRemovedBoundaryTimes([]);
       setActiveTab('edit');
       setShowCostEstimation(false);
 
@@ -856,6 +915,9 @@ function App() {
 
   const useExample = (url: string) => {
     setYtUrl(url);
+    setUserCustomSplits([]);
+    setEditedSegmentTexts({});
+    setRemovedBoundaryTimes([]);
     if (url.includes('2GZ2SNXWK-c')) {
       setChaptersInput(`00:00:00 Introduction
 00:01:25 The n8n basics
@@ -1242,6 +1304,20 @@ function App() {
     if (flatActiveSegments.length === 0) {
       alert('無字幕內容可供整理！');
       return;
+    }
+
+    const videoId = videoData?.video_id;
+    if (videoId && isDuplicateVideo(videoId)) {
+      const confirmGen = window.confirm(
+        '此影片之前已整理過重點筆記，是否確定要再次呼叫 AI 重新整理？'
+      );
+      if (!confirmGen) {
+        return;
+      }
+    }
+
+    if (videoId) {
+      markVideoAsGenerated(videoId);
     }
 
     // 建立完整的章節上下文

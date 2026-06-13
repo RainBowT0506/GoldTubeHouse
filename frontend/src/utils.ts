@@ -631,3 +631,25 @@ export function getCaretCharacterOffsetWithin(element: HTMLElement): number {
   }
   return caretOffset;
 }
+
+// Extract YouTube Video ID from URL or return the raw ID if already 11 characters
+export function getVideoId(url: string): string | null {
+  if (!url) return null;
+  const patterns = [
+    /(?:v=|\/v\/|embed\/|shorts\/|youtu\.be\/|\/embed\/|\/v\/|watch\?v=|&v=)([^#\&\?]+)/
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) {
+      const candidate = match[1];
+      if (candidate.length === 11) {
+        return candidate;
+      }
+    }
+  }
+  const cleanUrl = url.trim();
+  if (cleanUrl.length === 11 && /^[a-zA-Z0-9_-]{11}$/.test(cleanUrl)) {
+    return cleanUrl;
+  }
+  return null;
+}

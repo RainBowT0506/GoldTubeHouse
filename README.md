@@ -172,3 +172,11 @@ npm install
     *   在 `segment_subtitles.py` 中，修改 `download_subtitles` 函數調用時的 `lang` 參數。
 *   **調整圖片畫質**：
     *   在 `pdf_to_images.py` 中，可調整 `convert_pdf_to_images` 函數內的 `zoom` 變數（預設為 `2`）。若需要更高解析度（如 OCR 辨識用）可設為 `3` 或 `4`。
+
+---
+
+## ⚠️ AI 代理開發規範 (AI Agent Development Rules)
+
+- **絕對禁止自動執行 Git Commit**：AI 協同開發代理在修改或新增程式碼後，**絕對禁止自作主張或自動執行 `git commit`**。
+- **僅在明確指令下執行**：只有當使用者在對話中**明確下達「進行 commit」或「幫我 commit」的指令**時，AI 代理才可以執行 Git commit 操作。
+

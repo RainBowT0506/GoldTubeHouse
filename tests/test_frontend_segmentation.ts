@@ -1,4 +1,4 @@
-import { generateSegments, resolveSubtitleOverlaps, groupSegmentsForTerms, Segment } from '../frontend/src/utils.ts';
+import { generateSegments, resolveSubtitleOverlaps, groupSegmentsForTerms, getVideoId, Segment } from '../frontend/src/utils.ts';
 
 
 // Mock subtitles for basic tests (realistically distributed)
@@ -477,6 +477,28 @@ if (aiGroupsMock.length === 1) {
 } else {
   console.error(`❌ FAIL: Short video segments should bundle into 1 group, but got ${aiGroupsMock.length}!`);
   process.exit(1);
+}
+
+// ----------------------------------------------------
+// Test 12: getVideoId utility test
+// ----------------------------------------------------
+const testUrls = [
+  { url: "https://www.youtube.com/watch?v=EH5jx5qPabU", expected: "EH5jx5qPabU" },
+  { url: "https://youtu.be/EH5jx5qPabU", expected: "EH5jx5qPabU" },
+  { url: "https://www.youtube.com/embed/EH5jx5qPabU", expected: "EH5jx5qPabU" },
+  { url: "https://youtube.com/shorts/EH5jx5qPabU?feature=share", expected: "EH5jx5qPabU" },
+  { url: "EH5jx5qPabU", expected: "EH5jx5qPabU" },
+  { url: "invalid_url_with_no_id", expected: null }
+];
+
+for (const item of testUrls) {
+  const result = getVideoId(item.url);
+  if (result === item.expected) {
+    console.log(`✅ PASS: getVideoId("${item.url}") -> "${result}" matches expected.`);
+  } else {
+    console.error(`❌ FAIL: getVideoId("${item.url}") expected "${item.expected}", but got "${result}"!`);
+    process.exit(1);
+  }
 }
 
 console.log("\n🎉 All frontend segmentation, boundary, entry-split, and professional terms batching tests passed!");

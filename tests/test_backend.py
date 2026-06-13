@@ -103,6 +103,18 @@ Language: zh-TW
   - Sub-item 2
   + Sub-item 3
 Normal paragraph.
+
+- 核心訊息：
+
+  - 基礎 workflow 能力不會消失，只會在 agentic 時代變得更有價值
+
+  - 及早學會同時運用傳統工具與 agentic 工具，才能在這波轉變中保持領先
+
+- 過去無程式工具（no-code tools）提供的是「視覺化」搭建流程，但仍需人工連線、排錯
+- 正確設定 Claude Code 後，只需用自然語言描述需求，Claude Code 會：
+- 自行決定實作方式
+- 產生所有程式碼
+- 執行並在遇到錯誤時自我修正
 """
         expected_markdown = """# Title
 * Item 1
@@ -112,6 +124,16 @@ Normal paragraph.
 - Sub-item 2
 + Sub-item 3
 Normal paragraph.
+
+核心訊息：
+- 基礎 workflow 能力不會消失，只會在 agentic 時代變得更有價值
+- 及早學會同時運用傳統工具與 agentic 工具，才能在這波轉變中保持領先
+- 過去無程式工具（no-code tools）提供的是「視覺化」搭建流程，但仍需人工連線、排錯
+
+正確設定 Claude Code 後，只需用自然語言描述需求，Claude Code 會：
+- 自行決定實作方式
+- 產生所有程式碼
+- 執行並在遇到錯誤時自我修正
 """
         self.assertEqual(flatten_markdown_lists(raw_markdown), expected_markdown)
 
