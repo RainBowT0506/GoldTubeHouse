@@ -133,14 +133,14 @@
 每次接到與「章節合併/隱藏」相關的需求時，AI 應核對以下清單：
 
 ### ✅ 正確理解的狀態（勿再詢問）
-- [ ] 合併組 A（Intro + Automations vs Agents + n8n Foundations）：**已完成，維持現狀**。
-- [ ] 合併組 B（JSON in n8n + API Walkthrough）：**已完成，維持現狀**。
-- [ ] `Automation 1`（01:13:20）需要**隱藏（Collapse）**，不是合併（Merge）。
+- [x] 合併組 A（Intro + Automations vs Agents + n8n Foundations）：**已完成，維持現狀**。
+- [x] 合併組 B（JSON in n8n + API Walkthrough）：**已完成，維持現狀**。
+- [x] `Automation 1`（01:13:20）需要**隱藏（Collapse）**，不是合併（Merge）。
 
 ### 🔧 待確認/實作的需求
-- [ ] 確認前端 `collapsedChapters` 折疊狀態是否影響 AI 費用預估（`totalTokens` 計算邏輯應排除折疊卡片的文字）。
-- [ ] 確認前端 `collapsedChapters` 折疊狀態是否影響 AI 送出（送出時應跳過折疊卡片）。
-- [ ] 如果目前折疊功能**只做 UI 視覺折疊，而未排除 AI 計費/送出**，則需要補充此邏輯。
+- [x] 確認前端 `collapsedChapters` 折疊狀態影響 AI 費用預估（`totalTokens` 計算邏輯已排除折疊卡片的文字）。
+- [x] 確認前端 `collapsedChapters` 折疊狀態影響 AI 送出（送出時已跳過折疊卡片）。
+- [x] 如果目前折疊功能**只做 UI 視覺折疊，而未排除 AI 計費/送出**，則需要補充此邏輯。（已補齊 `flatActiveSegments` 的過濾邏輯）。
 
 ### 5.1 專業術語提取的分批限制 (Professional Terms Batch Limit)
 
@@ -159,6 +159,17 @@
   * 前端會將該批次所含的所有章節時間點與名稱（如 `* [01:13:20] Automation 1`）整理成 `current_title` 參數發送。
   * **提示詞優化 (Prompt Optimization)**：已修改 [prompt_note.txt](file:///Users/linchengyi/PycharmProjects/GoldTubeHouse/prompts/prompt_note.txt) 與 [server.py](file:///Users/linchengyi/PycharmProjects/GoldTubeHouse/server.py) 中的 Prompt 第一條，明確指令 AI：「*段落請用 Markdown 標題（#）標註。段落標題必須是具體的內容子主題（例如「# Webhook 觸發器設定」），而非直接使用章節時間。請確保所有整理出的子主題與內容皆符合【目前正在整理的章節】（例如 Automation 1 或 Automation 1 Indepth）的語意範圍與主題。*」
   * 這樣即使內容被打包合併或被切細分，AI 也會像原先一樣輸出具體的內容子主題標題（例如 `# Webhook 觸發器設定`、`# HTTP 請求節點配置`），但會被明確約束在目前處理的章節語意範圍內，避免失焦。
+
+### 5.3 自動隱藏/折疊已略過區間 (Auto-Collapse Passed Segments)
+
+* **商業需求**：當使用者對較後方的區塊進行「AI 整合合併」（例如將 `c` 與 `d` 合併）時，代表使用者已看過且確認該合併區間之前的所有區間（例如 `a` 與 `b`）沒問題，無須再進行合併。為求 UI 視覺簡潔並避免誤選（不可能將已處理的前置區塊與後置區塊跨區間二次合併），先前所有的未合併單一章節及已完成的合併組應**順便自動隱藏（折疊）**。
+* **技術解決方案**：
+  * 在 `App.tsx` 中使用 `useEffect` 監聽 `renderingAIGroups` 狀態。
+  * 每次 AI 整合區間有變動時，定位出最後一個已合併的 AI 群組（`items.length > 1`）在渲染清單中的索引位置 `lastMergedIdx`。
+  * 將該索引位置之前的所有項目進行自動折疊：
+    * 對於未合併的單一章節，將其 `groupKey`（`group_ch_${start}_${title}`）加入 `collapsedChapters`。
+    * 對於已合併的 AI 群組，將其 `group.id` 加入 `collapsedAIGroups`。
+  * `flatActiveSegments` 計算時會偵測 `collapsedChapters`，自動剔除被隱藏章節的子分段，從而將其自 AI 送出與 API 計費預估中排除，同時也不會再出現在右側「起始/結束區塊」下拉選單中。
 
 ---
 

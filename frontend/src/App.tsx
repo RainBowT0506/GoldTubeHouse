@@ -348,10 +348,15 @@ function App() {
     );
   }, [videoData, filteredChapterSplits, filteredCustomSplits, settingsInterval, settingsNoSegment, settingsSubSegment]);
 
-  // 取得實際上在 UI 呈現的扁平卡片清單
+  // 取得實際上在 UI 呈現的扁平卡片清單（已排除折疊隱藏的章節，不送 AI 也不計費）
   const flatActiveSegments = useMemo<Segment[]>(() => {
     const list: Segment[] = [];
     currentSegments.forEach((seg) => {
+      const groupKey = `group_ch_${seg.start}_${seg.chapterTitle}`;
+      if (collapsedChapters.has(groupKey)) {
+        // 排除已折疊隱藏的章節，不包含其子段落，從而排除 AI 計費與送出
+        return;
+      }
       if (seg.isGroup && seg.subSegments) {
         list.push(...seg.subSegments);
       } else {
@@ -359,7 +364,7 @@ function App() {
       }
     });
     return list;
-  }, [currentSegments]);
+  }, [currentSegments, collapsedChapters]);
 
   // 範圍合併的下拉選單選項
   const rangeOptions = useMemo(() => {
@@ -613,6 +618,67 @@ function App() {
 
     return groups;
   }, [currentSegments, removedBoundaryTimes]);
+
+  // 當 AI 整合區間變動時，自動將最後一個合併組之前的所有章節與合併組設為隱藏/折疊
+  useEffect(() => {
+    if (renderingAIGroups.length === 0) return;
+
+    // 找到最後一個合併組（即 items.length > 1 的 group）在 renderingAIGroups 中的 index
+    let lastMergedIdx = -1;
+    for (let i = renderingAIGroups.length - 1; i >= 0; i--) {
+      if (renderingAIGroups[i].items.length > 1) {
+        lastMergedIdx = i;
+        break;
+      }
+    }
+
+    if (lastMergedIdx === -1) return;
+
+    const toCollapseChapters: string[] = [];
+    const toCollapseAIGroups: string[] = [];
+
+    for (let i = 0; i < lastMergedIdx; i++) {
+      const group = renderingAIGroups[i];
+      if (group.items.length > 1) {
+        toCollapseAIGroups.push(group.id);
+      } else {
+        const item = group.items[0];
+        toCollapseChapters.push(`group_ch_${item.start}_${item.chapterTitle}`);
+      }
+    }
+
+    setCollapsedChapters((prev) => {
+      const next = new Set(prev);
+      let changed = false;
+      toCollapseChapters.forEach((key) => {
+        if (!next.has(key)) {
+          next.add(key);
+          changed = true;
+        }
+      });
+      if (changed) {
+        localStorage.setItem('gth_collapsedChapters', JSON.stringify([...next]));
+        return next;
+      }
+      return prev;
+    });
+
+    setCollapsedAIGroups((prev) => {
+      const next = new Set(prev);
+      let changed = false;
+      toCollapseAIGroups.forEach((key) => {
+        if (!next.has(key)) {
+          next.add(key);
+          changed = true;
+        }
+      });
+      if (changed) {
+        localStorage.setItem('gth_collapsedAIGroups', JSON.stringify([...next]));
+        return next;
+      }
+      return prev;
+    });
+  }, [renderingAIGroups]);
 
   const segmentsCount = useMemo(() => {
     let count = 0;
