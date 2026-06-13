@@ -72,7 +72,6 @@ function App() {
       return data ? new Set<string>(JSON.parse(data)) : new Set<string>();
     } catch { return new Set<string>(); }
   });
-  const [autoCollapsedChapters, setAutoCollapsedChapters] = useState<Set<string>>(() => new Set<string>());
   const [collapsedAIGroups, setCollapsedAIGroups] = useState<Set<string>>(() => {
     try {
       const data = localStorage.getItem('gth_collapsedAIGroups');
@@ -349,15 +348,10 @@ function App() {
     );
   }, [videoData, filteredChapterSplits, filteredCustomSplits, settingsInterval, settingsNoSegment, settingsSubSegment]);
 
-  // 取得實際上在 UI 呈現的扁平卡片清單（已排除折疊隱藏的章節，不送 AI 也不計費）
+  // 取得實際上在 UI 呈現的扁平卡片清單
   const flatActiveSegments = useMemo<Segment[]>(() => {
     const list: Segment[] = [];
     currentSegments.forEach((seg) => {
-      const groupKey = `group_ch_${seg.start}_${seg.chapterTitle}`;
-      if (collapsedChapters.has(groupKey)) {
-        // 排除已折疊隱藏的章節，不包含其子段落，從而排除 AI 計費與送出
-        return;
-      }
       if (seg.isGroup && seg.subSegments) {
         list.push(...seg.subSegments);
       } else {
@@ -365,7 +359,7 @@ function App() {
       }
     });
     return list;
-  }, [currentSegments, collapsedChapters]);
+  }, [currentSegments]);
 
   // 範圍合併的下拉選單選項
   const rangeOptions = useMemo(() => {
@@ -622,10 +616,7 @@ function App() {
 
   // 當 AI 整合區間變動時，自動將最後一個合併組之前的所有章節與合併組設為隱藏/折疊
   useEffect(() => {
-    if (renderingAIGroups.length === 0) {
-      setAutoCollapsedChapters(new Set());
-      return;
-    }
+    if (renderingAIGroups.length === 0) return;
 
     // 找到最後一個合併組（即 items.length > 1 的 group）在 renderingAIGroups 中的 index
     let lastMergedIdx = -1;
@@ -636,10 +627,7 @@ function App() {
       }
     }
 
-    if (lastMergedIdx === -1) {
-      setAutoCollapsedChapters(new Set());
-      return;
-    }
+    if (lastMergedIdx === -1) return;
 
     const toCollapseChapters: string[] = [];
     const toCollapseAIGroups: string[] = [];
@@ -650,44 +638,41 @@ function App() {
         toCollapseAIGroups.push(group.id);
       } else {
         const item = group.items[0];
-        const key = `group_ch_${item.start}_${item.chapterTitle}`;
-        // 只有在未被手動折疊的情況下，才加入自動折疊，避免同時存在兩者中
-        if (!collapsedChapters.has(key)) {
-          toCollapseChapters.push(key);
-        }
+        toCollapseChapters.push(`group_ch_${item.start}_${item.chapterTitle}`);
       }
     }
 
-    // 自動折疊 preceding 單一章節（僅視覺折疊，不排除 AI 送出）
-    setAutoCollapsedChapters(new Set(toCollapseChapters));
-
-    // 收集所有已被合併的章節 key，自動從 collapsedChapters 清理（避免舊/過期折疊導致 AI 排除）
-    const mergedChapterKeys: string[] = [];
-    renderingAIGroups.forEach((group) => {
-      if (group.items.length > 1) {
-        group.items.forEach((item) => {
-          mergedChapterKeys.push(`group_ch_${item.start}_${item.chapterTitle}`);
-        });
-      }
-    });
-
-    if (mergedChapterKeys.length > 0) {
-      setCollapsedChapters((prev) => {
-        const next = new Set(prev);
-        let changed = false;
-        mergedChapterKeys.forEach((key) => {
-          if (next.has(key)) {
-            next.delete(key);
-            changed = true;
-          }
-        });
-        if (changed) {
-          localStorage.setItem('gth_collapsedChapters', JSON.stringify([...next]));
-          return next;
+    // 自動折疊 preceding 單一章節，並清理已被合併的章節 key
+    setCollapsedChapters((prev) => {
+      const next = new Set(prev);
+      let changed = false;
+      toCollapseChapters.forEach((key) => {
+        if (!next.has(key)) {
+          next.add(key);
+          changed = true;
         }
-        return prev;
       });
-    }
+      // 收集所有已被合併的章節 key，自動從 collapsedChapters 清理
+      const mergedChapterKeys: string[] = [];
+      renderingAIGroups.forEach((group) => {
+        if (group.items.length > 1) {
+          group.items.forEach((item) => {
+            mergedChapterKeys.push(`group_ch_${item.start}_${item.chapterTitle}`);
+          });
+        }
+      });
+      mergedChapterKeys.forEach((key) => {
+        if (next.has(key)) {
+          next.delete(key);
+          changed = true;
+        }
+      });
+      if (changed) {
+        localStorage.setItem('gth_collapsedChapters', JSON.stringify([...next]));
+        return next;
+      }
+      return prev;
+    });
 
     // 自動折疊 preceding 已合併組
     setCollapsedAIGroups((prev) => {
@@ -705,11 +690,7 @@ function App() {
       }
       return prev;
     });
-  }, [renderingAIGroups, collapsedChapters]);
-
-  const allCollapsedChapters = useMemo(() => {
-    return new Set([...collapsedChapters, ...autoCollapsedChapters]);
-  }, [collapsedChapters, autoCollapsedChapters]);
+  }, [renderingAIGroups]);
 
   const segmentsCount = useMemo(() => {
     let count = 0;
@@ -940,27 +921,17 @@ function App() {
     setEditedSegmentTexts({});
     setRemovedBoundaryTimes([]);
     setCollapsedChapters(new Set());
-    setAutoCollapsedChapters(new Set());
     setCollapsedAIGroups(new Set());
     showToast('已清除章節與自訂切分點。');
   };
 
   const toggleChapterCollapse = (key: string) => {
-    const isAuto = autoCollapsedChapters.has(key);
-    if (isAuto) {
-      setAutoCollapsedChapters(prev => {
-        const next = new Set(prev);
-        next.delete(key);
-        return next;
-      });
-    } else {
-      setCollapsedChapters(prev => {
-        const next = new Set(prev);
-        if (next.has(key)) next.delete(key); else next.add(key);
-        localStorage.setItem('gth_collapsedChapters', JSON.stringify([...next]));
-        return next;
-      });
-    }
+    setCollapsedChapters(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      localStorage.setItem('gth_collapsedChapters', JSON.stringify([...next]));
+      return next;
+    });
   };
 
   const toggleAIGroupCollapse = (key: string) => {
@@ -1511,7 +1482,7 @@ function App() {
                 <EditSegmentsTab
                   segmentsCount={segmentsCount}
                   renderingAIGroups={renderingAIGroups}
-                  collapsedChapters={allCollapsedChapters}
+                  collapsedChapters={collapsedChapters}
                   toggleChapterCollapse={toggleChapterCollapse}
                   copyEntireChapter={copyEntireChapter}
                   removedBoundaryTimes={removedBoundaryTimes}

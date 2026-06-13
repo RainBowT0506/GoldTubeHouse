@@ -250,6 +250,11 @@ export const RangeMerging: React.FC<RangeMergingProps> = ({
               );
               if (isMerged) return null; // 已經選取就直接不要顯示了
               
+              // 隱藏最後一個已合併區塊之前的所有區塊
+              if (maxMergedEndIdx !== -1 && opt.index <= maxMergedEndIdx) {
+                return null;
+              }
+
               // 結束區塊不可小於起始區塊
               if (opt.index < batchStartIdx) return null;
               

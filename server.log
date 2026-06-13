@@ -96,3 +96,26 @@ INFO:     127.0.0.1:57065 - "POST /api/generate-block-note HTTP/1.1" 200 OK
 INFO:     127.0.0.1:57066 - "POST /api/generate-block-note HTTP/1.1" 200 OK
 [Logger] AI 請求與回應紀錄已成功儲存至 ai_logs/ai_call_20260613_072847.json
 INFO:     127.0.0.1:57067 - "POST /api/generate-block-note HTTP/1.1" 200 OK
+開始處理影片 (ID: UIf-SlmMays)...
+[API] 偵測到 cookies.txt，已成功載入 Cookie 快取進行請求。
+處理完成！影片標題: n8n Tutorial – Zero to Hero Course
+INFO:     127.0.0.1:61010 - "POST /api/process-video HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51328 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51328 - "GET /assets/index-qfKfEgr8.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51329 - "GET /assets/index-SbGTu6Cx.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51328 - "GET /api/check-env HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51328 - "GET /favicon.svg HTTP/1.1" 200 OK
+已儲存用戶分段資料 (Video ID: UIf-SlmMays)，合併邊界數量: 99
+INFO:     127.0.0.1:51380 - "POST /api/save-segments HTTP/1.1" 200 OK
+已儲存用戶分段資料 (Video ID: UIf-SlmMays)，合併邊界數量: 99
+INFO:     127.0.0.1:52125 - "POST /api/save-segments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53526 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53527 - "GET /assets/index-SbGTu6Cx.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53526 - "GET /assets/index-B8ZLlUSI.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53526 - "GET /api/check-env HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53526 - "GET /favicon.svg HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54794 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54794 - "GET /assets/index-R76sSCS_.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54795 - "GET /assets/index-SbGTu6Cx.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54794 - "GET /api/check-env HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54794 - "GET /favicon.svg HTTP/1.1" 200 OK
