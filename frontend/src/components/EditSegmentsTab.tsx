@@ -24,6 +24,7 @@ interface EditSegmentsTabProps {
   collapsedChapters: Set<string>;                   // Set of chapter group IDs that are visually collapsed
   toggleChapterCollapse: (key: string) => void;      // Callback to toggle chapter fold/unfold state
   copyEntireChapter: (group: Segment) => void;       // Callback to copy all subtitles within a whole chapter
+  copyEntireChapterSRT: (group: Segment) => void;    // Callback to copy all subtitles within a whole chapter in SRT format
   removedBoundaryTimes: number[];                   // Times (seconds) where chapter/subsegment boundaries were removed
   handleMergeWithNext: (nextStartTime: number) => void; // Callback to toggle merge/unmerge at a timestamp
   editedSegmentTexts: Record<string, string>;       // Key-value store of user edits (Segment ID -> modified text)
@@ -45,6 +46,7 @@ export const EditSegmentsTab: React.FC<EditSegmentsTabProps> = ({
   collapsedChapters,
   toggleChapterCollapse,
   copyEntireChapter,
+  copyEntireChapterSRT,
   removedBoundaryTimes,
   handleMergeWithNext,
   editedSegmentTexts,
@@ -112,9 +114,14 @@ export const EditSegmentsTab: React.FC<EditSegmentsTabProps> = ({
                             {formatTime(item.start)} ~ {formatTime(item.end)}
                           </span>
                           {!isCollapsed && (
-                            <button className="btn-copy-group" onClick={() => copyEntireChapter(item)}>
-                              複製整章
-                            </button>
+                            <>
+                              <button className="btn-copy-group" onClick={() => copyEntireChapter(item)}>
+                                複製整章 (純文字)
+                              </button>
+                              <button className="btn-copy-group" style={{ marginLeft: '8px' }} onClick={() => copyEntireChapterSRT(item)}>
+                                複製 SRT 格式
+                              </button>
+                            </>
                           )}
                         </div>
                       </div>

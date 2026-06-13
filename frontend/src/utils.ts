@@ -632,3 +632,20 @@ export function getVideoId(url: string): string | null {
   }
   return null;
 }
+
+export function formatSecondsToSRTTime(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  const ms = Math.floor((seconds % 1) * 1000);
+  const pad = (num: number, size: number) => String(num).padStart(size, '0');
+  return `${pad(h, 2)}:${pad(m, 2)}:${pad(s, 2)},${pad(ms, 3)}`;
+}
+
+export function formatSubtitlesToSRT(subtitles: SubtitleEntry[]): string {
+  return subtitles.map((sub, idx) => {
+    const startStr = formatSecondsToSRTTime(sub.start);
+    const endStr = formatSecondsToSRTTime(sub.start + sub.duration);
+    return `${idx + 1}\n${startStr} --> ${endStr}\n${sub.text}`;
+  }).join('\n\n');
+}

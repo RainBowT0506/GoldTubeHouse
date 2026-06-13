@@ -1,15 +1,7 @@
 {
-  "video_id": "UtXzdmpysmU",
-  "chapters_input": "00:00:00 — Introduction\n00:02:57 — What's n8n?\n00:04:44 — How to use it\n00:12:42 — Core concepts\n00:28:38 — Integrations\n00:37:17 — AI Agents\n00:39:06 — Inbox Manager overview\n00:49:53 — Categorize new Emails\n01:03:37 — Create issue tasks\n01:22:38 — Generate draft replies",
-  "removed_boundary_times": [
-    177.0,
-    284.0,
-    762.0,
-    2237.0,
-    2346.0,
-    2993.0,
-    4958.0
-  ],
-  "saved_at": "2026-06-13T11:16:11.900903",
-  "merged_count": 7
+  "video_id": "7_PeuTsx7UM",
+  "chapters_input": "",
+  "removed_boundary_times": [],
+  "saved_at": "2026-06-13T12:32:57.421290",
+  "merged_count": 0
 }
