@@ -1423,7 +1423,8 @@ function App() {
     <>
       <header>
         <div className="logo" onClick={goBackToHome}>
-          <span>GoldTubeHouse 🛠️</span>
+          <img src="/logo.jpg" alt="GoldTubeHouse" className="logo-img" />
+          <span className="logo-text">GoldTubeHouse</span>
         </div>
         <a href="#" className="github-link" onClick={(e) => e.preventDefault()}>
           <span>字幕分段整理與 AI 筆記系統 v3.0</span>
