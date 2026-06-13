@@ -7,7 +7,7 @@ import requests
 import json
 from datetime import datetime
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from youtube_transcript_api import YouTubeTranscriptApi
@@ -141,6 +141,7 @@ def process_video(request: VideoRequest):
         "title": metadata['title'],
         "duration": metadata['duration'],
         "thumbnail": metadata['thumbnail'],
+        "channel": metadata.get('channel', '未知頻道'),
         "subtitles": subtitles
     }
 
@@ -292,14 +293,19 @@ def generate_block_note(request: BlockNoteRequest):
     print(f"正在為 block '{title}' 生成 AI 筆記...")
 
     # Default Prompt 1
-    default_prompt_1 = """幫我分多個段落作重點整理。請嚴格遵守以下格式規範：
-1. 段落請用 Markdown 標題（#）標註。段落標題必須是具體的內容子主題（例如「# Webhook 觸發器設定」），而非直接使用章節時間。請確保所有整理出的子主題與內容皆符合【目前正在整理的章節】（例如 Automation 1 或 Automation 1 Indepth）的語意範圍與主題。
-2. 每個段落下的內容重點整理只允許使用單一層級的無序清單（全部使用 `-` 開頭），絕對不要出現縮排的第二層清單。
+    default_prompt_1 = """幫我分段落作重點整理。請嚴格遵守以下格式規範：
+1. 筆記標題層級與分隔規範：
+   - 每個影片原始章節請用一級標題表示，格式為 `# [原章節名稱]`。
+     例如：當目前整理的章節為「Intro ➔ Automations vs Agents」時，必須分別建立 `# Intro` 與 `# Automations vs Agents` 這兩個一級標題。
+   - 在每個一級標題底下，根據字幕內容劃分多個具體的內容子主題，並使用二級標題表示，格式為 `## [子主題名稱]` (例如 `## Webhook 觸發器設定`)，絕對不要直接使用章節時間。
+   - 若【目前正在整理的章節】中列出了多個以 `*` 開頭的原始章節（代表它們已被合併整理），則必須在不同一級標題（`#`）的內容之間，使用 `---`（三個減號組成的水平分隔線）進行明確的區隔。
+2. 每個二級標題底下的重點整理只允許使用單一層級的無序清單（全部使用 `-` 開頭），絕對不要出現縮排的第二層清單。
 3. 若有分類、子項目或步驟，請勿將分類標題單獨做成一個無序清單項目（例如不要寫「- 常見 HTTP 方法：」後面接著子項目清單），請將分類標題直接寫成一般的段落文字（不加 `-` 符號），隨後再以單層清單列出子項目。
 4. 清單項目之間不要留空行。
 5. 清單的內容文字中不要有額外的分類標籤或前綴文字。
 6. 不需幫我做總結，不要提供額外協助的建議，不需花俏的圖示，請專注於筆記內容。
-7. 如果有專業術語幫我附上英文，格式為：中文專業術語（英文）。
+7. 如果有專業術語，請嚴格遵守「中文專業術語（英文）」的順序與格式。
+   例如：必須寫成「網頁應用程式（Web application）」、「用戶端識別碼（Client ID）」、「啟用（Enable）」，絕對不能寫成「Web application（網頁應用程式）」、「Client ID（用戶端識別碼）」或直接只寫英文。所有的專業名詞首要呈現必須是繁體中文。
 8. 請以繁體中文回答。
 
 【整體影片章節結構（上下文參考）】：
@@ -387,6 +393,17 @@ def generate_block_terms(request: BlockTermsRequest):
         "status": "success",
         "content": processed_response
     }
+
+@app.get("/api/proxy-image")
+def proxy_image(url: str):
+    try:
+        r = requests.get(url, stream=True, timeout=10)
+        if r.status_code != 200:
+            raise HTTPException(status_code=r.status_code, detail="Failed to fetch image")
+        content_type = r.headers.get("content-type", "image/jpeg")
+        return StreamingResponse(r.iter_content(chunk_size=8192), media_type=content_type)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/save-segments")
 def save_segments(request: SaveSegmentsRequest):

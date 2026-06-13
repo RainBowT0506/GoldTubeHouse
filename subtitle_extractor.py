@@ -271,7 +271,8 @@ def get_video_metadata(video_id: str):
                 'title': info.get('title', '未命名影片'),
                 'duration': info.get('duration', 0),
                 'thumbnail': info.get('thumbnail', f"https://img.youtube.com/vi/{video_id}/maxresdefault.jpg"),
-                'video_id': video_id
+                'video_id': video_id,
+                'channel': info.get('uploader', info.get('channel', '未知頻道'))
             }
     except Exception as e:
         print(f"[yt-dlp] 擷取 metadata 失敗: {e}")
@@ -279,5 +280,6 @@ def get_video_metadata(video_id: str):
             'title': f"YouTube 影片 (ID: {video_id})",
             'duration': 0,
             'thumbnail': f"https://img.youtube.com/vi/{video_id}/maxresdefault.jpg",
-            'video_id': video_id
+            'video_id': video_id,
+            'channel': '未知頻道'
         }

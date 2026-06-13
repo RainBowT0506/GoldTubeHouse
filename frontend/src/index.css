@@ -831,6 +831,33 @@ main {
     gap: 4px;
 }
 
+.btn-download-thumb {
+    margin-top: 10px;
+    padding: 6px 12px;
+    background: linear-gradient(135deg, var(--primary) 0%, #d4af37 100%);
+    border: none;
+    border-radius: var(--radius-md);
+    color: #0b0f19;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px var(--primary-glow);
+}
+
+.btn-download-thumb:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px var(--primary-glow);
+    filter: brightness(1.1);
+}
+
+.btn-download-thumb:active {
+    transform: translateY(0);
+}
+
 /* Chapters 輸入區 */
 .chapters-label {
     font-size: 14px;

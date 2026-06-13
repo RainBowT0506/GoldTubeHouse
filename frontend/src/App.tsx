@@ -825,6 +825,7 @@ function App() {
         title: importTitle.trim() || '手動匯入影片',
         duration: duration,
         thumbnail: 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=120&auto=format&fit=crop&q=60',
+        channel: '手動匯入',
         subtitles: resolveSubtitleOverlaps(parsedSubs).map((s: any, idx: number) => ({
           ...s,
           globalIndex: idx
