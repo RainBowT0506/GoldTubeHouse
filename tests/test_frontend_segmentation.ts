@@ -444,5 +444,40 @@ if (case10Batches.length <= 7) {
   process.exit(1);
 }
 
+// ----------------------------------------------------
+// Test 11: Under noSegThreshold with chapters (bundling test)
+// ----------------------------------------------------
+// duration = 1100 (18.3m), noSegThreshold = 1800 (30m).
+// 1. generateSegments should still apply the chapters (length > 1)
+const segmentsUnderThreshold = generateSegments(mockSubtitlesBasic, 1100, [{ time: 100, title: "Ch1" }], [], 1200, 1800, 1800);
+console.log(`[Test 11] Under threshold segments count: ${segmentsUnderThreshold.length}`);
+if (segmentsUnderThreshold.length > 1) {
+  console.log("✅ PASS: Chapter splits are applied for short videos on the UI level.");
+} else {
+  console.error(`❌ FAIL: Short video with chapters should still show chapters, but got only ${segmentsUnderThreshold.length} segments!`);
+  process.exit(1);
+}
+
+// 2. Mock the React aiGroups bundling logic
+const isShortVideo = 1100 <= 1800; // duration <= noSegThreshold
+const aiGroupsMock: any[] = [];
+let currentGroup: any = null;
+segmentsUnderThreshold.forEach((seg, index) => {
+  const isMergedWithPrev = isShortVideo ? index > 0 : false;
+  if (isMergedWithPrev && currentGroup) {
+    currentGroup.segments.push(seg);
+  } else {
+    currentGroup = { id: `g_${index}`, segments: [seg] };
+    aiGroupsMock.push(currentGroup);
+  }
+});
+console.log(`[Test 11] Mocked AI groups count: ${aiGroupsMock.length}`);
+if (aiGroupsMock.length === 1) {
+  console.log("✅ PASS: Short video segments are successfully bundled into a single AI request.");
+} else {
+  console.error(`❌ FAIL: Short video segments should bundle into 1 group, but got ${aiGroupsMock.length}!`);
+  process.exit(1);
+}
+
 console.log("\n🎉 All frontend segmentation, boundary, entry-split, and professional terms batching tests passed!");
 

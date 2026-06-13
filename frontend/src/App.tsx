@@ -508,12 +508,15 @@ function App() {
   }
 
   const aiGroups = useMemo<AIGroup[]>(() => {
+    const isShortVideo = videoData && videoData.duration <= settingsNoSegment * 60 && userCustomSplits.length === 0;
     const groups: AIGroup[] = [];
     let currentGroup: AIGroup | null = null;
 
     flatActiveSegments.forEach((seg, index) => {
-      // 若非首元素，且該 segment 起始時間在 removedBoundaryTimes 中，則代表此為「被合併（整合）」的邊界
-      const isMergedWithPrev = index > 0 && removedBoundaryTimes.includes(seg.start);
+      // 若是短影片且無自訂分割，則一律合併至前一個區塊以進行單次 AI 整理
+      const isMergedWithPrev = isShortVideo
+        ? index > 0
+        : (index > 0 && removedBoundaryTimes.includes(seg.start));
 
       const segText = editedSegmentTexts[seg.id || ''] !== undefined
         ? editedSegmentTexts[seg.id || '']
@@ -556,7 +559,7 @@ function App() {
     });
 
     return groups;
-  }, [flatActiveSegments, removedBoundaryTimes, editedSegmentTexts]);
+  }, [flatActiveSegments, removedBoundaryTimes, editedSegmentTexts, videoData, settingsNoSegment, userCustomSplits]);
 
   const activeSegmentsWithEdits = useMemo<Segment[]>(() => {
     return flatActiveSegments.map(seg => {
