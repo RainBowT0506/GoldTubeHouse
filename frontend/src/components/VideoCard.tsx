@@ -16,7 +16,8 @@ interface VideoCardProps {
 
 /**
  * VideoCard component displays details of the selected YouTube video in the sidebar.
- * It shows the video title, duration, ID, and thumbnail image, which links directly to the YouTube video.
+ * It shows the video title, duration, ID, and thumbnail image. Clicking the thumbnail
+ * prompts the user to download the image.
  */
 export const VideoCard: React.FC<VideoCardProps> = ({ videoData }) => {
   const handleDownload = async () => {
@@ -55,14 +56,21 @@ export const VideoCard: React.FC<VideoCardProps> = ({ videoData }) => {
     }
   };
 
+  const handleThumbnailClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    if (!videoData.thumbnail) return;
+    if (window.confirm('是否下載此影片縮圖？')) {
+      handleDownload();
+    }
+  };
+
   return (
     <div className="sidebar-card video-card">
       <div className="video-thumb">
         <a
           href={`https://www.youtube.com/watch?v=${videoData.video_id}`}
-          target="_blank"
-          rel="noreferrer"
-          title="在新分頁開啟影片"
+          onClick={handleThumbnailClick}
+          title="點擊下載影片縮圖"
         >
           <img src={videoData.thumbnail || 'https://via.placeholder.com/120x90'} alt="影片縮圖" />
         </a>
@@ -75,24 +83,6 @@ export const VideoCard: React.FC<VideoCardProps> = ({ videoData }) => {
           <span>長度：{formatTime(videoData.duration)}</span>
           <span>Video ID: {videoData.video_id}</span>
         </div>
-        {videoData.thumbnail && (
-          <button className="btn-download-thumb" onClick={handleDownload} title="下載影片縮圖">
-            <svg
-              stroke="currentColor"
-              fill="currentColor"
-              strokeWidth="0"
-              viewBox="0 0 24 24"
-              height="14"
-              width="14"
-              xmlns="http://www.w3.org/2000/svg"
-              style={{ marginRight: '4px', verticalAlign: 'middle' }}
-            >
-              <path fill="none" d="M0 0h24v24H0z"></path>
-              <path d="M19.35 10.04A7.49 7.49 0 0012 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 000 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"></path>
-            </svg>
-            下載圖片
-          </button>
-        )}
       </div>
     </div>
   );
