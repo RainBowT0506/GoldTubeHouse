@@ -155,6 +155,32 @@ def process_video(request: VideoRequest):
         "subtitles": subtitles
     }
 
+# API 路由：僅解析播放清單 metadata（不下載字幕），用於快速載入
+@app.post("/api/playlist-metadata")
+def playlist_metadata(request: VideoRequest):
+    playlist_url = request.url.strip()
+    if not playlist_url:
+        return JSONResponse(
+            status_code=400,
+            content={"status": "error", "message": "請輸入有效的 YouTube 播放清單網址。"}
+        )
+        
+    print(f"開始解析播放清單 metadata (URL: {playlist_url})...")
+    playlist_info = get_playlist_metadata(playlist_url)
+    if not playlist_info or not playlist_info.get('videos'):
+        return JSONResponse(
+            status_code=400,
+            content={"status": "error", "message": "無法解析該播放清單。請確認是否為公開的播放清單。"}
+        )
+        
+    return {
+        "status": "success",
+        "title": playlist_info['title'],
+        "channel": playlist_info.get('channel') or '未知頻道',
+        "is_playlist": True,
+        "videos": playlist_info['videos']
+    }
+
 # API 路由：下載並剖析播放清單的所有影片與字幕
 @app.post("/api/process-playlist")
 def process_playlist(request: VideoRequest):

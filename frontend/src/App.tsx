@@ -92,11 +92,25 @@ function App() {
     if (data) {
       try {
         const parsed = JSON.parse(data);
-        if (parsed && parsed.subtitles) {
-          parsed.subtitles = resolveSubtitleOverlaps(parsed.subtitles).map((s: any, idx: number) => ({
-            ...s,
-            globalIndex: idx
-          }));
+        if (parsed) {
+          if (parsed.videos) {
+            parsed.videos = parsed.videos.map((v: any) => {
+              if (v.loading) {
+                return {
+                  ...v,
+                  loading: false,
+                  subtitles: v.subtitles || [{ text: "(此影片無字幕文字)", start: 0.0, duration: parseFloat(v.duration || 600) }]
+                };
+              }
+              return v;
+            });
+          }
+          if (parsed.subtitles) {
+            parsed.subtitles = resolveSubtitleOverlaps(parsed.subtitles).map((s: any, idx: number) => ({
+              ...s,
+              globalIndex: idx
+            }));
+          }
         }
         return parsed;
       } catch {
@@ -877,6 +891,121 @@ function App() {
   }, [aiGroups, aiTermsGroups, flatActiveSegments.length, videoData, isShortVideo]);
 
   // --- Handlers ---
+  const currentLoadSessionIdRef = React.useRef<number>(0);
+
+  const loadPlaylistSubtitlesSequentially = async (initialData: any, sessionId: number) => {
+    const updatedVideos = [...initialData.videos];
+    
+    for (let i = 0; i < updatedVideos.length; i++) {
+      if (currentLoadSessionIdRef.current !== sessionId) {
+        console.log('[Sequential Loader] Aborted session', sessionId);
+        return;
+      }
+      
+      const v = updatedVideos[i];
+      console.log(`[Sequential Loader] Starting download for: ${v.title} (${i+1}/${updatedVideos.length})`);
+      
+      try {
+        const videoUrl = v.url || `https://www.youtube.com/watch?v=${v.video_id}`;
+        const response = await fetch('/api/process-video', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: videoUrl })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error ${response.status}`);
+        }
+        
+        const res = await response.json();
+        if (currentLoadSessionIdRef.current !== sessionId) return;
+
+        if (res.status === 'success') {
+          updatedVideos[i] = {
+            ...v,
+            title: res.title || v.title,
+            duration: res.duration || v.duration,
+            thumbnail: res.thumbnail || v.thumbnail,
+            channel: res.channel || '未知頻道',
+            subtitles: res.subtitles || [],
+            loading: false
+          };
+          console.log(`[Sequential Loader] Finished download for: ${res.title}`);
+        } else {
+          throw new Error(res.message || '下載失敗');
+        }
+      } catch (err: any) {
+        console.warn(`[Sequential Loader] 影片 ${v.title} 下載失敗:`, err);
+        if (currentLoadSessionIdRef.current !== sessionId) return;
+        
+        updatedVideos[i] = {
+          ...v,
+          subtitles: [{
+            text: "(此影片無字幕文字)",
+            start: 0.0,
+            duration: parseFloat(v.duration || 600)
+          }],
+          loading: false
+        };
+      }
+      
+      // Rebuild unified subtitles and chapters list
+      let currentOffset = 0;
+      let tempChaptersInput = "";
+      const flatSubtitles: any[] = [];
+      
+      const formatSecondsToHHMMSS = (seconds: number): string => {
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = Math.floor(seconds % 60);
+        const pad = (num: number) => String(num).padStart(2, '0');
+        return `${pad(h)}:${pad(m)}:${pad(s)}`;
+      };
+      
+      updatedVideos.forEach((video) => {
+        if (initialData.is_playlist) {
+          const timeStr = formatSecondsToHHMMSS(currentOffset);
+          tempChaptersInput += `${timeStr} ${video.title}\n`;
+        }
+        
+        const subsToUse = (video.subtitles && video.subtitles.length > 0)
+          ? video.subtitles
+          : [{ text: "⏳ 正在下載字幕，請稍候...", start: 0.0, duration: video.duration || 600 }];
+          
+        const shiftedSubs = subsToUse.map((s: any) => ({
+          ...s,
+          start: s.start + currentOffset
+        }));
+        flatSubtitles.push(...shiftedSubs);
+        
+        currentOffset += video.duration || 600;
+      });
+      
+      if (initialData.is_playlist) {
+        setChaptersInput(tempChaptersInput.trim());
+      }
+      
+      setVideoData((prev: any) => {
+        if (!prev || currentLoadSessionIdRef.current !== sessionId) return prev;
+        
+        const isSingle = !prev.is_playlist;
+        const mainTitle = isSingle && updatedVideos[0] ? updatedVideos[0].title : prev.title;
+        const mainThumbnail = isSingle && updatedVideos[0] ? updatedVideos[0].thumbnail : prev.thumbnail;
+        const mainChannel = isSingle && updatedVideos[0] ? updatedVideos[0].channel : prev.channel;
+        
+        return {
+          ...prev,
+          title: mainTitle,
+          thumbnail: mainThumbnail,
+          channel: mainChannel,
+          duration: currentOffset,
+          videos: [...updatedVideos],
+          subtitles: resolveSubtitleOverlaps(flatSubtitles).map((s, idx) => ({ ...s, globalIndex: idx }))
+        };
+      });
+    }
+  };
+
   const handleUrlSubmit = async () => {
     if (!ytUrl.trim()) {
       alert('請輸入 YouTube 影片網址！');
@@ -887,66 +1016,69 @@ function App() {
 
     if (urls.length > 1) {
       setScreen('loading');
-      setLoadingText(`正在解析 ${urls.length} 個網址，請稍候...`);
+      setLoadingText(`正在解析 ${urls.length} 個網址資訊...`);
 
       try {
         const fetchPromises = urls.map(async (url, idx) => {
           const isPlaylistUrl = url.includes('list=') && (url.includes('/playlist') || !url.includes('v='));
-          const endpoint = isPlaylistUrl ? '/api/process-playlist' : '/api/process-video';
-          
-          try {
-            const response = await fetch(endpoint, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ url })
-            });
-            if (!response.ok) {
-              throw new Error(`HTTP error ${response.status}`);
-            }
-            const res = await response.json();
-            if (res.status !== 'success') {
-              throw new Error(res.message || '處理失敗');
-            }
-            return { isPlaylist: isPlaylistUrl, data: res, url };
-          } catch (err: any) {
-            console.warn(`網址 ${idx + 1} (${url}) 載入失敗:`, err);
-            let videoId = `custom_v_${idx}_${Date.now()}`;
-            let title = `影片 ${idx + 1}`;
+          if (isPlaylistUrl) {
             try {
-              const match = url.match(/(?:v=|\/embed\/|\/shorts\/|\/|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-              if (match) {
-                videoId = match[1];
-                title = `影片 (ID: ${videoId})`;
+              const response = await fetch('/api/playlist-metadata', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url })
+              });
+              if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+              const res = await response.json();
+              if (res.status === 'success' && res.videos) {
+                return { isPlaylist: true, videos: res.videos, url };
               }
-            } catch (e) {}
-
-            return {
-              isPlaylist: false,
-              url,
-              data: {
-                status: 'success',
-                video_id: videoId,
-                title: title,
-                duration: 600,
-                thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
-                channel: '載入失敗/無字幕影片',
-                subtitles: [{
-                  text: "(此影片無字幕文字)",
-                  start: 0.0,
-                  duration: 600.0
-                }]
-              }
-            };
+            } catch (err) {
+              console.warn(`[Fast Metadata] 播放清單 ${url} 解析失敗:`, err);
+            }
           }
+
+          // Single video: parse video ID directly
+          let videoId = `custom_v_${idx}_${Date.now()}`;
+          let title = `影片 ${idx + 1}`;
+          try {
+            const match = url.match(/(?:v=|\/embed\/|\/shorts\/|\/|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+            if (match) {
+              videoId = match[1];
+              title = `影片 (ID: ${videoId})`;
+            }
+          } catch (e) {}
+
+          return {
+            isPlaylist: false,
+            videos: [{
+              video_id: videoId,
+              title: title,
+              duration: 600,
+              thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+              loading: true,
+              url: url
+            }],
+            url
+          };
         });
 
         const results = await Promise.all(fetchPromises);
+        const videos: any[] = [];
+        results.forEach(item => {
+          videos.push(...item.videos);
+        });
+
+        if (videos.length === 0) {
+          throw new Error('未解析到任何有效的影片網址。');
+        }
+
+        currentLoadSessionIdRef.current += 1;
+        const sessionId = currentLoadSessionIdRef.current;
 
         let currentOffset = 0;
         let tempChaptersInput = "";
         const flatSubtitles: any[] = [];
-        const videos: any[] = [];
-        let firstThumbnail = "";
 
         const formatSecondsToHHMMSS = (seconds: number): string => {
           const h = Math.floor(seconds / 3600);
@@ -956,55 +1088,17 @@ function App() {
           return `${pad(h)}:${pad(m)}:${pad(s)}`;
         };
 
-        results.forEach((item) => {
-          const res = item.data;
-          if (item.isPlaylist && res.videos) {
-            res.videos.forEach((v: any) => {
-              const timeStr = formatSecondsToHHMMSS(currentOffset);
-              tempChaptersInput += `${timeStr} ${v.title}\n`;
-
-              const shiftedSubs = (v.subtitles || []).map((s: any) => ({
-                ...s,
-                start: s.start + currentOffset
-              }));
-              flatSubtitles.push(...shiftedSubs);
-
-              videos.push({
-                video_id: v.video_id,
-                title: v.title,
-                duration: v.duration,
-                subtitles: v.subtitles
-              });
-
-              if (!firstThumbnail && v.thumbnail) {
-                firstThumbnail = v.thumbnail;
-              }
-
-              currentOffset += v.duration;
-            });
-          } else {
-            const timeStr = formatSecondsToHHMMSS(currentOffset);
-            tempChaptersInput += `${timeStr} ${res.title}\n`;
-
-            const shiftedSubs = (res.subtitles || []).map((s: any) => ({
-              ...s,
-              start: s.start + currentOffset
-            }));
-            flatSubtitles.push(...shiftedSubs);
-
-            videos.push({
-              video_id: res.video_id,
-              title: res.title,
-              duration: res.duration,
-              subtitles: res.subtitles
-            });
-
-            if (!firstThumbnail && res.thumbnail) {
-              firstThumbnail = res.thumbnail;
-            }
-
-            currentOffset += res.duration;
-          }
+        videos.forEach((v) => {
+          const timeStr = formatSecondsToHHMMSS(currentOffset);
+          tempChaptersInput += `${timeStr} ${v.title}\n`;
+          
+          flatSubtitles.push({
+            text: "⏳ 正在下載字幕，請稍候...",
+            start: currentOffset,
+            duration: v.duration || 600
+          });
+          
+          currentOffset += v.duration || 600;
         });
 
         const playlistVideoData = {
@@ -1013,10 +1107,10 @@ function App() {
           title: '自訂影片清單',
           is_playlist: true,
           duration: currentOffset,
-          thumbnail: firstThumbnail || 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=120&auto=format&fit=crop&q=60',
+          thumbnail: videos[0]?.thumbnail || 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=120&auto=format&fit=crop&q=60',
           channel: '自訂清單',
           videos: videos,
-          subtitles: resolveSubtitleOverlaps(flatSubtitles).map((s, idx) => ({ ...s, globalIndex: idx }))
+          subtitles: flatSubtitles.map((s, idx) => ({ ...s, globalIndex: idx }))
         };
 
         setUserCustomSplits([]);
@@ -1030,7 +1124,10 @@ function App() {
 
         setVideoData(playlistVideoData);
         setScreen('app');
-        showToast(`✅ 成功載入自訂清單！共 ${videos.length} 部影片。`);
+        showToast(`✅ 已進入工作區！開始依序載入 ${videos.length} 部影片字幕...`);
+
+        loadPlaylistSubtitlesSequentially(playlistVideoData, sessionId);
+
       } catch (err: any) {
         setScreen('home');
         alert(err.message || '載入失敗，請重試。');
@@ -1059,38 +1156,34 @@ function App() {
       }
     }
 
-    setScreen('loading');
-    setLoadingText(isPlaylist ? '正在剖析播放清單資訊並下載所有影片字幕，請稍候...' : '正在剖析 YouTube 影片資訊與下載字幕，請稍候...');
-
-    const endpoint = isPlaylist ? '/api/process-playlist' : '/api/process-video';
-
-    try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ url: ytUrl })
-      });
-
-      let result;
+    if (isPlaylist) {
+      setScreen('loading');
+      setLoadingText('正在解析播放清單影片列表，請稍候...');
       try {
-        result = await response.json();
-      } catch (jsonErr) {
-        throw new Error(`伺服器回應格式錯誤 (HTTP ${response.status})。請確認後端服務運作正常。`);
-      }
+        const response = await fetch('/api/playlist-metadata', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ url: ytUrl })
+        });
+        
+        let result;
+        try {
+          result = await response.json();
+        } catch (jsonErr) {
+          throw new Error(`伺服器回應格式錯誤 (HTTP ${response.status})。`);
+        }
 
-      if (response.ok && result.status === 'success') {
-        setUserCustomSplits([]);
-        setEditedSegmentTexts({});
-        setChaptersInput('');
-        setAiNotesResult(null);
-        setAiTermsResult(null);
-        setRemovedBoundaryTimes([]);
-        setActiveTab('edit');
-        setShowCostEstimation(false);
+        if (response.ok && result.status === 'success' && result.videos) {
+          const videos = result.videos.map((v: any) => ({
+            ...v,
+            loading: true
+          }));
 
-        if (result.is_playlist && result.videos) {
+          currentLoadSessionIdRef.current += 1;
+          const sessionId = currentLoadSessionIdRef.current;
+
           let currentOffset = 0;
           let tempChaptersInput = "";
           const flatSubtitles: any[] = [];
@@ -1103,43 +1196,103 @@ function App() {
             return `${pad(h)}:${pad(m)}:${pad(s)}`;
           };
 
-          result.videos.forEach((v: any) => {
+          videos.forEach((v: any) => {
             const timeStr = formatSecondsToHHMMSS(currentOffset);
             tempChaptersInput += `${timeStr} ${v.title}\n`;
-
-            const shiftedSubs = (v.subtitles || []).map((s: any) => ({
-              ...s,
-              start: s.start + currentOffset
-            }));
-            flatSubtitles.push(...shiftedSubs);
-
-            currentOffset += v.duration;
+            
+            flatSubtitles.push({
+              text: "⏳ 正在下載字幕，請稍候...",
+              start: currentOffset,
+              duration: v.duration || 600
+            });
+            
+            currentOffset += v.duration || 600;
           });
 
+          const playlistVideoData = {
+            status: 'success',
+            video_id: 'playlist_' + Date.now(),
+            title: result.title || '播放清單',
+            is_playlist: true,
+            duration: currentOffset,
+            thumbnail: result.thumbnail || videos[0]?.thumbnail || 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=120&auto=format&fit=crop&q=60',
+            channel: result.channel || '未知頻道',
+            videos: videos,
+            subtitles: flatSubtitles.map((s, idx) => ({ ...s, globalIndex: idx }))
+          };
+
+          setUserCustomSplits([]);
+          setEditedSegmentTexts({});
           setChaptersInput(tempChaptersInput.trim());
-          result.duration = currentOffset;
-          result.subtitles = resolveSubtitleOverlaps(flatSubtitles).map((s: any, idx: number) => ({
-            ...s,
-            globalIndex: idx
-          }));
-          if (!result.thumbnail && result.videos.length > 0) {
-            result.thumbnail = result.videos[0].thumbnail;
-          }
-        } else if (result.subtitles) {
-          result.subtitles = resolveSubtitleOverlaps(result.subtitles).map((s: any, idx: number) => ({
-            ...s,
-            globalIndex: idx
-          }));
+          setAiNotesResult(null);
+          setAiTermsResult(null);
+          setRemovedBoundaryTimes([]);
+          setActiveTab('edit');
+          setShowCostEstimation(false);
+
+          setVideoData(playlistVideoData);
+          setScreen('app');
+          showToast(`✅ 已載入播放清單！共 ${videos.length} 部影片，正在背景依序下載字幕...`);
+
+          loadPlaylistSubtitlesSequentially(playlistVideoData, sessionId);
+        } else {
+          throw new Error(result.message || '解析播放清單失敗');
         }
-        setVideoData(result);
-        setScreen('app');
-      } else {
-        throw new Error(result?.message || '無法下載或處理該影片/播放清單。請確認網址，且影片有提供字幕。');
+      } catch (err: any) {
+        setScreen('home');
+        alert(err.message || '載入播放清單失敗，請重試。');
       }
-    } catch (err: any) {
-      setScreen('home');
-      alert(err.message || '發生未知錯誤，請重試。');
+      return;
     }
+
+    if (!videoId) {
+      alert('無法取得影片 ID，請確認 URL 是否正確。');
+      return;
+    }
+
+    // Single video mode
+    currentLoadSessionIdRef.current += 1;
+    const sessionId = currentLoadSessionIdRef.current;
+
+    const singleVideo = {
+      video_id: videoId,
+      title: '正在下載影片資訊...',
+      duration: 600,
+      thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+      loading: true,
+      url: ytUrl
+    };
+
+    const initialVideoData = {
+      status: 'success',
+      video_id: videoId,
+      title: '正在載入...',
+      is_playlist: false,
+      duration: 600,
+      thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+      channel: '正在載入',
+      videos: [singleVideo],
+      subtitles: [{
+        text: "⏳ 正在下載字幕，請稍候...",
+        start: 0.0,
+        duration: 600.0
+      }]
+    };
+
+    setUserCustomSplits([]);
+    setEditedSegmentTexts({});
+    setChaptersInput('');
+    setAiNotesResult(null);
+    setAiTermsResult(null);
+    setRemovedBoundaryTimes([]);
+    setActiveTab('edit');
+    setShowCostEstimation(false);
+
+    setVideoData(initialVideoData);
+    setScreen('app');
+    showToast('✅ 已進入工作區！正在下載字幕...');
+
+    loadPlaylistSubtitlesSequentially(initialVideoData, sessionId);
   };
 
   const handleManualImport = async (files?: FileList | null) => {
@@ -2072,6 +2225,7 @@ function App() {
   };
 
   const goBackToHome = () => {
+    currentLoadSessionIdRef.current += 1;
     setScreen('home');
     setAiNotesResult(null);
     setAiTermsResult(null);

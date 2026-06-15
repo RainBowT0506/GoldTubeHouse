@@ -286,6 +286,13 @@ def get_video_metadata(video_id: str):
 
 # 取得播放清單中所有影片的資訊 (包含影片 ID、標題、時長、縮圖)
 def get_playlist_metadata(playlist_url: str):
+    import re
+    # Normalize playlist URL to avoid watch?v=...&list=... returning a reference instead of entries
+    match = re.search(r'[&?]list=([a-zA-Z0-9_-]+)', playlist_url)
+    if match:
+        playlist_id = match.group(1)
+        playlist_url = f"https://www.youtube.com/playlist?list={playlist_id}"
+
     ydl_opts = {
         'extract_flat': True,
         'skip_download': True,
@@ -308,6 +315,15 @@ def get_playlist_metadata(playlist_url: str):
             info = ydl.extract_info(playlist_url, download=False)
             if not info:
                 return None
+            
+            # If yt-dlp returns a reference, recursively resolve it
+            if info.get('_type') == 'url':
+                resolved_url = info.get('url')
+                if resolved_url:
+                    info = ydl.extract_info(resolved_url, download=False)
+                    if not info:
+                        return None
+
             if info.get('_type') == 'playlist' or 'entries' in info:
                 entries = info.get('entries', [])
                 videos = []

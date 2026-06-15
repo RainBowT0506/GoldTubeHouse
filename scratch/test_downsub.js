@@ -1,61 +1,59 @@
-const CryptoJS = require("crypto-js");
-
-const $t = "zthxw34cdp6wfyxmpad38v52t3hsz6c5";
-
-const zt = {
-  stringify: function(t) {
-    var e = { ct: t.ciphertext.toString(CryptoJS.enc.Base64) };
-    if (t.iv) e.iv = t.iv.toString();
-    if (t.salt) e.s = t.salt.toString();
-    return JSON.stringify(e);
-  },
-  parse: function(t) {
-    var e = JSON.parse(t), n = CryptoJS.lib.CipherParams.create({ ciphertext: CryptoJS.enc.Base64.parse(e.ct) });
-    if (e.iv) n.iv = CryptoJS.enc.Hex.parse(e.iv);
-    if (e.s) n.salt = CryptoJS.enc.Hex.parse(e.s);
-    return n;
-  }
-};
-
-function Bt(t) {
-  var e = Buffer.from(t).toString('base64');
-  e = e.replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
-  return e;
-}
-
-function encode(t, e) {
-  if (!t) return false;
-  var n = CryptoJS.AES.encrypt(JSON.stringify(t), e || $t, {format: zt}).toString();
-  return Bt(n).trim();
-}
+const puppeteer = require('puppeteer');
+const fs = require('fs');
 
 async function run() {
-  const url = "https://www.youtube.com/watch?v=EH5jx5qPabU";
-  const urlEncrypt = encode(url);
-  const data = encode(urlEncrypt, url);
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+  });
+  const page = await browser.newPage();
+  
+  // Set User-Agent to sound like a normal browser
+  await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+  
+  const testUrl = 'https://www.youtube.com/watch?v=EH5jx5qPabU';
+  console.log(`Navigating to: https://downsub.com/?url=${encodeURIComponent(testUrl)}`);
+  
+  await page.goto(`https://downsub.com/?url=${encodeURIComponent(testUrl)}`, {
+    waitUntil: 'networkidle2',
+    timeout: 60000
+  });
 
-  try {
-    const response = await fetch("https://get.downsub.com/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-      },
-      body: JSON.stringify({ url, data })
+  console.log('Page loaded. Waiting for 10 seconds...');
+  await new Promise(r => setTimeout(r, 10000));
+  
+  // Take screenshot and save it
+  await page.screenshot({ path: '/Users/linchengyi/PycharmProjects/GoldTubeHouse/scratch/downsub_screenshot.png' });
+  console.log('Screenshot saved to scratch/downsub_screenshot.png');
+  
+  // Dump page HTML structure
+  const html = await page.content();
+  fs.writeFileSync('/Users/linchengyi/PycharmProjects/GoldTubeHouse/scratch/downsub_page.html', html, 'utf8');
+  console.log('HTML content saved to scratch/downsub_page.html');
+  
+  // Query all buttons or anchors
+  const elements = await page.evaluate(() => {
+    const elList = [];
+    document.querySelectorAll('*').forEach(el => {
+      if (el.tagName === 'A' || el.tagName === 'BUTTON' || el.tagName === 'SPAN' || el.tagName === 'DIV') {
+        const text = (el.innerText || el.textContent || '').trim();
+        if (text === 'SRT' || text === '下載' || text.includes('Hindi') || text.includes('English')) {
+          elList.push({
+            tag: el.tagName,
+            text: text.substring(0, 50),
+            id: el.id,
+            className: el.className,
+            parentTag: el.parentElement ? el.parentElement.tagName : 'NONE'
+          });
+        }
+      }
     });
-    const result = await response.json();
-    console.log("Response state:", result.state);
-    if (result.subtitles) {
-      console.log("Subtitles count:", result.subtitles.length);
-      console.log("Subtitles (first 3):", JSON.stringify(result.subtitles.slice(0, 3), null, 2));
-    }
-    if (result.subtitlesAutoTrans) {
-      console.log("SubtitlesAutoTrans count:", result.subtitlesAutoTrans.length);
-      console.log("SubtitlesAutoTrans (first 3):", JSON.stringify(result.subtitlesAutoTrans.slice(0, 3), null, 2));
-    }
-  } catch (err) {
-    console.error("Error:", err);
-  }
+    return elList;
+  });
+  
+  console.log('Query matches:', JSON.stringify(elements.slice(0, 30), null, 2));
+
+  await browser.close();
 }
 
-run();
+run().catch(console.error);

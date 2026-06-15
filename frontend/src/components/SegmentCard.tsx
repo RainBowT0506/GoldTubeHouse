@@ -57,8 +57,10 @@ export const SegmentCard: React.FC<SegmentCardProps> = ({
   const initialText = cleanAndJoinSubtitles(seg.subtitles);
   const textToShow = editedText !== undefined ? editedText : initialText;
 
+  const isLoading = textToShow.includes('⏳ 正在下載字幕');
+
   return (
-    <div className={`segment-card ${isSub ? 'subsegment' : ''}`} key={segId} id={segId}>
+    <div className={`segment-card ${isSub ? 'subsegment' : ''} ${isLoading ? 'loading-card' : ''}`} key={segId} id={segId}>
       <div className="segment-header">
         <div className="segment-meta">
           <span className="segment-title">
@@ -74,21 +76,37 @@ export const SegmentCard: React.FC<SegmentCardProps> = ({
           </span>
           {seg.subTitle && <span className="segment-time-range">{seg.subTitle}</span>}
         </div>
-        <div className="segment-actions">
-          <button className="btn-copy btn-copy-highlight" onClick={() => copySegmentText(segId, seg, false)}>
-            <span>僅複製字幕</span>
-          </button>
-          <button className="btn-copy" onClick={() => copySegmentText(segId, seg, true)}>
-            <span>複製標題與字幕</span>
-          </button>
-        </div>
+        {!isLoading && (
+          <div className="segment-actions">
+            <button className="btn-copy btn-copy-highlight" onClick={() => copySegmentText(segId, seg, false)}>
+              <span>僅複製字幕</span>
+            </button>
+            <button className="btn-copy" onClick={() => copySegmentText(segId, seg, true)}>
+              <span>複製標題與字幕</span>
+            </button>
+          </div>
+        )}
       </div>
-      <EditableSegmentText
-        segId={segId}
-        initialText={textToShow}
-        onBlur={(newVal) => handleSegmentTextChange(segId, newVal)}
-        onKeydown={(e) => handleSegmentKeydown(e, seg)}
-      />
+      {isLoading ? (
+        <div className="segment-loading-container" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '15px 0', color: 'var(--accent)' }}>
+          <div className="loading-spinner-small" style={{
+            width: '16px',
+            height: '16px',
+            border: '2px solid rgba(223, 177, 91, 0.2)',
+            borderTopColor: 'var(--accent)',
+            borderRadius: '50%',
+            animation: 'rotate 1.5s linear infinite'
+          }} />
+          <span style={{ fontSize: '13px', fontWeight: '500' }}>正在依序下載並加載此影片字幕...</span>
+        </div>
+      ) : (
+        <EditableSegmentText
+          segId={segId}
+          initialText={textToShow}
+          onBlur={(newVal) => handleSegmentTextChange(segId, newVal)}
+          onKeydown={(e) => handleSegmentKeydown(e, seg)}
+        />
+      )}
     </div>
   );
 };
