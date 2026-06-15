@@ -1,3 +1,15 @@
+# ⚠️ AGENTS RULE — 永久規則
+
+## 🚫 禁止自動 Git Commit
+
+**任何 AI Agent 在任何情況下，都不得自動執行 `git commit`。**
+
+- 只有在**使用者明確說「commit」**時，才可以執行 git commit
+- 修改完檔案後不得自動 commit，即使修改已完成也必須等待使用者指示
+- 違反此規則：AI Agent 曾多次在未經授權情況下自動 commit，干擾使用者的版本控制流程
+
+---
+
 # ⚠️ AGENTS RULE — 禁止修改 Prompts 目錄
 
 ## 🚫 絕對禁止事項
