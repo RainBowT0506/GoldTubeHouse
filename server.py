@@ -62,7 +62,9 @@ from subtitle_extractor import (
     fetch_subtitles_api,
     fetch_subtitles_ytdlp,
     fetch_subtitles_downsub,
-    get_video_metadata
+    get_video_metadata,
+    get_playlist_metadata,
+    fetch_video_subtitles_and_meta
 )
 from subtitle_utils import parse_vtt_file, parse_srt_content
 
@@ -152,6 +154,68 @@ def process_video(request: VideoRequest):
         "channel": metadata.get('channel', '未知頻道'),
         "subtitles": subtitles
     }
+
+# API 路由：下載並剖析播放清單的所有影片與字幕
+@app.post("/api/process-playlist")
+def process_playlist(request: VideoRequest):
+    playlist_url = request.url.strip()
+    if not playlist_url:
+        return JSONResponse(
+            status_code=400,
+            content={"status": "error", "message": "請輸入有效的 YouTube 播放清單網址。"}
+        )
+        
+    print(f"開始解析播放清單 (URL: {playlist_url})...")
+    playlist_info = get_playlist_metadata(playlist_url)
+    if not playlist_info or not playlist_info.get('videos'):
+        return JSONResponse(
+            status_code=400,
+            content={"status": "error", "message": "無法解析該播放清單。請確認是否為公開的播放清單。"}
+        )
+        
+    videos = playlist_info['videos']
+    title = playlist_info['title']
+    print(f"成功解析播放清單 '{title}'，共包含 {len(videos)} 部影片。開始併發下載字幕與 metadata...")
+    
+    processed_videos = []
+    # 使用 ThreadPoolExecutor 併發下載與解析字幕
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        future_to_video = {executor.submit(fetch_video_subtitles_and_meta, v): v for v in videos}
+        for future in concurrent.futures.as_completed(future_to_video):
+            v_info = future_to_video[future]
+            try:
+                data = future.result()
+                processed_videos.append(data)
+            except Exception as exc:
+                print(f"處理影片 {v_info['video_id']} 時發生異常: {exc}")
+                duration = v_info.get('duration') or 600
+                processed_videos.append({
+                    "video_id": v_info['video_id'],
+                    "title": v_info.get('title') or f"YouTube Video (ID: {v_info['video_id']})",
+                    "duration": duration,
+                    "thumbnail": v_info.get('thumbnail') or f"https://img.youtube.com/vi/{v_info['video_id']}/maxresdefault.jpg",
+                    "subtitles": [{
+                        "text": "(此影片載入失敗，無字幕文字)",
+                        "start": 0.0,
+                        "duration": float(duration)
+                    }]
+                })
+                
+    # 照原播放清單影片順序排序
+    video_id_to_index = {v['video_id']: idx for idx, v in enumerate(videos)}
+    processed_videos.sort(key=lambda x: video_id_to_index.get(x['video_id'], 999))
+    
+    channel = playlist_info.get('channel') or '未知頻道'
+    print(f"播放清單 '{title}' (頻道: {channel}) 處理完成！已完成 {len(processed_videos)} 部影片下載。")
+    
+    return {
+        "status": "success",
+        "title": title,
+        "channel": channel,
+        "is_playlist": True,
+        "videos": processed_videos
+    }
+
 
 # API 路由：檢查本地端環境變數是否有 API Key
 @app.get("/api/check-env")

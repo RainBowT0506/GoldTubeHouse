@@ -137,5 +137,32 @@ Normal paragraph.
 """
         self.assertEqual(flatten_markdown_lists(raw_markdown), expected_markdown)
 
+    def test_get_playlist_metadata(self):
+        from unittest.mock import patch, MagicMock
+        from subtitle_extractor import get_playlist_metadata
+        
+        mock_playlist_payload = {
+            "_type": "playlist",
+            "title": "n8n Beginners Course",
+            "entries": [
+                {"id": "video1", "title": "01 - Introduction", "duration": 120},
+                {"id": "video2", "title": "02 - Triggers", "duration": 300}
+            ]
+        }
+        
+        with patch('yt_dlp.YoutubeDL') as mock_ytdl:
+            mock_instance = MagicMock()
+            mock_instance.extract_info.return_value = mock_playlist_payload
+            mock_ytdl.return_value.__enter__.return_value = mock_instance
+            
+            result = get_playlist_metadata("https://www.youtube.com/playlist?list=PLhT1D")
+            self.assertIsNotNone(result)
+            self.assertEqual(result["title"], "n8n Beginners Course")
+            self.assertEqual(len(result["videos"]), 2)
+            self.assertEqual(result["videos"][0]["video_id"], "video1")
+            self.assertEqual(result["videos"][0]["title"], "01 - Introduction")
+            self.assertEqual(result["videos"][0]["duration"], 120)
+
 if __name__ == "__main__":
     unittest.main()
+

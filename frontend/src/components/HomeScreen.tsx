@@ -32,12 +32,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       </p>
 
       <div className="input-group">
-        <input
-          type="text"
+        <textarea
           className="url-input"
-          placeholder="請貼上 YouTube 影片網址 (例如 https://www.youtube.com/watch?v=2GZ2SNXWK-c)"
+          placeholder="請貼上 YouTube 影片網址或播放清單網址 (支援多個網址，換行貼入即可)"
           value={ytUrl}
           onChange={(e) => setYtUrl(e.target.value)}
+          rows={Math.max(1, ytUrl.split('\n').length)}
+          style={{
+            resize: 'none',
+            minHeight: '46px',
+            maxHeight: '120px',
+            overflowY: 'auto',
+            alignSelf: 'center'
+          }}
         />
         <button className="btn-submit" onClick={handleUrlSubmit}>
           <span>開始處理</span>
@@ -80,6 +87,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           onClick={() => useExample('https://www.youtube.com/watch?v=EH5jx5qPabU')}
         >
           n8n AI Agent 教學 (約 25 分)
+        </span>
+        <span
+          className="example-tag"
+          onClick={() => useExample('https://www.youtube.com/playlist?list=PL4HikwTaYE0GrWQOYuTL3YvHLMMwOjn7O')}
+        >
+          n8n 官方新手課程清單 (9部影片)
         </span>
       </div>
 

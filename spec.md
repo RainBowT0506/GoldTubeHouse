@@ -70,6 +70,7 @@ GoldTubeHouse 是一個專為 YouTube 字幕自動化下載、分段整理及 AI
 系統採用前後端分離架構，提供流暢的單頁應用程式（SPA）互動體驗：
 - **前端 (Frontend)**: 基於 React 18, TypeScript, Vite 及 Vanilla CSS 建構。前端負責時間軸運算、使用者編輯卡片、章節比對、費用預估，並透過 `localStorage` 實現頁面重新載入後的設定與狀態持久化（Persistence）。
 - **後端 (Backend)**: 使用 Python + FastAPI 提供高效能 API，負責調用 `youtube-transcript-api` 與 `yt-dlp` 下載字幕，並代理與安全處理對 OpenAI API 的呼叫，同時負責將用戶的分段結果持久化存檔。
+- **提示詞管理 (Prompts Management)**: 系統所有與 AI 互動的提示詞範本（重點整理、術語提取、合併分析）均統一儲存於 `prompts/` 目錄下的 `.txt` 檔案中，作為唯一的提示詞事實來源。後端一律動態載入這些檔案。若發生檔案遺失或讀取失敗，後端會主動拋出 500 錯誤（`HTTPException`），不再採用硬編碼的備份字串，避免程式碼內部的提示詞版本與實體檔案不同步。
 
 ---
 

@@ -283,3 +283,90 @@ def get_video_metadata(video_id: str):
             'video_id': video_id,
             'channel': '未知頻道'
         }
+
+# 取得播放清單中所有影片的資訊 (包含影片 ID、標題、時長、縮圖)
+def get_playlist_metadata(playlist_url: str):
+    ydl_opts = {
+        'extract_flat': True,
+        'skip_download': True,
+        'quiet': True,
+        'no_warnings': True,
+    }
+    cookie_file = "cookies.txt"
+    if os.path.exists(cookie_file):
+        ydl_opts['cookiefile'] = cookie_file
+        print(f"[yt-dlp Playlist] 偵測到 {cookie_file}，已啟用 Cookie 快取。")
+    else:
+        try:
+            ydl_opts['cookiesfrombrowser'] = ('chrome',)
+            print("[yt-dlp Playlist] 未偵測到 cookies.txt，已啟用自動載入 Chrome 瀏覽器 Cookie 模式。")
+        except Exception as e:
+            print(f"[yt-dlp Playlist] 自動載入 Chrome Cookie 失敗: {e}")
+            
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(playlist_url, download=False)
+            if not info:
+                return None
+            if info.get('_type') == 'playlist' or 'entries' in info:
+                entries = info.get('entries', [])
+                videos = []
+                for entry in entries:
+                    if not entry:
+                        continue
+                    video_id = entry.get('id') or get_video_id(entry.get('url', ''))
+                    if not video_id:
+                        continue
+                    videos.append({
+                        'video_id': video_id,
+                        'title': entry.get('title') or f"YouTube Video (ID: {video_id})",
+                        'duration': entry.get('duration') or 0,
+                        'thumbnail': f"https://img.youtube.com/vi/{video_id}/maxresdefault.jpg"
+                    })
+                return {
+                    'title': info.get('title') or '未命名播放清單',
+                    'channel': info.get('uploader') or info.get('channel') or info.get('uploader_id') or '未知頻道',
+                    'videos': videos
+                }
+    except Exception as e:
+        print(f"[yt-dlp Playlist] 擷取播放清單 metadata 失敗: {e}")
+    return None
+
+# 下載單一影片字幕並進行時長補齊容錯，用於併發下載
+def fetch_video_subtitles_and_meta(video: dict):
+    video_id = video['video_id']
+    title = video.get('title') or f"YouTube Video (ID: {video_id})"
+    
+    # 嘗試多管道獲取字幕
+    subtitles = fetch_subtitles_api(video_id)
+    if not subtitles:
+        subtitles = fetch_subtitles_ytdlp(video_id)
+    if not subtitles:
+        subtitles = fetch_subtitles_downsub(video_id)
+        
+    duration = video.get('duration') or 0
+    
+    # 容錯處理：如果完全沒有字幕
+    if not subtitles:
+        if duration == 0:
+            meta = get_video_metadata(video_id)
+            duration = meta.get('duration') or 600 # default to 10 mins if metadata fetch also fails
+        subtitles = [{
+            "text": "(此影片無字幕文字)",
+            "start": 0.0,
+            "duration": float(duration)
+        }]
+    else:
+        # 如果有字幕但時長為 0，利用最後一筆字幕推估
+        if duration == 0:
+            last_sub = subtitles[-1]
+            duration = int(last_sub['start'] + last_sub['duration'])
+            
+    return {
+        "video_id": video_id,
+        "title": title,
+        "duration": duration,
+        "thumbnail": video.get('thumbnail') or f"https://img.youtube.com/vi/{video_id}/maxresdefault.jpg",
+        "subtitles": subtitles
+    }
+

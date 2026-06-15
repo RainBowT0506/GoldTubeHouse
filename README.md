@@ -28,6 +28,7 @@ GoldTubeHouse/
 │   ├── mock_data/             # 測試用 Mock 字幕與分段數據
 │   ├── test_backend.py        # 後端 API 單元測試
 │   └── test_frontend_segmentation.ts # 前端分段演算法測試
+├── prompts/                   # AI 提示詞範本目錄 (作為唯一的提示詞事實來源，內含 prompt_*.txt)
 ├── ai_logs/                   # [自動建立] 存放 AI 請求與回應的 JSON 日誌 (已加入 .gitignore)
 └── scratch/                   # 存放快取或暫存資料的目錄 (如 user_segments.json)
 ```
@@ -172,6 +173,8 @@ npm install
     *   在 `segment_subtitles.py` 中，修改 `download_subtitles` 函數調用時的 `lang` 參數。
 *   **調整圖片畫質**：
     *   在 `pdf_to_images.py` 中，可調整 `convert_pdf_to_images` 函數內的 `zoom` 變數（預設為 `2`）。若需要更高解析度（如 OCR 辨識用）可設為 `3` 或 `4`。
+*   **客製化 AI 提示詞**：
+    *   後端一律優先動態載入 `prompts/` 目錄下的提示詞檔案（`prompt_note.txt`、`prompt_terms.txt`、`prompt_analysis.txt`）。若檔案不存在或讀取失敗會拋出 500 錯誤。如需客製化 AI 整理格式，請直接修改這些 `.txt` 檔案即可。
 
 ---
 

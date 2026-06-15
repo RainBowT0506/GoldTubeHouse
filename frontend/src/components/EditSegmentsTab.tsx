@@ -33,6 +33,7 @@ interface EditSegmentsTabProps {
   handleSegmentKeydown: (event: React.KeyboardEvent<HTMLDivElement>, seg: Segment) => void; // Keydown handler (for Enter splittings)
   collapsedAIGroups: Set<string>;                   // Set of AI group container IDs that are folded
   toggleAIGroupCollapse: (key: string) => void;     // Callback to fold/unfold AI group container
+  isPlaylist?: boolean;                             // Flag indicating playlist/list mode
 }
 
 /**
@@ -54,7 +55,8 @@ export const EditSegmentsTab: React.FC<EditSegmentsTabProps> = ({
   handleSegmentTextChange,
   handleSegmentKeydown,
   collapsedAIGroups,
-  toggleAIGroupCollapse
+  toggleAIGroupCollapse,
+  isPlaylist = false
 }) => {
   return (
     <div className="tab-content active">
@@ -111,7 +113,7 @@ export const EditSegmentsTab: React.FC<EditSegmentsTabProps> = ({
                           onClick={e => e.stopPropagation()}
                         >
                           <span className="chapter-group-time">
-                            {formatTime(item.start)} ~ {formatTime(item.end)}
+                            {isPlaylist ? `00:00 ~ ${formatTime(item.end - item.start)}` : `${formatTime(item.start)} ~ ${formatTime(item.end)}`}
                           </span>
                           {!isCollapsed && (
                             <>
@@ -207,7 +209,7 @@ export const EditSegmentsTab: React.FC<EditSegmentsTabProps> = ({
                     >
                       <div className="ai-merged-group-title">
                         <span className="collapse-arrow">{isGroupCollapsed ? '▶' : '▼'}</span>
-                        <span>🧠 AI 整合區間 ({group.items.length} 個章節)</span>
+                        <span>🧠 AI 整合區間 ({group.items.length} 個{isPlaylist ? '影片' : '章節'})</span>
                       </div>
                       <span className="ai-merged-group-time">
                         {formatTime(group.start)} ~ {formatTime(group.end)}
