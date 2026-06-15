@@ -13,6 +13,19 @@ import {
   groupSegmentsForTerms,
   formatSubtitlesToSRT
 } from './utils';
+import {
+  DEFAULT_INTERVAL_MIN,
+  DEFAULT_NO_SEGMENT_MIN,
+  DEFAULT_SUB_SEGMENT_MIN,
+  SHORT_VIDEO_BUFFER_SEC,
+  PRICE_INPUT_PER_M,
+  PRICE_OUTPUT_PER_M,
+  TWD_PER_USD,
+  EST_OUTPUT_TOKENS_NOTES,
+  EST_OUTPUT_TOKENS_TERMS,
+  EST_OUTPUT_TOKENS_COMBINED,
+  CHARS_TO_TOKENS_RATIO
+} from './constants';
 
 import { HomeScreen } from './components/HomeScreen';
 import { LoadingScreen } from './components/LoadingScreen';
@@ -168,15 +181,15 @@ function App() {
   });
   const [settingsInterval, setSettingsInterval] = useState<number>(() => {
     const saved = localStorage.getItem('gth_settingsInterval');
-    return saved ? Number(saved) : 20;
+    return saved ? Number(saved) : DEFAULT_INTERVAL_MIN;
   });
   const [settingsNoSegment, setSettingsNoSegment] = useState<number>(() => {
     const saved = localStorage.getItem('gth_settingsNoSegment');
-    return saved ? Number(saved) : 30;
+    return saved ? Number(saved) : DEFAULT_NO_SEGMENT_MIN;
   });
   const [settingsSubSegment, setSettingsSubSegment] = useState<number>(() => {
     const saved = localStorage.getItem('gth_settingsSubSegment');
-    return saved ? Number(saved) : 30;
+    return saved ? Number(saved) : DEFAULT_SUB_SEGMENT_MIN;
   });
   const [showCostEstimation, setShowCostEstimation] = useState<boolean>(() => {
     return localStorage.getItem('gth_showCostEstimation') === 'true';
@@ -370,7 +383,7 @@ function App() {
   // 有章節分割時一律採用長影片模式（分開筆記+術語）
   const isShortVideo = useMemo<boolean>(() => {
     if (!videoData) return false;
-    if (videoData.duration > (settingsNoSegment * 60 + 300)) return false;
+    if (videoData.duration > (settingsNoSegment * 60 + SHORT_VIDEO_BUFFER_SEC)) return false;
     if (userCustomSplits.length > 0) return false;
     if (parsedChapters.length > 0) return false; // 有章節即為長影片模式
     return true;
@@ -781,24 +794,24 @@ function App() {
     if (isShortVideo) {
       const p1Calls = aiGroups.length; // usually 1
       const p2Calls = 0;
-      const estInputTokens = Math.ceil(totalCharsNotes * 1.2);
-      const estOutputTokens = p1Calls * 1300; // ~500 for notes + ~800 for terms
+      const estInputTokens = Math.ceil(totalCharsNotes * CHARS_TO_TOKENS_RATIO);
+      const estOutputTokens = p1Calls * EST_OUTPUT_TOKENS_COMBINED;
 
-      const inputCost = (estInputTokens / 1000000) * 1.25; // fixed gpt-5.1 rates
-      const outputCost = (estOutputTokens / 1000000) * 10.0;
+      const inputCost = (estInputTokens / 1000000) * PRICE_INPUT_PER_M;
+      const outputCost = (estOutputTokens / 1000000) * PRICE_OUTPUT_PER_M;
       const totalCost = inputCost + outputCost;
 
       return {
         segments: flatActiveSegments.length,
         chars: totalCharsNotes,
         costUSD: totalCost,
-        costTWD: totalCost * 32.5,
+        costTWD: totalCost * TWD_PER_USD,
         videoDuration,
         p1Calls,
         p2Calls,
         estInputTokens,
-        estOutputP1: p1Calls * 500,
-        estOutputP2: p1Calls * 800,
+        estOutputP1: p1Calls * EST_OUTPUT_TOKENS_NOTES,
+        estOutputP2: p1Calls * EST_OUTPUT_TOKENS_TERMS,
         estOutputTokens,
         inputCost,
         outputCost
@@ -812,20 +825,20 @@ function App() {
       const p1Calls = aiGroups.length;
       const p2Calls = aiTermsGroups.length;
 
-      const estInputTokens = Math.ceil((totalCharsNotes + totalCharsTerms) * 1.2);
-      const estOutputP1 = p1Calls * 500;
-      const estOutputP2 = p2Calls * 800;
+      const estInputTokens = Math.ceil((totalCharsNotes + totalCharsTerms) * CHARS_TO_TOKENS_RATIO);
+      const estOutputP1 = p1Calls * EST_OUTPUT_TOKENS_NOTES;
+      const estOutputP2 = p2Calls * EST_OUTPUT_TOKENS_TERMS;
       const estOutputTokens = estOutputP1 + estOutputP2;
 
-      const inputCost = (estInputTokens / 1000000) * 1.25; // fixed gpt-5.1 rates
-      const outputCost = (estOutputTokens / 1000000) * 10.0;
+      const inputCost = (estInputTokens / 1000000) * PRICE_INPUT_PER_M;
+      const outputCost = (estOutputTokens / 1000000) * PRICE_OUTPUT_PER_M;
       const totalCost = inputCost + outputCost;
 
       return {
         segments: flatActiveSegments.length,
         chars: totalCharsNotes,
         costUSD: totalCost,
-        costTWD: totalCost * 32.5,
+        costTWD: totalCost * TWD_PER_USD,
         videoDuration,
         p1Calls,
         p2Calls,
