@@ -107,6 +107,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           setChaptersInput={setChaptersInput}
           applyChapters={applyChapters}
           clearChapters={clearChapters}
+          videoData={videoData}
         />
 
         {/* Range Merging Card */}
