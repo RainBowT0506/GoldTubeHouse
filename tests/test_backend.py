@@ -163,6 +163,21 @@ Normal paragraph.
             self.assertEqual(result["videos"][0]["title"], "01 - Introduction")
             self.assertEqual(result["videos"][0]["duration"], 120)
 
+    def test_oop_time_converter(self):
+        from subtitle_utils import TimeConverter
+        self.assertEqual(TimeConverter.time_to_seconds("01:05"), 65.0)
+        self.assertEqual(TimeConverter.vtt_time_to_seconds("00:01:05.500"), 65.5)
+
+    def test_oop_subtitle_parser(self):
+        from subtitle_utils import SubtitleParser
+        cleaned = SubtitleParser.clean_vtt_text("<b>Hello</b> World")
+        self.assertEqual(cleaned, "Hello World")
+
+    def test_oop_vtt_folder_compiler(self):
+        from processor import VttFolderCompiler
+        compiler = VttFolderCompiler(indent_size=2)
+        self.assertEqual(compiler.indent, "  ")
+
 if __name__ == "__main__":
     unittest.main()
 
