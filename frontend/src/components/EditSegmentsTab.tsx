@@ -34,6 +34,8 @@ interface EditSegmentsTabProps {
   collapsedAIGroups: Set<string>;                   // Set of AI group container IDs that are folded
   toggleAIGroupCollapse: (key: string) => void;     // Callback to fold/unfold AI group container
   isPlaylist?: boolean;                             // Flag indicating playlist/list mode
+  noTimestamps?: boolean;
+  onChapterTitleChange?: (time: number, newTitle: string) => void;
 }
 
 /**
@@ -56,7 +58,9 @@ export const EditSegmentsTab: React.FC<EditSegmentsTabProps> = ({
   handleSegmentKeydown,
   collapsedAIGroups,
   toggleAIGroupCollapse,
-  isPlaylist = false
+  isPlaylist = false,
+  noTimestamps = false,
+  onChapterTitleChange
 }) => {
   return (
     <div className="tab-content active">
@@ -140,6 +144,8 @@ export const EditSegmentsTab: React.FC<EditSegmentsTabProps> = ({
                               copySegmentText={copySegmentText}
                               handleSegmentTextChange={handleSegmentTextChange}
                               handleSegmentKeydown={handleSegmentKeydown}
+                              noTimestamps={noTimestamps}
+                              onChapterTitleChange={onChapterTitleChange}
                             />
                             {!isLastSub && subSegs[subIdx + 1] && (() => {
                               const isMerged = removedBoundaryTimes.includes(subSegs[subIdx + 1].start);
@@ -190,6 +196,8 @@ export const EditSegmentsTab: React.FC<EditSegmentsTabProps> = ({
                     copySegmentText={copySegmentText}
                     handleSegmentTextChange={handleSegmentTextChange}
                     handleSegmentKeydown={handleSegmentKeydown}
+                    noTimestamps={noTimestamps}
+                    onChapterTitleChange={onChapterTitleChange}
                   />
                 );
               }

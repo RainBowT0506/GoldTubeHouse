@@ -53,6 +53,12 @@ class SaveSegmentsRequest(BaseModel):
     removed_boundary_times: list[float] = []
     chapters_input: str = ""
 
+class ClientErrorRequest(BaseModel):
+    message: str
+    stack: Optional[str] = None
+    url: Optional[str] = None
+
+
 
 # --- OOP Service Modules ---
 
@@ -509,6 +515,16 @@ class GoldTubeApp:
 
             print(f"已儲存用戶分段資料 (Video ID: {request.video_id})，合併邊界數量: {len(request.removed_boundary_times)}")
             return {"status": "success"}
+
+        @self.app.post("/api/log-client-error")
+        def log_client_error(request: ClientErrorRequest):
+            print(f"\n[Client Error] {request.message}")
+            if request.stack:
+                print(f"Stack Trace:\n{request.stack}")
+            if request.url:
+                print(f"Client URL: {request.url}")
+            print("----------------------------------------\n")
+            return {"status": "logged"}
 
     def mount_static(self):
         dist_dir = os.path.join("frontend", "dist")

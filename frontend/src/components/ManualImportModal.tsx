@@ -10,6 +10,10 @@ interface ManualImportModalProps {
   setImportTitle: (val: string) => void; // State setter for imported title
   importText: string;                // State value of the raw subtitle text to import
   setImportText: (val: string) => void;  // State setter for imported subtitle text
+  importYtUrl: string;               // YouTube URL for thumbnail/download reference
+  setImportYtUrl: (val: string) => void; // Setter for importYtUrl
+  importMode: 'single' | 'playlist';  // Handling mode for '#' lines
+  setImportMode: (val: 'single' | 'playlist') => void; // Setter for importMode
   handleManualImport: (files?: FileList | null) => void;    // Callback to process and parse the text into subtitles
 }
 
@@ -25,6 +29,10 @@ export const ManualImportModal: React.FC<ManualImportModalProps> = ({
   setImportTitle,
   importText,
   setImportText,
+  importYtUrl,
+  setImportYtUrl,
+  importMode,
+  setImportMode,
   handleManualImport
 }) => {
   const [selectedFiles, setSelectedFiles] = React.useState<FileList | null>(null);
@@ -90,21 +98,54 @@ export const ManualImportModal: React.FC<ManualImportModalProps> = ({
               onChange={(e) => setImportTitle(e.target.value)}
             />
           </div>
+
+          <div className="form-group">
+            <label className="form-label">YouTube 影片連結 (選填，可關聯影片以取得並下載縮圖)</label>
+            <input
+              type="text"
+              className="form-input"
+              placeholder="請貼上 YouTube 影片連結，例如：https://www.youtube.com/watch?v=..."
+              value={importYtUrl}
+              onChange={(e) => setImportYtUrl(e.target.value)}
+            />
+          </div>
+
+          <div className="form-group" style={{ marginBottom: '20px' }}>
+            <label className="form-label" style={{ display: 'block', marginBottom: '8px' }}>段落/章節處理模式</label>
+            <div style={{ display: 'flex', gap: '20px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                <input
+                  type="radio"
+                  name="importMode"
+                  checked={importMode === 'single'}
+                  onChange={() => setImportMode('single')}
+                />
+                <span>單一影片 (自動將 # 行轉為章節，無時間戳文本適用)</span>
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px' }}>
+                <input
+                  type="radio"
+                  name="importMode"
+                  checked={importMode === 'playlist'}
+                  onChange={() => setImportMode('playlist')}
+                />
+                <span>播放清單 (以 # 行切割為多部影片)</span>
+              </label>
+            </div>
+          </div>
+
           <div className="form-group">
             <label className="form-label">
-              字幕內容 (支援 VTT, SRT, JSON 或純文字。貼上含 # 標題的多段文字將自動辨識為多影片清單)
+              字幕內容 (支援 VTT, SRT, JSON 或純文字。若選單一影片模式，貼上 `# 標題` 即會自動在該處建立章節)
             </label>
             <textarea
               className="form-textarea"
               placeholder={`單影片範例：
-00:00:00 Hello World
+# 01 - 開場介紹
+好，首先呢很高興大家來...
 
-多影片清單貼上範例：
-# 01 - 影片一介紹
-00:00:00 大家好...
-
-# 02 - 影片二概念
-00:00:00 接著我們要...`}
+# 02 - 重點工具
+第一個工具是過去我們參考文獻...`}
               value={importText}
               onChange={(e) => setImportText(e.target.value)}
               style={{ minHeight: '160px' }}

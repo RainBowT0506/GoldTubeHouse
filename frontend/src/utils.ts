@@ -171,17 +171,18 @@ export function generateSegments(
   interval: number,
   noSegThreshold: number,
   subSegThreshold: number,
-  removedBoundaryTimes: number[] = []
+  removedBoundaryTimes: number[] = [],
+  noTimestamps: boolean = false
 ): Segment[] {
   const segments: Segment[] = [];
 
   // ── 情況 1：沒有任何分割點 → 自動依時間間隔分段 ──────────────────────────
   if (chapterSplits.length === 0 && customSplits.length === 0) {
-    if (duration <= noSegThreshold) {
+    if (noTimestamps || duration <= noSegThreshold) {
       segments.push({
         id: 'seg_all',
         chapterTitle: '完整影片字幕',
-        subTitle: `00:00 ~ ${formatTime(duration)}`,
+        subTitle: noTimestamps ? '' : `00:00 ~ ${formatTime(duration)}`,
         isSubSegment: false,
         start: 0,
         end: duration,
@@ -194,7 +195,7 @@ export function generateSegments(
         const target = t + interval;
         if (target >= duration) {
           segments.push({
-            id: `seg_time_${idx}`,
+            id: `seg_time_${t.toFixed(4)}`,
             chapterTitle: `分段區塊 ${idx + 1}`,
             subTitle: `${formatTime(t)} ~ ${formatTime(duration)}`,
             isSubSegment: false,
@@ -209,7 +210,7 @@ export function generateSegments(
         if (nextT <= t) nextT = t + interval;
         if (duration - nextT < Math.min(360, interval * 0.5)) nextT = duration;
         segments.push({
-          id: `seg_time_${idx}`,
+          id: `seg_time_${t.toFixed(4)}`,
           chapterTitle: `分段區塊 ${idx + 1}`,
           subTitle: `${formatTime(t)} ~ ${formatTime(nextT)}`,
           isSubSegment: false,
@@ -233,9 +234,9 @@ export function generateSegments(
       const end = i + 1 < pts.length ? pts[i + 1].time : duration;
       segments.push({
         isGroup: false,
-        id: `seg_custom_${i}`,
+        id: `seg_custom_${start.toFixed(4)}`,
         chapterTitle: sp.title || `自訂分段 ${i + 1}`,
-        subTitle: `${formatTime(start)} ~ ${formatTime(end)}`,
+        subTitle: noTimestamps ? '' : `${formatTime(start)} ~ ${formatTime(end)}`,
         isSubSegment: false,
         start,
         end,
@@ -278,7 +279,7 @@ export function generateSegments(
       const segSubs = chSubs.filter(s => s.start >= segStart && s.start < segEnd);
       const segDur = segEnd - segStart;
 
-      if (segDur > subSegThreshold) {
+      if (!noTimestamps && segDur > subSegThreshold) {
         // 還需要自動再切分
         let t = segStart;
         let autoIdx = 0;
@@ -286,7 +287,7 @@ export function generateSegments(
           const target = t + interval;
           if (target >= segEnd) {
             subSegments.push({
-              id: `seg_ch${ci}_sp${si}_a${autoIdx}`,
+              id: `seg_sub_${t.toFixed(4)}`,
               chapterTitle: chTitle,
               subTitle: `${formatTime(t)} ~ ${formatTime(segEnd)}`,
               isSubSegment: true,
@@ -315,7 +316,7 @@ export function generateSegments(
 
           if (segEnd - nextT < Math.min(360, interval * 0.5)) nextT = segEnd;
           subSegments.push({
-            id: `seg_ch${ci}_sp${si}_a${autoIdx}`,
+            id: `seg_sub_${t.toFixed(4)}`,
             chapterTitle: chTitle,
             subTitle: `${formatTime(t)} ~ ${formatTime(nextT)}`,
             isSubSegment: true,
@@ -329,9 +330,9 @@ export function generateSegments(
       } else {
         // 短到可以直接當一個子分段
         subSegments.push({
-          id: `seg_ch${ci}_sp${si}`,
+          id: `seg_sub_${segStart.toFixed(4)}`,
           chapterTitle: chTitle,
-          subTitle: `${formatTime(segStart)} ~ ${formatTime(segEnd)}`,
+          subTitle: noTimestamps ? '' : `${formatTime(segStart)} ~ ${formatTime(segEnd)}`,
           isSubSegment: true,
           start: segStart,
           end: segEnd,
@@ -371,22 +372,17 @@ export function groupSegmentsForTerms(
 ): TermsBatch[] {
   if (segments.length === 0) return [];
 
-  const totalDurationMins = totalDuration / 60;
-  let N = 1;
-  if (totalDurationMins > 105) {
-    N = Math.ceil((totalDurationMins - 105) / 60) + 1;
-  }
-
-  // 確保 N 不超過可用的 segment 數量
-  if (N > segments.length) {
-    N = segments.length;
-  }
+  // 專業術語批次數直接由段落卡片數量決定，每 2 段合併為 1 批，最多不超過 7 批
+  const N = Math.min(7, Math.ceil(segments.length / 2));
 
   const targetBatchDuration = totalDuration / N;
   const batches: TermsBatch[] = [];
   let startIndex = 0;
 
   for (let b = 0; b < N - 1; b++) {
+    if (startIndex >= segments.length - 1) {
+      break;
+    }
     const idealEnd = (b + 1) * targetBatchDuration;
     
     // 在 [startIndex, segments.length - 2] 範圍內尋找最接近 idealEnd 的 segment 索引
@@ -572,6 +568,7 @@ export function parseSubtitlesText(text: string): SubtitleEntry[] {
   return subs;
 }
 
+
 export function parseTimestampToSeconds(ts: string): number {
   const clean = ts.trim().replace(',', '.');
   const parts = clean.split(':').map(Number);
@@ -595,20 +592,41 @@ export function parseTimestampToSeconds(ts: string): number {
 
 // Helper to determine caret offset inside contentEditable
 export function getCaretCharacterOffsetWithin(element: HTMLElement): number {
-  let caretOffset = 0;
-  const doc = element.ownerDocument;
-  const win = doc?.defaultView;
-  if (win && win.getSelection) {
-    const sel = win.getSelection();
-    if (sel && sel.rangeCount > 0) {
-      const range = sel.getRangeAt(0);
-      const preCaretRange = range.cloneRange();
-      preCaretRange.selectNodeContents(element);
-      preCaretRange.setEnd(range.endContainer, range.endOffset);
-      caretOffset = preCaretRange.toString().length;
+  const sel = element.ownerDocument?.defaultView?.getSelection();
+  if (!sel || sel.rangeCount === 0) return 0;
+  const range = sel.getRangeAt(0);
+  
+  let offset = 0;
+  let found = false;
+
+  function traverse(node: Node) {
+    if (found) return;
+
+    if (node === range.startContainer) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        offset += range.startOffset;
+      } else {
+        // If container is an element, range.startOffset is the child node index
+        for (let i = 0; i < range.startOffset; i++) {
+          offset += node.childNodes[i].textContent?.length || 0;
+        }
+      }
+      found = true;
+      return;
+    }
+
+    if (node.nodeType === Node.TEXT_NODE) {
+      offset += node.textContent?.length || 0;
+    } else {
+      for (let i = 0; i < node.childNodes.length; i++) {
+        traverse(node.childNodes[i]);
+        if (found) return;
+      }
     }
   }
-  return caretOffset;
+
+  traverse(element);
+  return offset;
 }
 
 // Extract YouTube Video ID from URL or return the raw ID if already 11 characters
@@ -648,4 +666,23 @@ export function formatSubtitlesToSRT(subtitles: SubtitleEntry[]): string {
     const endStr = formatSecondsToSRTTime(sub.start + sub.duration);
     return `${idx + 1}\n${startStr} --> ${endStr}\n${sub.text}`;
   }).join('\n\n');
+}
+
+export function cleanChineseWhitespace(text: string): string {
+  const cjkPattern = /([\u4e00-\u9fff\u3000-\u303f\uff00-\uffef])\s+([\u4e00-\u9fff\u3000-\u303f\uff00-\uffef])/g;
+  const cjkAlphaPattern = /([\u4e00-\u9fff\u3000-\u303f\uff00-\uffef])\s+([a-zA-Z0-9])/g;
+  const alphaCjkPattern = /([a-zA-Z0-9])\s+([\u4e00-\u9fff\u3000-\u303f\uff00-\uffef])/g;
+  const digitPattern = /(\d)\s+(\d)/g;
+
+  let cleaned = text;
+  let prev = "";
+  while (cleaned !== prev) {
+    prev = cleaned;
+    cleaned = cleaned
+      .replace(cjkPattern, '$1$2')
+      .replace(cjkAlphaPattern, '$1$2')
+      .replace(alphaCjkPattern, '$1$2')
+      .replace(digitPattern, '$1$2');
+  }
+  return cleaned;
 }

@@ -90,7 +90,7 @@ export const CostEstimation: React.FC<CostEstimationProps> = ({
                 <span>{estCostInfo.p1Calls} 次 (約 {estCostInfo.estOutputP1?.toLocaleString()} tokens)</span>
               </div>
               <div className="cost-details-row">
-                <span>術語次數 (每 60 分鐘)</span>
+                <span>術語次數 (每 2 段合併)</span>
                 <span>{estCostInfo.p2Calls} 次 (約 {estCostInfo.estOutputP2?.toLocaleString()} tokens)</span>
               </div>
               <div className="cost-details-row">

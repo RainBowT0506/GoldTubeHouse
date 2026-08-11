@@ -39,6 +39,8 @@ interface SegmentCardProps {
   copySegmentText: (segId: string, segment: Segment, withHeader: boolean) => void; // Callback to copy text
   handleSegmentTextChange: (segId: string, text: string) => void; // Callback to save text changes
   handleSegmentKeydown: (event: React.KeyboardEvent<HTMLDivElement>, seg: Segment) => void; // Keydown handler
+  noTimestamps?: boolean;
+  onChapterTitleChange?: (time: number, newTitle: string) => void;
 }
 
 /**
@@ -51,7 +53,9 @@ export const SegmentCard: React.FC<SegmentCardProps> = ({
   editedText,
   copySegmentText,
   handleSegmentTextChange,
-  handleSegmentKeydown
+  handleSegmentKeydown,
+  noTimestamps,
+  onChapterTitleChange
 }) => {
   const segId = seg.id || '';
   const initialText = cleanAndJoinSubtitles(seg.subtitles);
@@ -70,11 +74,42 @@ export const SegmentCard: React.FC<SegmentCardProps> = ({
               </>
             ) : (
               <>
-                # <span>{seg.chapterTitle}</span>
+                # <span
+                  className="segment-chapter-title-editable"
+                  contentEditable
+                  suppressContentEditableWarning
+                  onBlur={(e) => {
+                    const newTitle = e.currentTarget.innerText.trim();
+                    if (newTitle !== seg.chapterTitle) {
+                      onChapterTitleChange?.(seg.start, newTitle);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.nativeEvent.isComposing) return;
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      e.currentTarget.blur();
+                    }
+                  }}
+                  style={{
+                    borderBottom: '1px dashed rgba(255, 255, 255, 0.2)',
+                    padding: '0 4px',
+                    cursor: 'text',
+                    outline: 'none',
+                    display: 'inline-block',
+                    minWidth: '60px'
+                  }}
+                >
+                  {seg.chapterTitle}
+                </span>
               </>
             )}
           </span>
-          {seg.subTitle && <span className="segment-time-range">{seg.subTitle}</span>}
+          {noTimestamps ? (
+            <span className="segment-time-range">(共 {textToShow.length} 字)</span>
+          ) : (
+            seg.subTitle && <span className="segment-time-range">{seg.subTitle}</span>
+          )}
         </div>
         {!isLoading && (
           <div className="segment-actions">

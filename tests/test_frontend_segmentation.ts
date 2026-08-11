@@ -1,4 +1,4 @@
-import { generateSegments, resolveSubtitleOverlaps, groupSegmentsForTerms, getVideoId, Segment } from '../frontend/src/utils.ts';
+import { generateSegments, resolveSubtitleOverlaps, groupSegmentsForTerms, getVideoId, Segment, cleanChineseWhitespace } from '../frontend/src/utils.ts';
 
 
 // Mock subtitles for basic tests (realistically distributed)
@@ -279,15 +279,15 @@ const case2Segs = [
 ];
 const case2Batches = groupSegmentsForTerms(case2Segs, 9900);
 console.log(`[Case 2] 2:45:00 video batches count: ${case2Batches.length}`);
-if (case2Batches.length === 2) {
-  console.log("✅ PASS: Case 2 correctly generated 2 batches for 165 min video.");
+if (case2Batches.length === 1) {
+  console.log("✅ PASS: Case 2 correctly generated 1 batch for 165 min video.");
 } else {
-  console.error(`❌ FAIL: Case 2 expected 2 batches, but got ${case2Batches.length}!`);
+  console.error(`❌ FAIL: Case 2 expected 1 batch, but got ${case2Batches.length}!`);
   process.exit(1);
 }
 
 // Case 3: Video length 2:46:00 (166m = 9960s)
-// Expected: 166 > 165 -> 3 batches.
+// Expected: 3 segments -> Math.ceil(3 / 2) = 2 batches.
 const case3Segs = [
   createMockSegment(0, 3000, "Ch1"),
   createMockSegment(3000, 6000, "Ch2"),
@@ -295,15 +295,15 @@ const case3Segs = [
 ];
 const case3Batches = groupSegmentsForTerms(case3Segs, 9960);
 console.log(`[Case 3] 2:46:00 video batches count: ${case3Batches.length}`);
-if (case3Batches.length === 3) {
-  console.log("✅ PASS: Case 3 correctly generated 3 batches for 166 min video.");
+if (case3Batches.length === 2) {
+  console.log("✅ PASS: Case 3 correctly generated 2 batches for 166 min video.");
 } else {
-  console.error(`❌ FAIL: Case 3 expected 3 batches, but got ${case3Batches.length}!`);
+  console.error(`❌ FAIL: Case 3 expected 2 batches, but got ${case3Batches.length}!`);
   process.exit(1);
 }
 
 // Case 4: Video length 4:30:00 (270m = 16200s)
-// Expected: 225 < 270 <= 285 -> 4 batches.
+// Expected: 4 segments -> Math.ceil(4 / 2) = 2 batches.
 const case4Segs = [
   createMockSegment(0, 4000, "Ch1"),
   createMockSegment(4000, 8000, "Ch2"),
@@ -312,10 +312,10 @@ const case4Segs = [
 ];
 const case4Batches = groupSegmentsForTerms(case4Segs, 16200);
 console.log(`[Case 4] 4:30:00 video batches count: ${case4Batches.length}`);
-if (case4Batches.length === 4) {
-  console.log("✅ PASS: Case 4 correctly generated 4 batches for 270 min video.");
+if (case4Batches.length === 2) {
+  console.log("✅ PASS: Case 4 correctly generated 2 batches for 270 min video.");
 } else {
-  console.error(`❌ FAIL: Case 4 expected 4 batches, but got ${case4Batches.length}!`);
+  console.error(`❌ FAIL: Case 4 expected 2 batches, but got ${case4Batches.length}!`);
   process.exit(1);
 }
 
@@ -394,6 +394,21 @@ for (const item of testUrls) {
     console.error(`❌ FAIL: getVideoId("${item.url}") expected "${item.expected}", but got "${result}"!`);
     process.exit(1);
   }
+}
+
+// ----------------------------------------------------
+// Test 13: cleanChineseWhitespace utility test
+// ----------------------------------------------------
+console.log("\n[Test 13] cleanChineseWhitespace simulation:");
+const rawChineseText = "好 那 首 先 呢 很 高 興 大 家 來 報 名 我 們 今 年 的 研 究 攻略 營 Google Search 2 0 1 1 年";
+const expectedCleaned = "好那首先呢很高興大家來報名我們今年的研究攻略營Google Search 2011年";
+const cleanedResult = cleanChineseWhitespace(rawChineseText);
+
+if (cleanedResult === expectedCleaned) {
+  console.log(`✅ PASS: cleanChineseWhitespace successfully cleaned spaces and preserved English spaces.`);
+} else {
+  console.error(`❌ FAIL: Expected "${expectedCleaned}", but got "${cleanedResult}"!`);
+  process.exit(1);
 }
 
 console.log("\n🎉 All frontend segmentation, boundary, entry-split, and professional terms batching tests passed!");

@@ -11,7 +11,8 @@ import {
   getCaretCharacterOffsetWithin,
   getVideoId,
   groupSegmentsForTerms,
-  formatSubtitlesToSRT
+  formatSubtitlesToSRT,
+  cleanChineseWhitespace
 } from './utils';
 import {
   DEFAULT_INTERVAL_MIN,
@@ -77,6 +78,17 @@ const markVideoAsGenerated = (videoId: string) => {
   }
 };
 
+const generateManualVideoId = (title: string, text: string) => {
+  const combined = title + '_' + text.slice(0, 10000);
+  let hash = 0;
+  for (let i = 0; i < combined.length; i++) {
+    const char = combined.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash |= 0;
+  }
+  return 'manual_' + Math.abs(hash).toString(36);
+};
+
 function App() {
   // --- States ---
   const [screen, setScreen] = useState<'home' | 'loading' | 'app'>(() => {
@@ -87,7 +99,9 @@ function App() {
     const saved = localStorage.getItem('gth_ytUrl_v2');
     return saved !== null ? saved : '';
   });
-  const [videoData, setVideoData] = useState<any | null>(() => {
+
+  // Calculate restored video data first
+  const initialVideoData = (() => {
     const data = localStorage.getItem('gth_videoData_v2');
     if (data) {
       try {
@@ -118,40 +132,72 @@ function App() {
       }
     }
     return null;
-  });
+  })();
+
+  const initialVideoId = initialVideoData?.video_id || '';
+
+  const [videoData, setVideoData] = useState<any | null>(initialVideoData);
+
   const [chaptersInput, setChaptersInput] = useState<string>(() => {
+    if (initialVideoId) {
+      const saved = localStorage.getItem(`gth_chaptersInput_${initialVideoId}`);
+      if (saved !== null) return saved;
+    }
     const saved = localStorage.getItem('gth_chaptersInput_v2');
     return saved !== null ? saved : '';
   });
+
   const [userCustomSplits, setUserCustomSplits] = useState<ChapterSplit[]>(() => {
+    if (initialVideoId) {
+      const saved = localStorage.getItem(`gth_userCustomSplits_${initialVideoId}`);
+      if (saved) return JSON.parse(saved);
+    }
     const data = localStorage.getItem('gth_userCustomSplits');
     return data ? JSON.parse(data) : [];
   });
+
   const [collapsedChapters, setCollapsedChapters] = useState<Set<string>>(() => {
     try {
       const data = localStorage.getItem('gth_collapsedChapters');
       return data ? new Set<string>(JSON.parse(data)) : new Set<string>();
     } catch { return new Set<string>(); }
   });
+
   const [collapsedAIGroups, setCollapsedAIGroups] = useState<Set<string>>(() => {
     try {
       const data = localStorage.getItem('gth_collapsedAIGroups');
       return data ? new Set<string>(JSON.parse(data)) : new Set<string>();
     } catch { return new Set<string>(); }
   });
+
   const [removedBoundaryTimes, setRemovedBoundaryTimes] = useState<number[]>(() => {
+    if (initialVideoId) {
+      const saved = localStorage.getItem(`gth_removedBoundaryTimes_${initialVideoId}`);
+      if (saved) return JSON.parse(saved);
+    }
     try {
       const data = localStorage.getItem('gth_removedBoundaryTimes');
       return data ? JSON.parse(data) : [];
     } catch { return []; }
   });
+
   const [editedSegmentTexts, setEditedSegmentTexts] = useState<Record<string, string>>(() => {
+    if (initialVideoId) {
+      const saved = localStorage.getItem(`gth_editedSegmentTexts_${initialVideoId}`);
+      if (saved) return JSON.parse(saved);
+    }
     const data = localStorage.getItem('gth_editedSegmentTexts');
     return data ? JSON.parse(data) : {};
   });
+
   const [batchStartIdx, setBatchStartIdx] = useState<number>(0);
   const [batchEndIdx, setBatchEndIdx] = useState<number>(0);
+
   const [aiNotesResult, setAiNotesResult] = useState<AIBlock[] | null>(() => {
+    if (initialVideoId) {
+      const saved = localStorage.getItem(`gth_aiNotesResult_${initialVideoId}`);
+      if (saved) return JSON.parse(saved);
+    }
     try {
       const data = localStorage.getItem('gth_aiNotesResult');
       if (!data) return null;
@@ -169,7 +215,12 @@ function App() {
       return null;
     }
   });
+
   const [aiTermsResult, setAiTermsResult] = useState<AIBlock[] | null>(() => {
+    if (initialVideoId) {
+      const saved = localStorage.getItem(`gth_aiTermsResult_${initialVideoId}`);
+      if (saved) return JSON.parse(saved);
+    }
     try {
       const data = localStorage.getItem('gth_aiTermsResult');
       if (!data) return null;
@@ -187,6 +238,22 @@ function App() {
       return null;
     }
   });
+
+  const loadVideoState = (videoId: string) => {
+    const savedChapters = localStorage.getItem(`gth_chaptersInput_${videoId}`);
+    const savedSplits = localStorage.getItem(`gth_userCustomSplits_${videoId}`);
+    const savedTexts = localStorage.getItem(`gth_editedSegmentTexts_${videoId}`);
+    const savedBoundaries = localStorage.getItem(`gth_removedBoundaryTimes_${videoId}`);
+    const savedNotes = localStorage.getItem(`gth_aiNotesResult_${videoId}`);
+    const savedTerms = localStorage.getItem(`gth_aiTermsResult_${videoId}`);
+
+    setChaptersInput(savedChapters !== null ? savedChapters : '');
+    setUserCustomSplits(savedSplits ? JSON.parse(savedSplits) : []);
+    setEditedSegmentTexts(savedTexts ? JSON.parse(savedTexts) : {});
+    setRemovedBoundaryTimes(savedBoundaries ? JSON.parse(savedBoundaries) : []);
+    setAiNotesResult(savedNotes ? JSON.parse(savedNotes) : null);
+    setAiTermsResult(savedTerms ? JSON.parse(savedTerms) : null);
+  };
   const [openaiKey, setOpenaiKey] = useState<string>(() => {
     return localStorage.getItem('gth_openaiKey') || localStorage.getItem('openai_api_key') || '';
   });
@@ -249,6 +316,8 @@ function App() {
   const [showImportModal, setShowImportModal] = useState<boolean>(false);
   const [importTitle, setImportTitle] = useState<string>('');
   const [importText, setImportText] = useState<string>('');
+  const [importYtUrl, setImportYtUrl] = useState<string>('');
+  const [importMode, setImportMode] = useState<'single' | 'playlist'>('single');
 
   // --- Effects for checkEnvKey ---
   useEffect(() => {
@@ -265,7 +334,39 @@ function App() {
     };
     checkEnvKey();
   }, []);
+  // --- Global Client Error Logger ---
+  useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      fetch('/api/log-client-error', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: event.message || 'Unknown error',
+          stack: event.error?.stack || null,
+          url: window.location.href
+        })
+      }).catch(err => console.error('Failed to send error to backend:', err));
+    };
 
+    const handleRejection = (event: PromiseRejectionEvent) => {
+      fetch('/api/log-client-error', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: event.reason?.message || String(event.reason) || 'Promise rejection',
+          stack: event.reason?.stack || null,
+          url: window.location.href
+        })
+      }).catch(err => console.error('Failed to send rejection to backend:', err));
+    };
+
+    window.addEventListener('error', handleError);
+    window.addEventListener('unhandledrejection', handleRejection);
+    return () => {
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('unhandledrejection', handleRejection);
+    };
+  }, []);
   // --- Effects for State Persistence ---
   useEffect(() => {
     localStorage.setItem('gth_screen', screen);
@@ -285,19 +386,31 @@ function App() {
 
   useEffect(() => {
     localStorage.setItem('gth_chaptersInput_v2', chaptersInput);
-  }, [chaptersInput]);
+    if (videoData?.video_id) {
+      localStorage.setItem(`gth_chaptersInput_${videoData.video_id}`, chaptersInput);
+    }
+  }, [chaptersInput, videoData?.video_id]);
 
   useEffect(() => {
     localStorage.setItem('gth_userCustomSplits', JSON.stringify(userCustomSplits));
-  }, [userCustomSplits]);
+    if (videoData?.video_id) {
+      localStorage.setItem(`gth_userCustomSplits_${videoData.video_id}`, JSON.stringify(userCustomSplits));
+    }
+  }, [userCustomSplits, videoData?.video_id]);
 
   useEffect(() => {
     localStorage.setItem('gth_editedSegmentTexts', JSON.stringify(editedSegmentTexts));
-  }, [editedSegmentTexts]);
+    if (videoData?.video_id) {
+      localStorage.setItem(`gth_editedSegmentTexts_${videoData.video_id}`, JSON.stringify(editedSegmentTexts));
+    }
+  }, [editedSegmentTexts, videoData?.video_id]);
 
   useEffect(() => {
     localStorage.setItem('gth_removedBoundaryTimes', JSON.stringify(removedBoundaryTimes));
-  }, [removedBoundaryTimes]);
+    if (videoData?.video_id) {
+      localStorage.setItem(`gth_removedBoundaryTimes_${videoData.video_id}`, JSON.stringify(removedBoundaryTimes));
+    }
+  }, [removedBoundaryTimes, videoData?.video_id]);
 
   useEffect(() => {
     localStorage.setItem('gth_collapsedAIGroups', JSON.stringify([...collapsedAIGroups]));
@@ -306,18 +419,30 @@ function App() {
   useEffect(() => {
     if (aiNotesResult) {
       localStorage.setItem('gth_aiNotesResult', JSON.stringify(aiNotesResult));
+      if (videoData?.video_id) {
+        localStorage.setItem(`gth_aiNotesResult_${videoData.video_id}`, JSON.stringify(aiNotesResult));
+      }
     } else {
       localStorage.removeItem('gth_aiNotesResult');
+      if (videoData?.video_id) {
+        localStorage.removeItem(`gth_aiNotesResult_${videoData.video_id}`);
+      }
     }
-  }, [aiNotesResult]);
+  }, [aiNotesResult, videoData?.video_id]);
 
   useEffect(() => {
     if (aiTermsResult) {
       localStorage.setItem('gth_aiTermsResult', JSON.stringify(aiTermsResult));
+      if (videoData?.video_id) {
+        localStorage.setItem(`gth_aiTermsResult_${videoData.video_id}`, JSON.stringify(aiTermsResult));
+      }
     } else {
       localStorage.removeItem('gth_aiTermsResult');
+      if (videoData?.video_id) {
+        localStorage.removeItem(`gth_aiTermsResult_${videoData.video_id}`);
+      }
     }
-  }, [aiTermsResult]);
+  }, [aiTermsResult, videoData?.video_id]);
 
   useEffect(() => {
     localStorage.setItem('gth_openaiKey', openaiKey);
@@ -342,18 +467,6 @@ function App() {
   useEffect(() => {
     localStorage.setItem('gth_showCostEstimation', String(showCostEstimation));
   }, [showCostEstimation]);
-
-  useEffect(() => {
-    if (videoData && videoData.video_id) {
-      const savedVideoId = localStorage.getItem('gth_chaptersVideoId_v2');
-      if (savedVideoId !== videoData.video_id) {
-        setChaptersInput('');
-        localStorage.setItem('gth_chaptersVideoId_v2', videoData.video_id);
-      }
-    } else {
-      localStorage.removeItem('gth_chaptersVideoId_v2');
-    }
-  }, [videoData]);
 
   // --- Toast Trigger ---
   const showToast = (message: string) => {
@@ -416,7 +529,8 @@ function App() {
       settingsInterval * 60,
       settingsNoSegment * 60,
       settingsSubSegment * 60,
-      [] // 傳入空陣列，避免實體摺疊合併卡片
+      [], // 傳入空陣列，避免實體摺疊合併卡片
+      !!videoData?.no_timestamps
     );
 
     if (videoData.is_playlist && videoData.videos) {
@@ -460,18 +574,18 @@ function App() {
   // 範圍合併的下拉選單選項
   const rangeOptions = useMemo(() => {
     return flatActiveSegments.map((seg, index) => {
-      const timeStr = seg.subTitle || `${formatTime(seg.start)} ~ ${formatTime(seg.end)}`;
+      const timeStr = videoData?.no_timestamps ? `段落 ${index + 1}` : (seg.subTitle || `${formatTime(seg.start)} ~ ${formatTime(seg.end)}`);
       const diffSecs = seg.end - seg.start;
       const diffMin = Math.floor(diffSecs / 60);
       const diffSec = Math.floor(diffSecs % 60);
-      const durationStr = diffSec > 0 ? `${diffMin}分${diffSec}秒` : `${diffMin}分`;
+      const durationStr = videoData?.no_timestamps ? '' : (diffSec > 0 ? ` (${diffMin}分${diffSec}秒)` : ` (${diffMin}分)`);
       return {
         index,
         time: seg.start,
-        label: `${timeStr} (${durationStr}) - ${seg.chapterTitle}${seg.isSubSegment ? ' (細分區間)' : ''}`
+        label: `${timeStr}${durationStr} - ${seg.chapterTitle}${seg.isSubSegment ? ' (細分區間)' : ''}`
       };
     });
-  }, [flatActiveSegments]);
+  }, [flatActiveSegments, videoData]);
 
   // 當扁平卡片變動時，自動檢查並過濾掉不再存在的邊界合併時間點，防止舊影片或舊章節的合併狀態殘留
   useEffect(() => {
@@ -623,11 +737,8 @@ function App() {
     let currentGroup: AIGroup | null = null;
 
     flatActiveSegments.forEach((seg, index) => {
-      // 若是短影片且無自訂分割，則一律合併至前一個區塊以進行單次 AI 整理
-      // 否則，若目前群組所含時間未滿 settingsInterval (分)，則自動合併，以減少過多零碎的 AI 呼叫。
-      const isMergedWithPrev = isShortVideo
-        ? index > 0
-        : (index > 0 && (removedBoundaryTimes.includes(seg.start) || (currentGroup && seg.start - currentGroup.start < settingsInterval * 60)));
+      // 只有在使用者點選「合併」記錄在 removedBoundaryTimes 的時間點時才進行合併，以確保 AI 批次與 UI 卡片完全一致
+      const isMergedWithPrev = index > 0 && removedBoundaryTimes.includes(seg.start);
 
       const segText = editedSegmentTexts[seg.id || ''] !== undefined
         ? editedSegmentTexts[seg.id || '']
@@ -672,23 +783,32 @@ function App() {
     return groups;
   }, [flatActiveSegments, removedBoundaryTimes, editedSegmentTexts, videoData, settingsNoSegment, userCustomSplits, isShortVideo]);
 
-  const activeSegmentsWithEdits = useMemo<Segment[]>(() => {
-    return flatActiveSegments.map(seg => {
-      const segId = seg.id || '';
-      if (editedSegmentTexts[segId] !== undefined) {
-        return {
-          ...seg,
-          subtitles: [{ text: editedSegmentTexts[segId], start: seg.start, duration: seg.end - seg.start }]
-        };
-      }
-      return seg;
+  const aiGroupsAsSegments = useMemo<Segment[]>(() => {
+    return aiGroups.map((g) => {
+      const allSubs: any[] = [];
+      g.segments.forEach((seg) => {
+        const segId = seg.id || '';
+        if (editedSegmentTexts[segId] !== undefined) {
+          allSubs.push({ text: editedSegmentTexts[segId], start: seg.start, duration: seg.end - seg.start });
+        } else if (seg.subtitles) {
+          allSubs.push(...seg.subtitles);
+        }
+      });
+      return {
+        id: g.id,
+        chapterTitle: g.title,
+        subTitle: '',
+        start: g.start,
+        end: g.end,
+        subtitles: allSubs
+      };
     });
-  }, [flatActiveSegments, editedSegmentTexts]);
+  }, [aiGroups, editedSegmentTexts]);
 
   const aiTermsGroups = useMemo<TermsBatch[]>(() => {
     const totalDur = videoData ? videoData.duration : 0;
-    return groupSegmentsForTerms(activeSegmentsWithEdits, totalDur);
-  }, [activeSegmentsWithEdits, videoData]);
+    return groupSegmentsForTerms(aiGroupsAsSegments, totalDur);
+  }, [aiGroupsAsSegments, videoData]);
 
 
 
@@ -1055,7 +1175,7 @@ function App() {
               video_id: videoId,
               title: title,
               duration: 600,
-              thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+              thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
               loading: true,
               url: url
             }],
@@ -1113,12 +1233,10 @@ function App() {
           subtitles: flatSubtitles.map((s, idx) => ({ ...s, globalIndex: idx }))
         };
 
-        setUserCustomSplits([]);
-        setEditedSegmentTexts({});
-        setChaptersInput(tempChaptersInput.trim());
-        setAiNotesResult(null);
-        setAiTermsResult(null);
-        setRemovedBoundaryTimes([]);
+        loadVideoState(playlistVideoData.video_id);
+        if (localStorage.getItem(`gth_chaptersInput_${playlistVideoData.video_id}`) === null) {
+          setChaptersInput(tempChaptersInput.trim());
+        }
         setActiveTab('edit');
         setShowCostEstimation(false);
 
@@ -1149,7 +1267,7 @@ function App() {
     const videoId = getVideoId(ytUrl);
     if (!isPlaylist && videoId && isDuplicateVideo(videoId)) {
       const confirmLoad = window.confirm(
-        '偵測到此影片之前已整理過重點筆記。\n是否確定要再次載入此影片？'
+        '偵測到此影片之前已整理過重點筆記。\n是否確定要再次載入此影片並還原歷史整理紀錄？'
       );
       if (!confirmLoad) {
         return;
@@ -1221,12 +1339,10 @@ function App() {
             subtitles: flatSubtitles.map((s, idx) => ({ ...s, globalIndex: idx }))
           };
 
-          setUserCustomSplits([]);
-          setEditedSegmentTexts({});
-          setChaptersInput(tempChaptersInput.trim());
-          setAiNotesResult(null);
-          setAiTermsResult(null);
-          setRemovedBoundaryTimes([]);
+          loadVideoState(playlistVideoData.video_id);
+          if (localStorage.getItem(`gth_chaptersInput_${playlistVideoData.video_id}`) === null) {
+            setChaptersInput(tempChaptersInput.trim());
+          }
           setActiveTab('edit');
           setShowCostEstimation(false);
 
@@ -1258,7 +1374,7 @@ function App() {
       video_id: videoId,
       title: '正在下載影片資訊...',
       duration: 600,
-      thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+      thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
       loading: true,
       url: ytUrl
     };
@@ -1269,7 +1385,7 @@ function App() {
       title: '正在載入...',
       is_playlist: false,
       duration: 600,
-      thumbnail: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+      thumbnail: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
       channel: '正在載入',
       videos: [singleVideo],
       subtitles: [{
@@ -1279,12 +1395,7 @@ function App() {
       }]
     };
 
-    setUserCustomSplits([]);
-    setEditedSegmentTexts({});
-    setChaptersInput('');
-    setAiNotesResult(null);
-    setAiTermsResult(null);
-    setRemovedBoundaryTimes([]);
+    loadVideoState(videoId);
     setActiveTab('edit');
     setShowCostEstimation(false);
 
@@ -1322,7 +1433,7 @@ function App() {
         for (let i = 0; i < fileList.length; i++) {
           const file = fileList[i];
           const text = await readFileAsText(file);
-          const parsedSubs = parseSubtitlesText(text);
+          const parsedSubs = parseSubtitlesText(cleanChineseWhitespace(text));
           if (parsedSubs.length === 0) {
             continue;
           }
@@ -1366,30 +1477,46 @@ function App() {
           throw new Error("未能從選取的文件中解析出任何有效字幕。");
         }
 
+        // Try extracting YT ID for playlist if URL is specified
+        let resolvedVideoId = '';
+        let resolvedThumbnail = 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=120&auto=format&fit=crop&q=60';
+        if (importYtUrl.trim()) {
+          const vid = getVideoId(importYtUrl.trim());
+          if (vid && vid !== 'null') {
+            resolvedVideoId = vid;
+            resolvedThumbnail = `https://img.youtube.com/vi/${vid}/hqdefault.jpg`;
+          }
+        }
+
+        const targetVideoId = resolvedVideoId || generateManualVideoId(importTitle.trim() || '手動匯入播放清單', flatSubtitles.map(s => s.text).join(' '));
+
         const manualVideoData = {
           status: 'success',
-          video_id: 'manual_list_' + Date.now(),
+          video_id: targetVideoId,
           title: importTitle.trim() || '手動匯入播放清單',
           is_playlist: true,
           duration: currentOffset,
-          thumbnail: 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=120&auto=format&fit=crop&q=60',
+          thumbnail: resolvedThumbnail,
           channel: '手動匯入',
           videos: videos,
-          subtitles: resolveSubtitleOverlaps(flatSubtitles).map((s, idx) => ({ ...s, globalIndex: idx }))
+          subtitles: resolveSubtitleOverlaps(flatSubtitles).map((s, idx) => ({ ...s, globalIndex: idx })),
+          no_timestamps: fileList.every(f => f.name.toLowerCase().endsWith('.txt')),
+          is_manual_import: true
         };
 
-        setUserCustomSplits([]);
-        setEditedSegmentTexts({});
-        setChaptersInput(tempChaptersInput.trim());
-        setAiNotesResult(null);
-        setAiTermsResult(null);
-        setRemovedBoundaryTimes([]);
+        loadVideoState(targetVideoId);
+        if (localStorage.getItem(`gth_chaptersInput_${targetVideoId}`) === null) {
+          setChaptersInput(tempChaptersInput.trim());
+        }
         setActiveTab('edit');
         setShowCostEstimation(false);
 
         setVideoData(manualVideoData);
         setScreen('app');
         setShowImportModal(false);
+        setImportTitle('');
+        setImportText('');
+        setImportYtUrl('');
         showToast(`✅ 成功匯入播放清單！共 ${videos.length} 部影片。`);
       } catch (err: any) {
         setScreen('home');
@@ -1404,119 +1531,196 @@ function App() {
     }
 
     try {
-      const sections = importText.split(/(?=^#\s+)/m);
-      if (sections.length > 1) {
-        const videos: any[] = [];
-        let currentOffset = 0;
-        let tempChaptersInput = "";
-        const flatSubtitles: any[] = [];
-
-        const formatSecondsToHHMMSS = (seconds: number): string => {
-          const h = Math.floor(seconds / 3600);
-          const m = Math.floor((seconds % 3600) / 60);
-          const s = Math.floor(seconds % 60);
-          const pad = (num: number) => String(num).padStart(2, '0');
-          return `${pad(h)}:${pad(m)}:${pad(s)}`;
-        };
-
-        sections.forEach((sec, idx) => {
-          const lines = sec.split('\n');
-          const headerLine = lines[0].trim();
-          const title = headerLine.replace(/^#\s+/, "").trim() || `影片 ${idx + 1}`;
-          const content = lines.slice(1).join('\n').trim();
-          if (!content) return;
-
-          const parsedSubs = parseSubtitlesText(content);
-          if (parsedSubs.length === 0) return;
-
-          let duration = 0;
-          if (parsedSubs.length > 0) {
-            const lastSub = parsedSubs[parsedSubs.length - 1];
-            duration = Math.ceil(lastSub.start + lastSub.duration);
-          }
-
-          const timeStr = formatSecondsToHHMMSS(currentOffset);
-          tempChaptersInput += `${timeStr} ${title}\n`;
-
-          const shiftedSubs = parsedSubs.map((s: any) => ({
-            ...s,
-            start: s.start + currentOffset
-          }));
-          flatSubtitles.push(...shiftedSubs);
-
-          videos.push({
-            video_id: `manual_text_v_${idx}_${Date.now()}`,
-            title: title,
-            duration: duration,
-            subtitles: parsedSubs
-          });
-
-          currentOffset += duration;
-        });
-
-        if (videos.length > 0) {
-          const manualVideoData = {
-            status: 'success',
-            video_id: 'manual_list_' + Date.now(),
-            title: importTitle.trim() || '手動匯入播放清單',
-            is_playlist: true,
-            duration: currentOffset,
-            thumbnail: 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=120&auto=format&fit=crop&q=60',
-            channel: '手動匯入',
-            videos: videos,
-            subtitles: resolveSubtitleOverlaps(flatSubtitles).map((s, idx) => ({ ...s, globalIndex: idx }))
-          };
-
-          setUserCustomSplits([]);
-          setEditedSegmentTexts({});
-          setChaptersInput(tempChaptersInput.trim());
-          setAiNotesResult(null);
-          setAiTermsResult(null);
-          setRemovedBoundaryTimes([]);
-          setActiveTab('edit');
-          setShowCostEstimation(false);
-
-          setVideoData(manualVideoData);
-          setScreen('app');
-          setShowImportModal(false);
-          setImportTitle('');
-          setImportText('');
-          showToast(`✅ 成功手動匯入播放清單！共 ${videos.length} 部影片。`);
-          return;
+      const cleanedImportText = cleanChineseWhitespace(importText);
+      // Try extracting YT ID
+      let resolvedVideoId = '';
+      let resolvedThumbnail = 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=120&auto=format&fit=crop&q=60';
+      if (importYtUrl.trim()) {
+        const vid = getVideoId(importYtUrl.trim());
+        if (vid && vid !== 'null') {
+          resolvedVideoId = vid;
+          resolvedThumbnail = `https://img.youtube.com/vi/${vid}/hqdefault.jpg`;
         }
       }
 
-      const parsedSubs = parseSubtitlesText(importText);
+      if (importMode === 'playlist') {
+        const sections = cleanedImportText.split(/(?=^#\s+)/m);
+        if (sections.length > 1) {
+          const videos: any[] = [];
+          let currentOffset = 0;
+          let tempChaptersInput = "";
+          const flatSubtitles: any[] = [];
+
+          const formatSecondsToHHMMSS = (seconds: number): string => {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = Math.floor(seconds % 60);
+            const pad = (num: number) => String(num).padStart(2, '0');
+            return `${pad(h)}:${pad(m)}:${pad(s)}`;
+          };
+
+          sections.forEach((sec, idx) => {
+            const lines = sec.split('\n');
+            const headerLine = lines[0].trim();
+            const title = headerLine.replace(/^#\s+/, "").trim() || `影片 ${idx + 1}`;
+            const content = lines.slice(1).join('\n').trim();
+            if (!content) return;
+
+            const parsedSubs = parseSubtitlesText(content);
+            if (parsedSubs.length === 0) return;
+
+            let duration = 0;
+            if (parsedSubs.length > 0) {
+              const lastSub = parsedSubs[parsedSubs.length - 1];
+              duration = Math.ceil(lastSub.start + lastSub.duration);
+            }
+
+            const timeStr = formatSecondsToHHMMSS(currentOffset);
+            tempChaptersInput += `${timeStr} ${title}\n`;
+
+            const shiftedSubs = parsedSubs.map((s: any) => ({
+              ...s,
+              start: s.start + currentOffset
+            }));
+            flatSubtitles.push(...shiftedSubs);
+
+            videos.push({
+              video_id: `manual_text_v_${idx}_${Date.now()}`,
+              title: title,
+              duration: duration,
+              subtitles: parsedSubs
+            });
+
+            currentOffset += duration;
+          });
+
+          if (videos.length > 0) {
+            const targetVideoId = resolvedVideoId || generateManualVideoId(importTitle.trim() || '手動匯入播放清單', importText);
+
+            const manualVideoData = {
+              status: 'success',
+              video_id: targetVideoId,
+              title: importTitle.trim() || '手動匯入播放清單',
+              is_playlist: true,
+              duration: currentOffset,
+              thumbnail: resolvedThumbnail,
+              channel: '手動匯入',
+              videos: videos,
+              subtitles: resolveSubtitleOverlaps(flatSubtitles).map((s, idx) => ({ ...s, globalIndex: idx })),
+              is_manual_import: true
+            };
+
+            loadVideoState(targetVideoId);
+            if (localStorage.getItem(`gth_chaptersInput_${targetVideoId}`) === null) {
+              setChaptersInput(tempChaptersInput.trim());
+            }
+            setActiveTab('edit');
+            setShowCostEstimation(false);
+
+            setVideoData(manualVideoData);
+            setScreen('app');
+            setShowImportModal(false);
+            setImportTitle('');
+            setImportText('');
+            setImportYtUrl('');
+            showToast(`✅ 成功手動匯入播放清單！共 ${videos.length} 部影片。`);
+            return;
+          }
+        }
+      }
+
+      // Single Video Mode (with automatic '#' heading to chapter conversion)
+      let parsedSubs: any[] = [];
+      let tempChaptersInput = "";
+      let duration = 0;
+
+      const formatSecondsToHHMMSS = (seconds: number): string => {
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = Math.floor(seconds % 60);
+        const pad = (num: number) => String(num).padStart(2, '0');
+        return `${pad(h)}:${pad(m)}:${pad(s)}`;
+      };
+
+      if (importMode === 'single') {
+        const lines = cleanedImportText.split(/\r?\n/);
+        let currentTime = 0;
+        const chapters: { time: number; title: string }[] = [];
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed) continue;
+
+          if (trimmed.startsWith('#')) {
+            const title = trimmed.replace(/^#+\s*/, '').trim();
+            if (title) {
+              chapters.push({ time: currentTime, title });
+            }
+          } else {
+            // Check if it's a timestamped subtitle line
+            const timePrefixRegex = /^(\d{1,2}:\d{2}(?::\d{2})?)\s+(.*)$/;
+            const match = trimmed.match(timePrefixRegex);
+            if (match) {
+              const timeStr = match[1];
+              const textContent = match[2].trim();
+              const seconds = parseTimeToSeconds(timeStr);
+              parsedSubs.push({
+                text: textContent,
+                start: seconds,
+                duration: 8
+              });
+              currentTime = seconds + 8;
+            } else {
+              parsedSubs.push({
+                text: trimmed,
+                start: currentTime,
+                duration: 8
+              });
+              currentTime += 8;
+            }
+          }
+        }
+        duration = currentTime;
+        tempChaptersInput = chapters
+          .map(c => `${formatSecondsToHHMMSS(c.time)} ${c.title}`)
+          .join('\n');
+      } else {
+        // Fallback or playlist mode with only 1 segment
+        parsedSubs = parseSubtitlesText(cleanedImportText);
+        if (parsedSubs.length > 0) {
+          const lastSub = parsedSubs[parsedSubs.length - 1];
+          duration = Math.ceil(lastSub.start + lastSub.duration);
+        }
+      }
+
       if (parsedSubs.length === 0) {
         alert('無法從貼上的文字中解析出任何字幕。');
         return;
       }
 
-      let duration = 0;
-      if (parsedSubs.length > 0) {
-        const lastSub = parsedSubs[parsedSubs.length - 1];
-        duration = Math.ceil(lastSub.start + lastSub.duration);
-      }
+      const isPlainTextInput = !importText.includes('-->') && !/^\d{1,2}:\d{2}/m.test(importText);
+
+      const targetVideoId = resolvedVideoId || generateManualVideoId(importTitle.trim() || '手動匯入影片', importText);
 
       const manualVideoData = {
         status: 'success',
-        video_id: 'manual_' + Date.now(),
+        video_id: targetVideoId,
         title: importTitle.trim() || '手動匯入影片',
         duration: duration,
-        thumbnail: 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=120&auto=format&fit=crop&q=60',
+        thumbnail: resolvedThumbnail,
         channel: '手動匯入',
         subtitles: resolveSubtitleOverlaps(parsedSubs).map((s: any, idx: number) => ({
           ...s,
           globalIndex: idx
-        }))
+        })),
+        no_timestamps: isPlainTextInput,
+        is_manual_import: true
       };
 
-      setUserCustomSplits([]);
-      setEditedSegmentTexts({});
-      setChaptersInput('');
-      setAiNotesResult(null);
-      setAiTermsResult(null);
-      setRemovedBoundaryTimes([]);
+      loadVideoState(targetVideoId);
+      if (localStorage.getItem(`gth_chaptersInput_${targetVideoId}`) === null) {
+        setChaptersInput(tempChaptersInput.trim());
+      }
       setActiveTab('edit');
       setShowCostEstimation(false);
 
@@ -1525,6 +1729,7 @@ function App() {
       setShowImportModal(false);
       setImportTitle('');
       setImportText('');
+      setImportYtUrl('');
       showToast('✅ 成功手動匯入字幕！');
     } catch (err: any) {
       alert('匯入失敗: ' + err.message);
@@ -1626,6 +1831,204 @@ function App() {
     });
   };
 
+  const handleSegmentKeydown = (event: React.KeyboardEvent<HTMLDivElement>, seg: Segment) => {
+    if (event.nativeEvent.isComposing) return;
+    if (event.key === 'Enter') {
+      event.preventDefault(); // Prevent line break in contentEditable
+
+      const element = event.currentTarget;
+      const caretOffset = getCaretCharacterOffsetWithin(element);
+
+      if (!seg.subtitles || seg.subtitles.length === 0) return;
+
+      const normalizeTextForComparison = (str: string) => {
+        return str.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+      };
+
+      const normalizedCurrent = normalizeTextForComparison(element.innerText);
+      const normalizedOriginal = normalizeTextForComparison(cleanAndJoinSubtitles(seg.subtitles));
+
+      let splitTime = -1;
+
+      if (normalizedCurrent !== normalizedOriginal && normalizedCurrent.length > 0) {
+        // --- 1. 使用者已經編輯過卡片文字，使用比例切分並整合新文字到 global subtitles ---
+        const targetCharOffset = Math.max(0, Math.min(caretOffset, normalizedCurrent.length));
+
+        if (targetCharOffset > 0 && targetCharOffset < normalizedCurrent.length) {
+          const part1 = normalizedCurrent.substring(0, targetCharOffset).trim();
+          const part2 = normalizedCurrent.substring(targetCharOffset).trim();
+
+          if (part1 && part2) {
+            const ratio = targetCharOffset / normalizedCurrent.length;
+            const totalDuration = seg.end - seg.start;
+            const duration1 = totalDuration * ratio;
+            const duration2 = totalDuration * (1 - ratio);
+            const start2 = seg.start + duration1;
+
+            const entry1 = {
+              start: seg.start,
+              duration: duration1,
+              text: part1
+            };
+            const entry2 = {
+              start: start2,
+              duration: duration2,
+              text: part2
+            };
+
+            // 尋找此 segment 原始字幕在 global videoData.subtitles 的第一個位置
+            let firstGlobalIdx = -1;
+            if (seg.subtitles[0] && seg.subtitles[0].globalIndex !== undefined) {
+              firstGlobalIdx = seg.subtitles[0].globalIndex;
+            } else if (seg.subtitles[0]) {
+              firstGlobalIdx = videoData.subtitles.findIndex(
+                (s: any) => Math.abs(s.start - seg.subtitles[0].start) < 0.01 && s.text === seg.subtitles[0].text
+              );
+            }
+
+            if (firstGlobalIdx !== -1) {
+              const updatedSubtitles = [...videoData.subtitles];
+              // 將原本 segment 底下的多個 entry 替換為兩個切分後的新 entry
+              updatedSubtitles.splice(firstGlobalIdx, seg.subtitles.length, entry1, entry2);
+
+              const reindexedSubtitles = updatedSubtitles.map((s, idx) => ({
+                ...s,
+                globalIndex: idx
+              }));
+
+              setVideoData({
+                ...videoData,
+                subtitles: reindexedSubtitles
+              });
+
+              // 清除對應卡片的本地編輯 state，因為已同步至全域 subtitles 中
+              setEditedSegmentTexts((prev) => {
+                const copy = { ...prev };
+                delete copy[seg.id || ''];
+                return copy;
+              });
+
+              splitTime = start2;
+            }
+          }
+        }
+      } else {
+        // --- 2. 文字未被修改，使用原本精確的逐條字幕 mapping 邏輯 ---
+        const { mappings } = getCleanedSubtitlesAndMappings(seg.subtitles);
+        if (mappings.length === 0) return;
+
+        let targetLocalIdx = -1;
+        let targetCharOffset = 0;
+
+        for (let i = 0; i < mappings.length; i++) {
+          const m = mappings[i];
+          if (caretOffset >= m.textStart && caretOffset <= m.textEnd) {
+            targetLocalIdx = m.entryIndex;
+            targetCharOffset = caretOffset - m.textStart;
+            break;
+          }
+          if (i < mappings.length - 1) {
+            const nextM = mappings[i + 1];
+            if (caretOffset > m.textEnd && caretOffset < nextM.textStart) {
+              targetLocalIdx = m.entryIndex;
+              targetCharOffset = m.textEnd - m.textStart;
+              break;
+            }
+          }
+        }
+
+        if (targetLocalIdx === -1) {
+          const lastM = mappings[mappings.length - 1];
+          targetLocalIdx = lastM.entryIndex;
+          targetCharOffset = lastM.textEnd - lastM.textStart;
+        }
+
+        const targetEntry = seg.subtitles[targetLocalIdx];
+        const cleanText = targetEntry.text.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+
+        splitTime = targetEntry.start;
+
+        if (targetCharOffset > 0 && targetCharOffset < cleanText.length) {
+          const part1 = cleanText.substring(0, targetCharOffset).trim();
+          const part2 = cleanText.substring(targetCharOffset).trim();
+
+          if (part1 && part2) {
+            const ratio = part1.length / cleanText.length;
+            const duration1 = targetEntry.duration * ratio;
+            const duration2 = targetEntry.duration * (1 - ratio);
+            const start2 = targetEntry.start + duration1;
+
+            const entry1 = {
+              start: targetEntry.start,
+              duration: duration1,
+              text: part1
+            };
+            const entry2 = {
+              start: start2,
+              duration: duration2,
+              text: part2
+            };
+
+            let globalIdx = -1;
+            if (targetEntry.globalIndex !== undefined) {
+              globalIdx = targetEntry.globalIndex;
+            } else {
+              globalIdx = videoData.subtitles.findIndex(
+                (s: any) => Math.abs(s.start - targetEntry.start) < 0.01 && s.text === targetEntry.text
+              );
+            }
+
+            if (globalIdx !== -1) {
+              const updatedSubtitles = [...videoData.subtitles];
+              updatedSubtitles.splice(globalIdx, 1, entry1, entry2);
+              
+              const reindexedSubtitles = updatedSubtitles.map((s, idx) => ({
+                ...s,
+                globalIndex: idx
+              }));
+
+              setVideoData({
+                ...videoData,
+                subtitles: reindexedSubtitles
+              });
+
+              // 清除對應卡片的本地編輯 state，避免快取干擾
+              setEditedSegmentTexts((prev) => {
+                const copy = { ...prev };
+                delete copy[seg.id || ''];
+                return copy;
+              });
+
+              splitTime = start2;
+            }
+          }
+        } else if (targetCharOffset >= cleanText.length) {
+          if (targetLocalIdx + 1 < seg.subtitles.length) {
+            splitTime = seg.subtitles[targetLocalIdx + 1].start;
+          } else {
+            showToast('⚠️ 請在區塊內部的字句中間或句尾進行分割。');
+            return;
+          }
+        } else {
+          splitTime = targetEntry.start;
+        }
+      }
+
+      if (splitTime === -1) {
+        showToast('⚠️ 請在區塊內部的字句中間或句尾進行分割。');
+        return;
+      }
+
+      // Add to custom splits
+      const newSplit: ChapterSplit = {
+        time: splitTime,
+        title: '' // unnamed custom split
+      };
+      setUserCustomSplits((prev) => [...prev, newSplit].sort((a, b) => a.time - b.time));
+      showToast('✂️ 手動分割成功！後續時段已向後推移。');
+    }
+  };
+
   const handleMergeWithNext = (nextChapterStartTime: number) => {
     console.log('[Merge Debug] handleMergeWithNext called with nextChapterStartTime:', nextChapterStartTime, 'type:', typeof nextChapterStartTime);
     setRemovedBoundaryTimes(prev => {
@@ -1692,127 +2095,64 @@ function App() {
     showToast(`已設定預設區間為 ${minutes} 分鐘。`);
   };
 
-  const handleSegmentKeydown = (event: React.KeyboardEvent<HTMLDivElement>, seg: Segment) => {
-    if (event.key === 'Enter') {
-      event.preventDefault(); // Prevent line break in contentEditable
+  const handleRenameChapter = (time: number, newTitle: string) => {
+    const customIdx = userCustomSplits.findIndex(c => c.time === time);
+    if (customIdx >= 0) {
+      setUserCustomSplits(prev => {
+        const next = [...prev];
+        next[customIdx] = { ...next[customIdx], title: newTitle };
+        return next;
+      });
+      showToast('已更新自訂切分點名稱！');
+      return;
+    }
 
-      const element = event.currentTarget;
-      const caretOffset = getCaretCharacterOffsetWithin(element);
+    const lines = chaptersInput.split('\n');
+    const timeRegex = /(\d{1,2}:\d{2}(?::\d{2})?)/;
+    let updated = false;
 
-      if (!seg.subtitles || seg.subtitles.length === 0) return;
-
-      const { mappings } = getCleanedSubtitlesAndMappings(seg.subtitles);
-      if (mappings.length === 0) return;
-
-      let targetLocalIdx = -1;
-      let targetCharOffset = 0;
-
-      // Find which mapping contains the caretOffset
-      for (let i = 0; i < mappings.length; i++) {
-        const m = mappings[i];
-        if (caretOffset >= m.textStart && caretOffset <= m.textEnd) {
-          targetLocalIdx = m.entryIndex;
-          targetCharOffset = caretOffset - m.textStart;
-          break;
-        }
-        if (i < mappings.length - 1) {
-          const nextM = mappings[i + 1];
-          if (caretOffset > m.textEnd && caretOffset < nextM.textStart) {
-            targetLocalIdx = m.entryIndex;
-            targetCharOffset = m.textEnd - m.textStart;
-            break;
-          }
+    const newLines = lines.map(line => {
+      const match = line.match(timeRegex);
+      if (match) {
+        const timeStr = match[1];
+        const timeSecs = parseTimeToSeconds(timeStr);
+        if (timeSecs === time) {
+          updated = true;
+          return `${timeStr} ${newTitle}`;
         }
       }
+      return line;
+    });
 
-      if (targetLocalIdx === -1) {
-        const lastM = mappings[mappings.length - 1];
-        targetLocalIdx = lastM.entryIndex;
-        targetCharOffset = lastM.textEnd - lastM.textStart;
-      }
-
-      const targetEntry = seg.subtitles[targetLocalIdx];
-      const cleanText = targetEntry.text.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
-
-      let splitTime = targetEntry.start;
-
-      // If the cursor is inside the entry (not at the very start or end)
-      if (targetCharOffset > 0 && targetCharOffset < cleanText.length) {
-        const part1 = cleanText.substring(0, targetCharOffset).trim();
-        const part2 = cleanText.substring(targetCharOffset).trim();
-
-        if (part1 && part2) {
-          const ratio = part1.length / cleanText.length;
-          const duration1 = targetEntry.duration * ratio;
-          const duration2 = targetEntry.duration * (1 - ratio);
-          const start2 = targetEntry.start + duration1;
-
-          const entry1 = {
-            start: targetEntry.start,
-            duration: duration1,
-            text: part1
-          };
-          const entry2 = {
-            start: start2,
-            duration: duration2,
-            text: part2
-          };
-
-          // Find the index of targetEntry in the global videoData.subtitles
-          let globalIdx = -1;
-          if (targetEntry.globalIndex !== undefined) {
-            globalIdx = targetEntry.globalIndex;
-          } else {
-            globalIdx = videoData.subtitles.findIndex(
-              (s: any) => Math.abs(s.start - targetEntry.start) < 0.01 && s.text === targetEntry.text
-            );
-          }
-
-          if (globalIdx !== -1) {
-            const updatedSubtitles = [...videoData.subtitles];
-            updatedSubtitles.splice(globalIdx, 1, entry1, entry2);
-            
-            // Re-index updated subtitles to have correct globalIndex
-            const reindexedSubtitles = updatedSubtitles.map((s, idx) => ({
-              ...s,
-              globalIndex: idx
-            }));
-
-            setVideoData({
-              ...videoData,
-              subtitles: reindexedSubtitles
-            });
-
-            splitTime = start2;
-          }
-        }
-      } else if (targetCharOffset >= cleanText.length) {
-        // Cursor is at the end of the entry.
-        // If there is a next entry in this segment, split at its start time.
-        if (targetLocalIdx + 1 < seg.subtitles.length) {
-          splitTime = seg.subtitles[targetLocalIdx + 1].start;
-        } else {
-          showToast('⚠️ 請在區塊內部的字句中間或句尾進行分割。');
-          return;
-        }
-      } else {
-        // Cursor is at the start of the entry
-        splitTime = targetEntry.start;
-      }
-
-      const distanceFromStart = splitTime - seg.start;
-      if (distanceFromStart < 1) {
-        showToast('⚠️ 請在區塊內部的字句中間或句尾進行分割。');
-        return;
-      }
-
-      // Add to custom splits
-      const newSplit: ChapterSplit = {
-        time: splitTime,
-        title: '' // unnamed custom split
+    if (updated) {
+      setChaptersInput(newLines.join('\n'));
+      showToast('已更新章節名稱！');
+    } else {
+      const formatSecondsToHHMMSS = (seconds: number): string => {
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = Math.floor(seconds % 60);
+        const pad = (num: number) => String(num).padStart(2, '0');
+        return `${pad(h)}:${pad(m)}:${pad(s)}`;
       };
-      setUserCustomSplits((prev) => [...prev, newSplit].sort((a, b) => a.time - b.time));
-      showToast('✂️ 手動分割成功！後續時段已向後推移。');
+      const timeStr = formatSecondsToHHMMSS(time);
+      const newChaptersInput = `${chaptersInput.trim()}\n${timeStr} ${newTitle}`.trim();
+      
+      const sortedChapters = newChaptersInput
+        .split('\n')
+        .map(l => l.trim())
+        .filter(Boolean)
+        .sort((a, b) => {
+          const mA = a.match(timeRegex);
+          const mB = b.match(timeRegex);
+          const tA = mA ? parseTimeToSeconds(mA[1]) : 0;
+          const tB = mB ? parseTimeToSeconds(mB[1]) : 0;
+          return tA - tB;
+        })
+        .join('\n');
+
+      setChaptersInput(sortedChapters);
+      showToast('已設定章節名稱！');
     }
   };
 
@@ -1946,11 +2286,13 @@ function App() {
     const videoId = videoData?.video_id;
     if (videoId && isDuplicateVideo(videoId)) {
       const confirmGen = window.confirm(
-        '此影片之前已整理過重點筆記，是否確定要再次呼叫 AI 重新整理？'
+        '⚠️ 偵測到此影片已有先前的 AI 整理紀錄。是否要清除舊紀錄並重新發送 AI 整理請求？\n（選取 [取消] 將保留原有的筆記與術語）'
       );
       if (!confirmGen) {
         return;
       }
+      setAiNotesResult(null);
+      setAiTermsResult(null);
     }
 
     if (videoId) {
@@ -2315,6 +2657,8 @@ function App() {
                   collapsedAIGroups={collapsedAIGroups}
                   toggleAIGroupCollapse={toggleAIGroupCollapse}
                   isPlaylist={!!videoData?.is_playlist}
+                  noTimestamps={!!videoData?.no_timestamps}
+                  onChapterTitleChange={handleRenameChapter}
                 />
               )}
 
@@ -2396,6 +2740,10 @@ function App() {
         setImportTitle={setImportTitle}
         importText={importText}
         setImportText={setImportText}
+        importYtUrl={importYtUrl}
+        setImportYtUrl={setImportYtUrl}
+        importMode={importMode}
+        setImportMode={setImportMode}
         handleManualImport={handleManualImport}
       />
 

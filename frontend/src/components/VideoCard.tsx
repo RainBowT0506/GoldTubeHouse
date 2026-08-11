@@ -12,6 +12,7 @@ interface VideoCardProps {
     duration: number;               // Total duration in seconds
     channel?: string;               // Optional channel name
     is_playlist?: boolean;          // Optional playlist flag
+    no_timestamps?: boolean;        // Optional flag for text mode
     videos?: Array<{
       video_id: string;
       title: string;
@@ -105,7 +106,11 @@ export const VideoCard: React.FC<VideoCardProps> = ({ videoData }) => {
           </div>
         )}
         <div className="video-meta">
-          <span>長度：{formatTime(videoData.duration)}</span>
+          {videoData.no_timestamps ? (
+            <span>📝 文字模式 (無時間戳)</span>
+          ) : (
+            <span>長度：{formatTime(videoData.duration)}</span>
+          )}
           {isPlaylist ? (
             <span>播放清單 ({videoData.videos?.length || 0} 部影片)</span>
           ) : (
